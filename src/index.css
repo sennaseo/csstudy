@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 전역 베이스 — 다크 톤 고정, 스크롤바 강조 X */
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  /* 어두운 배경에 너무 밝은 흰색은 눈이 아프다. ink-100 정도가 적당. */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* selection 색상도 톤 다운 */
+::selection {
+  background: rgba(94, 234, 212, 0.25);
+  color: #eceef2;
+}
