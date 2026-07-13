@@ -1,12 +1,28 @@
 <!doctype html>
-<html lang="ko" class="dark">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0a0a0b" />
+    <!-- viewport-fit=cover: 아이폰 노치 영역까지 배경이 차게 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#7c6ff0" />
     <title>csStudy — 개발 사고 회복</title>
+
+    <!-- ─── PWA: 홈 화면에 앱처럼 설치 가능 ─── -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <!-- iOS 사파리는 manifest 만으로 부족 — 전용 태그 필요 -->
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="csStudy" />
+
+    <!-- Pretendard — 한글이 예쁘게 나오는 무료 폰트 -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
   </head>
-  <body class="bg-ink-950 text-ink-100 font-mono antialiased">
+  <body class="text-ink-700 font-sans antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

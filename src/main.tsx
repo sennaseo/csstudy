@@ -11,3 +11,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <App />
   </React.StrictMode>,
 );
+
+// ─── Service Worker 등록 (PWA 오프라인 지원) ─────────────────
+// 프로덕션 빌드에서만 등록한다 — 개발 중에 켜두면 캐시 때문에
+// 코드를 고쳐도 옛 화면이 보이는 "유령 버그"에 시달리게 된다.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // 등록 실패해도 앱은 정상 동작 (오프라인만 안 될 뿐)
+    });
+  });
+}
