@@ -31,9 +31,10 @@ function Hearts() {
       <span className={"text-sm leading-none" + (hearts === 0 ? " grayscale" : "")}>
         ❤️
       </span>
+      {/* 숫자는 font-round(Baloo 2) — 듀오링고의 둥근 숫자 느낌 */}
       <span
         className={
-          "text-sm font-extrabold tabular-nums " +
+          "font-round text-sm font-extrabold tabular-nums " +
           (hearts === 0 ? "text-ink-300" : "text-duo-red")
         }
       >
@@ -75,7 +76,15 @@ function PathScreen() {
   );
 }
 
-/** 문제 풀이 화면 — 상단바 + 퀴즈 카드. */
+/** 문제 풀이 화면 — 상단바 + 퀴즈 카드.
+ *
+ *  레이아웃(듀오링고식 3층 구조):
+ *    [상단바: ✕ + 진행바 + 하트]  ← 고정
+ *    [본문: 문제와 보기]           ← 남는 공간 전부, 넘치면 스크롤
+ *    [하단 footer: 확인/피드백]    ← 화면 바닥에 고정
+ *  아래 두 층(본문/footer)은 QuestionCard 안에서 만든다.
+ *  여기서는 "상단바는 안 줄어들게(shrink-0), 카드는 남는 높이를 다 먹게(flex-1)"만
+ *  정해주면 된다. min-h-0 은 flexbox 에서 스크롤이 생기게 하는 필수 주문. */
 function QuizScreen() {
   const mode = useStudyStore((s) => s.mode);
   const goHome = useStudyStore((s) => s.goHome);
@@ -90,10 +99,10 @@ function QuizScreen() {
   return (
     <>
       {/* 상단바: 닫기(✕) + 진행도 바(레슨) + 하트(레슨 모드만) */}
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         <button
           onClick={goHome}
-          className="text-xl font-bold text-ink-300 transition-colors hover:text-ink-500"
+          className="text-xl font-extrabold text-ink-300 transition-colors hover:text-ink-500"
           title="그만두고 홈으로"
           aria-label="홈으로"
         >
@@ -102,16 +111,14 @@ function QuizScreen() {
         {isQueueMode ? (
           <>
             {mode === "review" && (
-              <span className="shrink-0 text-sm font-bold text-amber-500">🔁</span>
+              <span className="shrink-0 text-sm font-bold text-duo-fox">🔁</span>
             )}
             {mode === "today" && (
               <span className="shrink-0 text-sm font-bold text-duo-green">⚡</span>
             )}
-            <div className="h-3 flex-1 overflow-hidden rounded-full bg-ink-200">
-              <div
-                className="h-full rounded-full bg-duo-green transition-all duration-300"
-                style={{ width: `${pct}%` }}
-              />
+            {/* 듀오링고식 진행바 — 두꺼운 16px 트랙 + 젤리 하이라이트 (index.css) */}
+            <div className="progress-track flex-1">
+              <div className="progress-fill" style={{ width: `${pct}%` }} />
             </div>
             {/* 하트는 레슨 모드에서만 소모되므로 레슨에서만 보여준다 */}
             {mode === "lesson" && <Hearts />}
@@ -132,9 +139,22 @@ function QuizScreen() {
 export default function App() {
   const view = useStudyStore((s) => s.view);
 
+  // 퀴즈 화면만 "화면에 딱 맞는 높이"로 만든다 (h-full + overflow-hidden).
+  // 그래야 안쪽 QuestionCard 가 본문만 스크롤시키고 확인 버튼을 바닥에 붙여둘 수 있다.
+  // 나머지 화면(홈/완료)은 예전처럼 페이지 전체가 자연스럽게 늘어나며 스크롤된다.
+  const isQuiz = view === "quiz";
+
   return (
-    <div className="min-h-full">
-      <main className="safe-area mx-auto flex w-full max-w-xl flex-col gap-5 px-4 py-6 sm:py-10">
+    <div className={isQuiz ? "h-full overflow-hidden" : "min-h-full"}>
+      <main
+        className={
+          "mx-auto flex w-full max-w-xl flex-col gap-5 px-4 " +
+          (isQuiz
+            ? // 하단 padding 은 footer 가 직접 safe-area 를 챙기므로 여기선 위쪽만.
+              "h-full pt-[max(1rem,env(safe-area-inset-top))]"
+            : "safe-area py-6 sm:py-10")
+        }
+      >
         {view === "path" && <PathScreen />}
         {view === "quiz" && <QuizScreen />}
         {view === "lessonComplete" && <LessonComplete />}

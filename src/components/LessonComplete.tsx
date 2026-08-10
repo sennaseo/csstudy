@@ -2,11 +2,56 @@
 // LessonComplete — 레슨을 끝냈을 때 뜨는 축하 화면
 // - 듀오링고의 "레슨 완료!" 화면처럼 큰 메시지 + 결과(정답수/획득 XP).
 // - 마운트되자마자 컨페티 한 번. "계속" 누르면 홈(스킬트리)으로.
+//
+// 듀오링고식 스탯 카드가 이 화면의 핵심 볼거리다. 생김새는 3층 샌드위치:
+//   ┌ 색 테두리(bg-색) ─────────┐   ← 바깥 상자 전체가 그 색
+//   │  라벨 띠 ("획득 XP")      │   ← 색 위에 흰 글씨
+//   │ ┌ 흰 내용부 ───────────┐ │
+//   │ │      +48             │ │   ← 큰 숫자 (font-round)
+//   │ └──────────────────────┘ │
+//   └──────────────────────────┘
+// 구현 요령: 바깥 div 에 색 배경 + p-1(얇은 테두리 두께), 안쪽 div 는 흰 배경.
+// "테두리"를 border 로 그리는 대신 padding 으로 만드는 게 훨씬 간단하다.
 // =============================================================
 
 import { useEffect, useState } from "react";
 import { useStudyStore } from "../store/useStudyStore";
 import { Confetti } from "./Confetti";
+
+/** 듀오링고식 스탯 카드 한 장.
+ *  @param tone   바깥 상자/라벨 띠의 배경색 클래스 (예: "bg-duo-bee")
+ *  @param ink    큰 숫자에 쓸 글자색 클래스
+ *  @param delay  등장 지연(ms) — 카드마다 다르게 주면 순차 등장(stagger)이 된다 */
+function StatCard({
+  label,
+  tone,
+  ink,
+  delay,
+  children,
+}: {
+  label: string;
+  tone: string;
+  ink: string;
+  delay: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={"animate-slide-up flex-1 rounded-2xl p-1 " + tone}
+      // Tailwind 에 없는 값은 style 로 직접 — 카드마다 다른 지연이라 클래스로 못 만든다.
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <p className="py-1 text-center text-[10px] font-extrabold uppercase tracking-wider text-white">
+        {label}
+      </p>
+      <div className="rounded-xl bg-white px-2 py-3">
+        <p className={"text-center font-round text-2xl font-extrabold leading-none " + ink}>
+          {children}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export function LessonComplete() {
   const result = useStudyStore((s) => s.lessonResult);
@@ -24,7 +69,7 @@ export function LessonComplete() {
       <div className="flex flex-col items-center gap-4 py-16">
         <button
           onClick={goHome}
-          className="btn-3d rounded-2xl border-duo-green-dim bg-duo-green px-6 py-3 text-sm font-extrabold uppercase text-white"
+          className="btn-3d rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green px-6 py-3 text-sm font-extrabold text-white"
         >
           돌아가기
         </button>
@@ -58,52 +103,54 @@ export function LessonComplete() {
     ? "수고했어요. 틀린 건 다음 복습에서 또 만나요."
     : "수고했어요. 틀린 건 복습 노드에서 다시 만나요.";
 
+  // 이번 세션 최고 콤보 — 콤보가 살아있으면 그 값, 끊겼으면 안 보여준다.
+  const showCombo = !failed && combo >= 2;
+
   return (
     <div className="relative flex flex-col items-center gap-6 py-12 text-center">
-      {/* 실패했을 땐 컨페티 없음 */}
+      {/* 실패했을 땐 컨페티 없음 — 차분하게 위로하는 화면이라 축포는 안 어울린다 */}
       {!failed && <Confetti burstId={burstId} />}
 
-      <div className="text-6xl">{failed ? "💔" : allCorrect ? "🏆" : "🎉"}</div>
-      <h2 className="text-2xl font-extrabold text-ink-900">{title}</h2>
-      <p className="text-sm text-ink-500">{subtitle}</p>
-
-      {/* 결과 카드 2개: 정답수 / 획득 XP */}
-      <div className="flex w-full max-w-xs gap-3">
-        <div className="flex-1 rounded-2xl border-2 border-duo-green-dim bg-duo-green-soft p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-duo-green-ink">
-            정답
-          </p>
-          <p className="mt-1 text-2xl font-extrabold text-duo-green-ink">
-            {result.correct}
-            <span className="text-base text-ink-500"> / {result.total}</span>
-          </p>
-        </div>
-        <div className="flex-1 rounded-2xl border-2 border-accent-dim bg-accent-soft p-4">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-accent-dim">
-            획득 XP
-          </p>
-          <p className="mt-1 text-2xl font-extrabold text-accent-dim">
-            +{result.xpGained}
-          </p>
-        </div>
+      {/* 트로피가 "통!" 하고 튀어나온다 (실패 화면은 조용히 그냥 표시) */}
+      <div className={"text-7xl " + (failed ? "" : "animate-bounce-in")}>
+        {failed ? "💔" : allCorrect ? "🏆" : "🎉"}
       </div>
 
-      {/* 콤보 배지 — 이번 세션 콤보가 살아있거나 신기록을 세웠을 때만 */}
-      {!failed && combo >= 2 && (
-        <p className="text-xs font-bold text-amber-500">
-          🔥 콤보 {combo}연속
-          {combo === bestCombo && bestCombo >= 3 && " · 최고 기록!"}
-        </p>
+      {/* 큰 타이틀만 font-display(Jua) — 한글이 둥글둥글해지며 축하 분위기가 산다 */}
+      <div className="flex flex-col gap-2">
+        <h2 className="font-display text-3xl leading-tight text-ink-900">{title}</h2>
+        <p className="text-sm font-semibold text-ink-500">{subtitle}</p>
+      </div>
+
+      {/* 스탯 카드 — 100ms 씩 늦게 등장시켜 하나씩 착착 올라오게 한다 */}
+      <div className="flex w-full max-w-sm gap-3">
+        <StatCard label="획득 XP" tone="bg-duo-bee" ink="text-duo-bee-dim" delay={100}>
+          +{result.xpGained}
+        </StatCard>
+        <StatCard label="정답" tone="bg-accent" ink="text-accent-dim" delay={200}>
+          {result.correct}
+          <span className="text-base text-ink-300"> / {result.total}</span>
+        </StatCard>
+        {showCombo && (
+          <StatCard label="콤보" tone="bg-duo-fox" ink="text-duo-fox" delay={300}>
+            🔥{combo}
+          </StatCard>
+        )}
+      </div>
+
+      {/* 콤보 신기록은 카드 아래에 한 줄로 덧붙인다 */}
+      {showCombo && combo === bestCombo && bestCombo >= 3 && (
+        <p className="text-xs font-extrabold text-duo-fox">🏅 콤보 신기록!</p>
       )}
 
       {/* 복습 보상으로 하트를 회복했을 때 */}
       {result.heartsRecovered && (
-        <p className="text-xs font-bold text-duo-red">❤️ 하트 1개 회복!</p>
+        <p className="text-xs font-extrabold text-duo-red">❤️ 하트 1개 회복!</p>
       )}
 
       <button
         onClick={goHome}
-        className="btn-3d mt-2 w-full max-w-xs rounded-2xl border-duo-green-dim bg-duo-green px-6 py-3.5 text-sm font-extrabold uppercase tracking-wide text-white hover:brightness-105"
+        className="btn-3d mt-2 w-full max-w-sm rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green px-6 py-4 text-base font-extrabold tracking-wide text-white hover:brightness-105"
       >
         계속
       </button>

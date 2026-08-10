@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <!-- viewport-fit=cover: 아이폰 노치 영역까지 배경이 차게 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#7c6ff0" />
+    <!-- theme-color: 안드로이드 크롬 주소창 색. 브랜드 초록(Feather Green)으로. -->
+    <meta name="theme-color" content="#58CC02" />
     <title>csStudy — 개발 사고 회복</title>
 
     <!-- ─── PWA: 홈 화면에 앱처럼 설치 가능 ─── -->
@@ -20,6 +21,18 @@
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
+    />
+
+    <!-- 듀오링고 느낌의 둥근 폰트 2종 (Google Fonts)
+         - Baloo 2 → font-round : 숫자/영문 라벨용 ("XP 120", "LV 3")
+         - Jua     → font-display : 완료 화면 큰 한글 타이틀용
+         preconnect 는 "폰트 서버에 미리 악수해두기" — 실제 다운로드가 조금 더 빨라진다.
+         display=swap 은 "폰트 받는 동안 기본 글꼴로라도 먼저 보여줘" 옵션(빈 화면 방지). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Jua&display=swap"
+      rel="stylesheet"
     />
   </head>
   <body class="text-ink-700 font-sans antialiased">

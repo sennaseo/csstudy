@@ -71,6 +71,81 @@ export interface QuizChoice {
   correct: boolean;
 }
 
+// ─── 문제 유형(Exercise) ─────────────────────────────────────
+// "같은 문제(Question) 하나"를 여러 방식으로 출제하기 위한 포장지.
+// 비유: 같은 고기(지식)라도 굽거나(객관식) 볶거나(빈칸) 튀길(말하기) 수 있다.
+// 유형마다 필요한 데이터가 달라서 discriminated union 으로 정의한다.
+// → switch(ex.type) 하면 TS 가 각 분기에서 필요한 필드를 자동으로 좁혀준다.
+
+/** 출제 가능한 유형들. */
+export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match";
+
+/** 객관식: 보기 4개 중 맞는 설명 고르기 (기존 방식). */
+export interface ChoiceExercise {
+  type: "choice";
+  choices: QuizChoice[];
+}
+
+/** 빈칸 채우기: 요약 문장의 핵심 단어가 뚫려 있고, 단어 은행에서 골라 채운다. */
+export interface BlankExercise {
+  type: "blank";
+  /** 빈칸 앞부분 텍스트. */
+  before: string;
+  /** 빈칸 뒷부분 텍스트. */
+  after: string;
+  /** 정답 단어. */
+  answer: string;
+  /** 단어 은행 (정답 1 + 오답들, 이미 섞여 있음). */
+  bank: string[];
+}
+
+/** OX 퀴즈: 제시된 설명이 이 질문에 대한 맞는 설명인지 판단. */
+export interface OxExercise {
+  type: "ox";
+  /** 판단할 설명 문장. */
+  statement: string;
+  /** 이 설명이 실제로 맞는지 (O가 정답인지). */
+  isTrue: boolean;
+}
+
+/** 직접 타이핑: 핵심 키워드를 입력하면 채점 (오타 1글자 허용). */
+export interface TypingExercise {
+  type: "typing";
+  /** 빈칸 앞부분 텍스트. */
+  before: string;
+  /** 빈칸 뒷부분 텍스트. */
+  after: string;
+  /** 정답 키워드. */
+  answer: string;
+}
+
+/** 말하기(셀프 설명): 소리내어 설명한 뒤 정답을 보고 스스로 평가. */
+export interface SpeakExercise {
+  type: "speak";
+}
+
+/** 매칭 한 쌍: 질문(term) ↔ 한 줄 정답(def). */
+export interface MatchPair {
+  qid: string;
+  term: string;
+  def: string;
+}
+
+/** 선 연결하기: 질문 4개와 설명 4개를 짝지어 연결. */
+export interface MatchExercise {
+  type: "match";
+  pairs: MatchPair[];
+}
+
+/** 모든 유형의 합집합 — 스토어가 들고 있는 "현재 출제 형태". */
+export type Exercise =
+  | ChoiceExercise
+  | BlankExercise
+  | OxExercise
+  | TypingExercise
+  | SpeakExercise
+  | MatchExercise;
+
 /**
  * 레슨(스킬 트리 노드) 한 개의 완료 기록.
  * - 이 맵에 노드 id 가 있으면 = "완료됨"(다음 노드 언락 조건).

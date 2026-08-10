@@ -19,9 +19,10 @@ export function DailyStats() {
 
   return (
     <>
+      {/* 칩 — 그림자 대신 흰 배경 + Swan(ink-200) 테두리 (듀오링고는 그림자를 거의 안 씀) */}
       <button
         onClick={() => setIsCalendarOpen(true)}
-        className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 shadow-chip transition-all hover:shadow-card active:scale-95"
+        className="flex items-center gap-1.5 rounded-full border-2 border-ink-200 bg-white px-3 py-1.5 transition-all hover:brightness-[0.98] active:scale-95"
         title="달력에서 학습 기록 보기"
       >
         <span
@@ -32,7 +33,13 @@ export function DailyStats() {
         >
           🔥
         </span>
-        <span className="text-sm font-bold tabular-nums text-ink-900">
+        {/* 스트릭 숫자 — 불이 붙은 상태면 Fox 오렌지로 강조 */}
+        <span
+          className={
+            "text-sm font-round font-extrabold tabular-nums " +
+            (isLitToday ? "text-duo-fox" : "text-ink-900")
+          }
+        >
           {streak}
         </span>
         <span className="text-xs text-ink-500">일</span>

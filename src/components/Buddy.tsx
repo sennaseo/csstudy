@@ -28,12 +28,14 @@ export function Buddy() {
 
   return (
     <>
-      <div className="rounded-2xl bg-white p-4 shadow-card">
+      {/* 카드 — 그림자 대신 흰 배경 + Swan(ink-200) 테두리 라운드 카드 */}
+      <div className="rounded-2xl border-2 border-ink-200 bg-white p-4">
         <div className="flex items-center justify-between">
           <span className="text-sm font-semibold text-ink-900">내 버디</span>
+          {/* 도감 버튼 — accent-soft 배경 + accent 글자 (토큰이 이제 Macaw 파랑이라 자동 재스킨) */}
           <button
             onClick={() => setIsBookOpen(true)}
-            className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-dim transition-colors hover:bg-accent hover:text-white"
+            className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
           >
             📖 도감 {ownedCount}/12
           </button>
@@ -103,12 +105,10 @@ function BuddyCard({ charId, xp }: { charId: string; xp: number }) {
           {character.name} · {stage}단계
         </p>
 
-        {/* XP 바 */}
-        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-ink-100">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-accent to-sky-400 transition-all duration-500"
-            style={{ width: `${percent}%` }}
-          />
+        {/* XP 바 — .progress-track/.progress-fill 재사용. 기본 16px 는 너무 두꺼워서
+            !h-2.5 로 이 자리에서만 얇게 override (progress-fill 안의 ::after 하이라이트는 그대로 유지). */}
+        <div className="progress-track !h-2.5 mt-1.5">
+          <div className="progress-fill" style={{ width: `${percent}%` }} />
         </div>
         <p className="mt-0.5 text-[10px] tabular-nums text-ink-300">
           {isMax

@@ -20,13 +20,14 @@ import type {
   BuddyRecord,
   Category,
   CategoryGroup,
+  Exercise,
   PersistedState,
   Question,
   QuestionRecord,
-  QuizChoice,
   ReviewStatus,
 } from "../types";
-import { CATEGORY_GROUPS, QUESTIONS, SUMMARIES } from "../data/questions";
+import { CATEGORY_GROUPS, QUESTIONS } from "../data/questions";
+import { buildExercise, shuffle } from "../utils/exercise";
 import { ALL_NODES, NODE_BY_ID } from "../data/lessonPath";
 import { CHARACTERS, RARITY_INFO, stageOf } from "../data/characters";
 import type { BuddyCharacter } from "../data/characters";
@@ -160,46 +161,9 @@ function drawNewBuddy(owned: Record<string, BuddyRecord>): BuddyCharacter | null
   return pool[pool.length - 1]; // 부동소수점 안전망
 }
 
-// ─── 객관식 보기 만들기 (듀오링고식 즉답 채점) ───────────────
-
-/** 문제의 한 줄 요약 — SUMMARIES 에 없으면 answer 의 첫 문장으로 폴백. */
-function summaryOf(q: Question): string {
-  const s = SUMMARIES[q.id];
-  if (s) return s;
-  // 폴백: 첫 문장(마침표/물음표 기준)만 잘라 쓴다.
-  const first = q.answer.split(/(?<=[.?!])\s/)[0];
-  return first.length > 80 ? first.slice(0, 78) + "…" : first;
-}
-
-/** 배열을 복사해 섞는다 (Fisher–Yates). 원본은 안 건드린다. */
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-/**
- * 보기 4개 만들기 = 정답 1 + 오답(distractor) 3.
- * - 오답은 "같은 카테고리 문제"를 우선해서 뽑는다 → 적당히 헷갈리게.
- *   같은 카테고리가 부족하면 다른 카테고리로 채운다.
- * - 마지막에 통째로 섞어서 정답 위치를 랜덤화한다.
- */
-function buildChoices(q: Question): QuizChoice[] {
-  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
-  const otherCat = QUESTIONS.filter((x) => x.id !== q.id && x.category !== q.category);
-  const distractorSrc = [...shuffle(sameCat), ...shuffle(otherCat)].slice(0, 3);
-
-  const choices: QuizChoice[] = [
-    { qid: q.id, text: summaryOf(q), correct: true },
-    ...distractorSrc.map((x) => ({ qid: x.id, text: summaryOf(x), correct: false })),
-  ];
-  return shuffle(choices);
-}
-
 // ─── Store 본체 ───────────────────────────────────────────
+// 문제 → 출제 형태(객관식/빈칸/OX/타이핑/말하기/매칭) 변환은
+// utils/exercise.ts 의 buildExercise 가 담당한다 (랜덤 믹스).
 
 /** 획득/진화 알림 — UI 가 모달로 보여주고 clearReward 로 닫는다. */
 export interface PendingReward {
@@ -240,12 +204,14 @@ export interface LessonResult {
 interface StudyState extends PersistedState {
   currentQuestion: Question | null;
   isAnswerVisible: boolean;
-  /** 현재 문제의 객관식 보기 4개 (정답 1 + 오답 3). pickRandom 때 새로 만든다. */
-  choices: QuizChoice[];
-  /** 사용자가 고른 보기의 출처 qid. 아직 안 골랐으면 null. */
+  /** 현재 문제의 출제 형태 (객관식/빈칸/OX/타이핑/말하기/매칭 중 랜덤). */
+  exercise: Exercise | null;
+  /** (객관식 전용) 사용자가 고른 보기의 출처 qid. 아직 안 골랐으면 null. */
   selectedQid: string | null;
-  /** 채점 완료 여부 — true 면 보기 클릭이 잠기고 피드백 시트가 뜬다. */
+  /** 채점 완료 여부 — true 면 입력이 잠기고 피드백 시트가 뜬다. */
   graded: boolean;
+  /** 방금 채점 결과 (모든 유형 공통). graded 전에는 null. */
+  lastCorrect: boolean | null;
   /** 새 캐릭터 획득/진화 알림 (transient — 저장 안 함). */
   pendingReward: PendingReward | null;
 
@@ -272,8 +238,13 @@ interface StudyState extends PersistedState {
   setCategory: (c: Category | null) => void;
   pickRandom: () => void;
   toggleAnswer: () => void;
-  /** 보기 하나를 골라 즉시 채점한다 (정답/오답 확정). 다음 문제로는 넘어가지 않음. */
+  /** (객관식) 보기 하나를 골라 즉시 채점한다. 다음 문제로는 넘어가지 않음. */
   answerQuiz: (qid: string) => void;
+  /**
+   * (전 유형 공통) 채점 확정 — 콤보/하트/최고기록 갱신까지 한 번에.
+   * 빈칸·OX·타이핑·말하기·매칭 UI 가 "맞았는지" 판단해서 이걸 부른다.
+   */
+  gradeExercise: (correct: boolean, selectedQid?: string | null) => void;
   /** 결과만 기록한다(XP·캐릭터·일일카운트). 다음 문제로 넘기지 않는다. */
   recordStatus: (status: ReviewStatus) => void;
   /** "계속" 버튼: 결과 기록 후 모드에 맞게 진행(랜덤=다음 랜덤, 레슨=다음 or 완료). */
@@ -394,9 +365,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
     ...persisted,
     currentQuestion: null,
     isAnswerVisible: false,
-    choices: [],
+    exercise: null,
     selectedQid: null,
     graded: false,
+    lastCorrect: null,
     pendingReward: null,
     view: "path",
     mode: "lesson",
@@ -432,26 +404,26 @@ export const useStudyStore = create<StudyState>((set, get) => {
         pool = QUESTIONS.filter((q) => cats.includes(q.category));
       }
       const next = pickFromPool(pool, currentQuestion?.id ?? null);
-      // 새 문제 → 새 보기 + 채점 상태 초기화.
+      // 새 문제 → 새 출제 형태 + 채점 상태 초기화.
       set({
         currentQuestion: next,
         isAnswerVisible: false,
-        choices: next ? buildChoices(next) : [],
+        exercise: next ? buildExercise(next) : null,
         selectedQid: null,
         graded: false,
+        lastCorrect: null,
       });
     },
 
     toggleAnswer: () =>
       set((s) => ({ isAnswerVisible: !s.isAnswerVisible })),
 
-    answerQuiz: (qid) => {
-      // 이미 채점됐으면 무시 (보기 잠금).
+    gradeExercise: (correct, selectedQid = null) => {
+      // 이미 채점됐으면 무시 (입력 잠금).
       const { graded, currentQuestion, combo, bestCombo, mode, hearts, heartsUpdatedAt } =
         get();
       if (graded || !currentQuestion) return;
       // 콤보: 정답이면 +1, 오답이면 0으로 리셋. 최고 기록은 영속 저장.
-      const correct = qid === currentQuestion.id;
       const nextCombo = correct ? combo + 1 : 0;
       const nextBest = Math.max(bestCombo, nextCombo);
 
@@ -466,13 +438,21 @@ export const useStudyStore = create<StudyState>((set, get) => {
       }
 
       set({
-        selectedQid: qid,
+        selectedQid,
         graded: true,
+        lastCorrect: correct,
         combo: nextCombo,
         bestCombo: nextBest,
         ...heartPatch,
       });
       if (nextBest > bestCombo || "hearts" in heartPatch) persist();
+    },
+
+    // 객관식은 "고른 보기 qid == 문제 id" 가 곧 정답 판정.
+    answerQuiz: (qid) => {
+      const q = get().currentQuestion;
+      if (!q) return;
+      get().gradeExercise(qid === q.id, qid);
     },
 
     recordStatus: (status) => {
@@ -554,9 +534,9 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     continueQuiz: () => {
-      const { currentQuestion, graded, selectedQid, mode } = get();
+      const { currentQuestion, graded, lastCorrect, mode } = get();
       if (!currentQuestion || !graded) return;
-      const correct = selectedQid === currentQuestion.id;
+      const correct = lastCorrect === true;
       const status: ReviewStatus = correct ? "understood" : "unknown";
 
       // 1) 결과 기록 (XP·캐릭터·일일카운트). 다음 문제로는 안 넘김.
@@ -599,9 +579,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
           lessonIndex: nextIndex,
           lessonCorrect: newCorrect,
           currentQuestion: nextQ ?? null,
-          choices: nextQ ? buildChoices(nextQ) : [],
+          exercise: nextQ ? buildExercise(nextQ) : null,
           selectedQid: null,
           graded: false,
+          lastCorrect: null,
         });
         return;
       }
@@ -643,9 +624,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
           lessonCorrect: 0,
           lessonXp: 0,
           currentQuestion: firstQ,
-          choices: firstQ ? buildChoices(firstQ) : [],
+          exercise: firstQ ? buildExercise(firstQ) : null,
           selectedQid: null,
           graded: false,
+          lastCorrect: null,
         });
         return;
       }
@@ -698,9 +680,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonXp: 0,
         lessonResult: null,
         currentQuestion: first,
-        choices: first ? buildChoices(first) : [],
+        exercise: first ? buildExercise(first) : null,
         selectedQid: null,
         graded: false,
+        lastCorrect: null,
       });
     },
 
@@ -729,9 +712,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonXp: 0,
         lessonResult: null,
         currentQuestion: first,
-        choices: buildChoices(first),
+        exercise: buildExercise(first),
         selectedQid: null,
         graded: false,
+        lastCorrect: null,
       });
     },
 
@@ -757,9 +741,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonXp: 0,
         lessonResult: null,
         currentQuestion: first,
-        choices: buildChoices(first),
+        exercise: buildExercise(first),
         selectedQid: null,
         graded: false,
+        lastCorrect: null,
       });
     },
 

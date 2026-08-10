@@ -2,27 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 전역 베이스 — 밝고 부드러운 파스텔 톤 */
+/* 전역 베이스 — 듀오링고 톤(깨끗한 흰 배경 + 채도 높은 포인트 컬러) */
 html, body, #root {
   height: 100%;
 }
 
 body {
-  /* 위에서 아래로 흐르는 아주 옅은 파스텔 그라디언트 배경.
-     단색보다 공간감이 생겨서 카드가 떠 있는 느낌이 난다. */
-  background:
-    radial-gradient(1100px 500px at 80% -10%, rgba(186, 230, 253, 0.55), transparent 60%),
-    radial-gradient(900px 500px at 10% 0%, rgba(237, 234, 253, 0.8), transparent 55%),
-    #fdfbf7;
-  background-attachment: fixed;
+  /* 배경은 그냥 흰색 단색.
+     예전엔 파스텔 그라디언트를 깔았지만, 듀오링고는 배경을 완전히 비워두고
+     버튼·카드의 진한 색만으로 시선을 끈다. 배경이 조용할수록 색이 더 세게 보인다. */
+  background: #ffffff;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* 텍스트 선택 색도 포인트 컬러로 맞춘다 */
+/* 텍스트 선택 색도 포인트 컬러(Macaw 파랑)로 맞춘다 */
 ::selection {
-  background: rgba(124, 111, 240, 0.25);
-  color: #3f3d56;
+  background: rgba(28, 176, 246, 0.25);
+  color: #4b4b4b;
 }
 
 /* ─── 모바일 (PWA) ────────────────────────────────────────
@@ -115,14 +112,32 @@ button {
 /* ─── 듀오링고식 3D 버튼 ───────────────────────────────────────
    버튼 밑에 진한 테두리(border-bottom)를 깔아 '두께'를 만들고,
    누르면(active) 그 두께만큼 내려앉으며 눌리는 손맛을 준다.
-   비유: 실제 키보드 키를 누르는 느낌. */
+   비유: 실제 키보드 키를 누르는 느낌.
+
+   ⚠️ 여기가 이 파일에서 제일 조심해야 하는 부분 —
+   예전엔 누를 때 border-bottom-width 를 4px → 2px 로 줄였다.
+   그런데 테두리도 요소의 '키'에 포함되기 때문에, 두께가 줄면 버튼이 2px 작아지고
+   그 아래 있던 것들이 위로 딸려 올라온다(레이아웃 점프).
+   그래서 지금은 **두께는 4px 그대로 두고 색만 투명하게** 바꾼다.
+   두께는 자리를 계속 차지하니 아무것도 안 움직이고, 눈에는 바닥이 사라진 것처럼 보인다.
+
+   transition 에 transform 만 넣은 이유:
+   색(border-color)까지 천천히 변하면 눌린 느낌이 흐물흐물해진다.
+   위치는 부드럽게(60ms), 색은 즉시 — 이게 딸깍하는 손맛의 정체다. */
 .btn-3d {
   border-bottom-width: 4px;
-  transition: transform 0.05s ease, filter 0.1s ease;
+  transition: transform 0.06s ease-out;
 }
 .btn-3d:active:not(:disabled) {
-  transform: translateY(2px);
-  border-bottom-width: 2px;
+  transform: translateY(4px);        /* 바닥 두께(4px)만큼 정확히 내려앉는다 */
+  border-bottom-color: transparent;  /* 두께는 유지 + 색만 지움 → 점프 없음 */
+}
+/* 비활성 버튼은 눌리지 않는다.
+   회색으로 바꾸는 건 컴포넌트가 Tailwind 클래스(bg-ink-200 등)로 하고,
+   여기선 "눌러도 반응 없음"만 확실히 못 박는다. */
+.btn-3d:disabled {
+  cursor: not-allowed;
+  transform: none;
 }
 /* 정답 흔들기(오답일 때 살짝 좌우로) */
 @keyframes shake {
@@ -167,4 +182,110 @@ button {
   transform: translateY(-50%);
   border: 7px solid transparent;
   border-right-color: white;
+}
+
+/* ─── 듀오링고식 진행바 ────────────────────────────────────────
+   사용법(HTML 두 겹):
+     <div class="progress-track">
+       <div class="progress-fill" style="width: 40%"></div>
+     </div>
+
+   - track = 회색 홈, fill = 그 안을 채우는 초록 막대.
+   - fill 의 ::after 로 위쪽에 흰 반투명 줄을 하나 얹는데,
+     이게 "매끈한 젤리 위에 빛이 반사된" 느낌을 만든다(하이라이트).
+   - width 만 400ms 로 전환 → 정답 맞출 때마다 막대가 스르륵 늘어난다. */
+.progress-track {
+  height: 16px;
+  border-radius: 9999px;
+  background: #e5e5e5; /* Swan */
+  overflow: hidden;    /* 채움 막대가 둥근 모서리 밖으로 삐져나오지 않게 */
+}
+.progress-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #7fdd37 0%, #58cc02 100%);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* ─── 스킬 패스 노드(원형 버튼) ────────────────────────────────
+   지름 72px 원 + 아래로 8px 짙은 그림자 = 두툼한 3D 원판.
+
+   왜 CSS 변수(--node-shadow-color)를 쓰나?
+   상태(완료/현재/잠금)마다 바닥 색이 달라야 하는데,
+   box-shadow 규칙을 세 번 복사하는 대신 "색만" 변수로 갈아끼우는 게 깔끔하다.
+   비유: 도장은 하나, 잉크만 바꿔 찍는 것.
+
+   사용법: <button class="path-node path-node-current">…</button> */
+.path-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 9999px;
+  font-weight: 800;
+  --node-shadow-color: #afafaf; /* 기본값 — variant 가 덮어쓴다 */
+  box-shadow: 0 8px 0 var(--node-shadow-color);
+  transition: transform 0.06s ease-out;
+}
+/* 완료 — Bee 골드 */
+.path-node-done {
+  --node-shadow-color: #e5a100;
+  background: #ffc800;
+  color: #ffffff;
+}
+/* 현재 — Feather Green, 살짝 크게 키워서 "여기야!" 하고 눈에 띄게 */
+.path-node-current {
+  --node-shadow-color: #46a302;
+  background: #58cc02;
+  color: #ffffff;
+  transform: scale(1.08);
+}
+/* 잠금 — 채도 없는 회색 (아직 못 여는 곳이라는 신호) */
+.path-node-locked {
+  --node-shadow-color: #cecece;
+  background: #e5e5e5;
+  color: #afafaf;
+  cursor: not-allowed;
+}
+/* 누르면 그림자 두께(8px)만큼 내려앉는다.
+   여기서는 box-shadow 라 레이아웃 높이에 영향이 없으므로 그림자를 없애도 안전하다.
+   (btn-3d 는 border 라서 못 없애고 색만 지웠던 것과 대비) */
+.path-node:active:not(.path-node-locked) {
+  transform: translateY(8px);
+  box-shadow: 0 0 0 var(--node-shadow-color);
+}
+/* 현재 노드는 scale 이 걸려 있으니, 눌릴 때도 그 크기를 유지해야 안 튄다 */
+.path-node-current:active {
+  transform: translateY(8px) scale(1.08);
+}
+
+/* ─── XP 플로트 ───────────────────────────────────────────────
+   "+10 XP" 같은 숫자가 위로 떠오르며 사라지는 효과.
+   Tailwind 쪽에도 animate-float-up 으로 같은 게 있으니 편한 쪽을 쓰면 된다.
+   forwards = 끝난 뒤 사라진 상태 그대로 유지(안 그러면 도로 나타난다). */
+@keyframes float-up {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+.float-up {
+  animation: float-up 1.1s ease-out forwards;
 }

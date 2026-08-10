@@ -23,11 +23,12 @@ export function GoalGauge() {
   const isDone = count >= DAILY_GOAL;
 
   return (
-    <div className="rounded-2xl bg-white p-4 shadow-card">
+    // 듀오링고는 그림자보다 테두리 위주 — 흰 배경 + Swan(ink-200) 테두리 카드.
+    <div className="rounded-2xl border-2 border-ink-200 bg-white p-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-semibold text-ink-900">오늘의 목표</span>
-        <span className="text-sm tabular-nums text-ink-500">
-          <span className={isDone ? "font-bold text-emerald-500" : "font-bold text-accent"}>
+        <span className="text-sm font-round tabular-nums text-ink-500">
+          <span className={isDone ? "font-extrabold text-duo-green-ink" : "font-extrabold text-accent"}>
             {count}
           </span>
           {" / "}
@@ -35,20 +36,15 @@ export function GoalGauge() {
         </span>
       </div>
 
-      {/* 게이지 바 — width 를 % 로 주고 transition 으로 부드럽게 채운다 */}
-      <div className="h-3 overflow-hidden rounded-full bg-ink-100">
-        <div
-          className={
-            "h-full rounded-full transition-all duration-700 ease-out " +
-            (isDone
-              ? "bg-gradient-to-r from-emerald-400 to-teal-400"
-              : "bg-gradient-to-r from-accent to-sky-400")
-          }
-          style={{ width: `${percent}%` }}
-        />
+      {/* 게이지 바 — .progress-track/.progress-fill 이 채움 색(초록 그라디언트)과
+          하이라이트 줄까지 알아서 그려준다. width 만 % 로 넘기면 된다. */}
+      <div className="progress-track">
+        <div className="progress-fill" style={{ width: `${percent}%` }} />
       </div>
 
-      <p className="mt-2 text-xs text-ink-500">{messageFor(count)}</p>
+      <p className={"mt-2 text-xs " + (isDone ? "font-bold text-duo-green-ink" : "text-ink-500")}>
+        {messageFor(count)}
+      </p>
     </div>
   );
 }

@@ -21,16 +21,17 @@ export function QuickActions() {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* 메인: 오늘의 5문제 — 제일 크고 제일 위. 고민 없이 이것만 누르면 된다. */}
+      {/* 메인: 오늘의 5문제 — 제일 크고 제일 위. 고민 없이 이것만 누르면 된다.
+          듀오링고 메인 CTA 스타일: 두꺼운 초록 3D + 굵은 글자. */}
       <button
         onClick={startToday}
-        className="btn-3d flex w-full items-center justify-between rounded-2xl border-duo-green-dim bg-duo-green px-5 py-4 text-left text-white hover:brightness-105"
+        className="btn-3d flex w-full items-center justify-between rounded-2xl border-b-4 border-duo-green-dim bg-duo-green px-5 py-4 text-left text-white hover:brightness-105"
       >
         <div>
           <p className="text-base font-extrabold">
             ⚡ {goalDone ? "한 판 더!" : "오늘의 5문제 시작"}
           </p>
-          <p className="text-xs opacity-90">
+          <p className="text-xs font-semibold opacity-90">
             {reviewCount > 0
               ? `복습 ${Math.min(reviewCount, DAILY_GOAL)}개 포함 · 자동으로 골라줘요`
               : "자동으로 골라줘요 · 1분이면 끝"}
@@ -39,21 +40,22 @@ export function QuickActions() {
         <span className="text-2xl">›</span>
       </button>
 
-      {/* 서브: 복습 — 밀린 게 있을 때만 활성화. 뱃지로 압박(적당히). */}
+      {/* 서브: 복습 — 듀오링고 보조 버튼(흰 배경 + Swan 테두리 + accent 글자).
+          밀린 게 있을 때만 활성화. 개수 뱃지는 duo-fox(주황) 배경으로 눈에 띄게. */}
       <button
         onClick={startReview}
         disabled={reviewCount === 0}
         className={
-          "btn-3d flex w-full items-center justify-between rounded-2xl border-2 px-5 py-3 text-left " +
+          "btn-3d flex w-full items-center justify-between rounded-2xl border-2 border-b-4 px-5 py-3 text-left " +
           (reviewCount === 0
             ? "cursor-not-allowed border-ink-200 bg-ink-100 text-ink-300"
-            : "border-amber-300 bg-amber-50 text-ink-900 hover:brightness-[0.98]")
+            : "border-ink-200 bg-white text-accent hover:brightness-[0.98]")
         }
       >
         <p className="text-sm font-extrabold">
           🔁 복습
           {reviewCount > 0 && (
-            <span className="ml-2 rounded-full bg-amber-400 px-2 py-0.5 text-[11px] font-extrabold text-white">
+            <span className="ml-2 rounded-full bg-duo-fox px-2 py-0.5 text-[11px] font-round font-extrabold text-white">
               {reviewCount}
             </span>
           )}

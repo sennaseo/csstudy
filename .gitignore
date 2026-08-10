@@ -13,3 +13,4 @@ dist-ssr
 vite.config.js.timestamp-*.mjs
 *.tsbuildinfo
 .gstack/
+.serena/
