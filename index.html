@@ -9,10 +9,11 @@
     <title>csStudy — 개발 사고 회복</title>
 
     <!-- ─── PWA: 홈 화면에 앱처럼 설치 가능 ─── -->
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="icon" type="image/png" href="/icon-192.png" />
+    <!-- 상대 경로("./") — 루트 배포든 /csstudy/ 하위 경로(GitHub Pages)든 다 맞는다 -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./icon-192.png" />
     <!-- iOS 사파리는 manifest 만으로 부족 — 전용 태그 필요 -->
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="csStudy" />

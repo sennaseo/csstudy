@@ -1,0 +1,44 @@
+# =============================================================
+# GitHub Pages 자동 배포
+# - main 에 푸시하면: 빌드(tsc + vite) → dist 를 Pages 에 올린다.
+# - 결과 주소: https://sennaseo.github.io/csstudy/
+# =============================================================
+name: deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Actions 탭에서 수동 실행도 가능
+
+permissions:
+  contents: read
+  pages: write # Pages 에 올릴 권한
+  id-token: write # 배포 신원 증명용
+
+# 배포가 겹치면 옛 배포는 취소하고 최신 것만
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true # Pages 가 꺼져 있으면 워크플로가 알아서 켠다
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

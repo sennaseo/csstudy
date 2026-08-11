@@ -45,9 +45,12 @@ self.addEventListener("fetch", (event) => {
         // 오프라인! 캐시에서 꺼낸다
         const cached = await cache.match(request);
         if (cached) return cached;
-        // SPA 라우팅 대비: 페이지 요청이면 index.html 로
+        // SPA 라우팅 대비: 페이지 요청이면 index.html 로.
+        // 상대 경로("./")는 이 sw.js 가 놓인 위치 기준으로 풀린다 —
+        // 루트 배포든 /csstudy/ 하위 경로 배포든 항상 옳은 주소가 된다.
         if (request.mode === "navigate") {
-          const index = await cache.match("/index.html");
+          const index =
+            (await cache.match("./index.html")) || (await cache.match("./"));
           if (index) return index;
         }
         return Response.error();
