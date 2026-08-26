@@ -10,7 +10,7 @@ import type { Category, CategoryGroup, Question } from "../types";
 
 /** 그룹 → 카테고리 매핑. 새 카테고리는 여기 + types.ts 의 Category union 에 추가. */
 export const CATEGORY_GROUPS: Record<CategoryGroup, Category[]> = {
-  프론트엔드: ["React", "TypeScript"],
+  프론트엔드: ["React", "TypeScript", "상태관리"],
   "백엔드&프로그래밍": ["CS", "Java", "SpringBoot", "구조설계"],
 };
 
@@ -1022,6 +1022,270 @@ class LocalRepo implements QuestionRepo { /* ... */ }
 class ApiRepo implements QuestionRepo { /* ... */ }
 // → 이 인터페이스를 쓰는 쪽 코드는 한 줄도 안 고친다`,
   },
+  // ─── 상태관리 (React Query · Zustand · Context) ─────────
+  // 출처: https://github.com/ssi02014/react-query-tutorial (TanStack Query v5 기준)
+  {
+    id: "q-state-1",
+    category: "상태관리",
+    question: "서버 상태와 클라이언트 상태는 무엇이 다른가?",
+    answer:
+      "클라이언트 상태 = 내 방 안의 물건 (모달 열림, 입력창 값). 내가 완전히 통제하고 즉시 바뀐다. 서버 상태 = 남의 창고(DB)에 있는 물건의 '복사본'. 가져오는 데 시간이 걸리고(비동기), 내가 모르는 새 원본이 바뀔 수 있어서 '언제 다시 가져올지·얼마나 믿을지'가 핵심 고민이다. 그래서 서버 상태는 React Query 같은 캐시 도구, 클라이언트 상태는 useState/Zustand 로 나눠 관리한다.",
+    code: `// 클라이언트 상태 — 내가 주인
+const [isOpen, setIsOpen] = useState(false);
+
+// 서버 상태 — DB 원본의 '복사본'. 낡을 수 있다.
+const { data } = useQuery({ queryKey: ["user"], queryFn: fetchUser });`,
+  },
+  {
+    id: "q-state-2",
+    category: "상태관리",
+    question: "React Query 의 queryKey 는 왜 배열이고, 변수를 꼭 넣어야 하나?",
+    answer:
+      "queryKey 는 캐시 창고의 '선반 이름표'. 같은 이름표면 같은 선반(캐시)을 공유하고, 다르면 다른 선반이다. 페이지 번호·id 같은 변수를 키에 안 넣으면 2페이지를 요청해도 1페이지 선반에서 꺼내오는 사고가 난다. 배열이라서 [\"posts\", 2] 처럼 계층적으로 표현하고, 나중에 [\"posts\"] 하나로 자식 선반 전체를 무효화할 수도 있다.",
+    code: `// ❌ page 가 바뀌어도 키가 같아서 캐시가 재활용됨
+useQuery({ queryKey: ["posts"], queryFn: () => fetchPosts(page) });
+
+// ✅ 의존하는 변수는 전부 키에
+useQuery({ queryKey: ["posts", page], queryFn: () => fetchPosts(page) });`,
+  },
+  {
+    id: "q-state-3",
+    category: "상태관리",
+    question: "staleTime 과 gcTime 의 차이는?",
+    answer:
+      "우유의 '유통기한' 과 '냉장고 보관 기한'. staleTime = 유통기한 (기본 0ms). 지나면 stale(낡음)이 되어 다시 마운트되거나 창에 포커스가 오면 자동으로 새로 받아온다. gcTime = 아무도 안 쓰는(inactive) 캐시를 냉장고에 얼마나 두는지 (기본 5분). 지나면 버려진다(가비지 컬렉션). 상식적으로 staleTime < gcTime 이어야 한다 — 유통기한보다 먼저 버리면 의미 없다.",
+    code: `useQuery({
+  queryKey: ["user"],
+  queryFn: fetchUser,
+  staleTime: 1000 * 60,      // 1분간은 '신선' → 재요청 안 함
+  gcTime: 1000 * 60 * 5,     // 화면에서 사라진 뒤 5분 지나면 캐시 삭제
+});`,
+  },
+  {
+    id: "q-state-4",
+    category: "상태관리",
+    question: "쿼리 캐시의 생명주기(fresh → stale → inactive → deleted)를 설명하면?",
+    answer:
+      "① 마운트: queryKey 로 선반을 만들고 데이터를 가져온다. ② fresh: staleTime 동안은 신선해서 다시 안 묻는다. ③ stale: 시간이 지나면 낡음 — 다음 마운트/포커스/재연결 때 백그라운드로 새로 받아온다. ④ inactive: 그 쿼리를 쓰는 컴포넌트가 다 사라지면 대기 상태. ⑤ deleted: gcTime 이 지나면 메모리에서 삭제. 이 흐름을 알아야 '왜 화면이 깜빡이지', '왜 갑자기 재요청하지' 를 설명할 수 있다.",
+    code: `// 흐름 요약
+mount → fetch → fresh ──(staleTime)──▶ stale
+                                        │ (refetch 조건 충족 시 재요청)
+unmount → inactive ──(gcTime)──▶ deleted`,
+  },
+  {
+    id: "q-state-5",
+    category: "상태관리",
+    question: "isPending 과 isFetching 은 뭐가 다른가?",
+    answer:
+      "isPending = '아직 보여줄 데이터가 하나도 없다' (status: pending). 첫 로딩 스피너용. isFetching = '지금 서버에 다녀오는 중' — 캐시에 데이터가 있어서 화면은 이미 보여주는데 뒤에서 새로 받는 중일 수도 있다. 즉 isFetching 이 true 여도 isPending 은 false 일 수 있다. v5 에선 isLoading = isPending && isFetching 이고, 첫 로딩은 isPending 을 권장.",
+    code: `const { data, isPending, isFetching } = useQuery({ ... });
+
+if (isPending) return <Spinner />;          // 데이터 자체가 없음
+return (
+  <>
+    {isFetching && <small>갱신 중…</small>}  // 데이터는 있는데 뒤에서 재요청
+    <List items={data} />
+  </>
+);`,
+  },
+  {
+    id: "q-state-6",
+    category: "상태관리",
+    question: "enabled 옵션은 언제 쓰나? (종속 쿼리)",
+    answer:
+      "'앞 주문이 나와야 다음 주문을 넣는' 상황. 예: 이메일로 유저를 찾고 → 그 유저 id 로 수강 목록을 가져온다. 두 번째 쿼리는 유저 id 가 없으면 실행하면 안 되니 enabled: !!user?.id 로 잠근다. enabled: false 로 두고 버튼 클릭 시 refetch() 로 수동 실행하는 데도 쓴다. 주의: enabled: false 인 쿼리는 invalidateQueries 로도 안 깨어난다.",
+    code: `const { data: user } = useQuery({
+  queryKey: ["user", email],
+  queryFn: () => getUser(email),
+});
+
+const { data: courses } = useQuery({
+  queryKey: ["courses", user?.id],
+  queryFn: () => getCourses(user!.id),
+  enabled: !!user?.id, // user 가 생기기 전엔 실행 금지
+});`,
+  },
+  {
+    id: "q-state-7",
+    category: "상태관리",
+    question: "useMutation 은 useQuery 와 무엇이 다르고, 성공 후 목록은 어떻게 갱신하나?",
+    answer:
+      "useQuery 는 '읽기(GET)' — 자동으로 실행되고 캐시된다. useMutation 은 '쓰기(POST/PUT/DELETE)' — 내가 mutate() 를 호출해야만 실행된다. 쓰기가 끝났다고 화면의 목록이 저절로 바뀌진 않으니, onSuccess 에서 invalidateQueries 로 관련 선반에 '낡음' 도장을 찍어 재요청시킨다. mutate 는 콜백형(권장), mutateAsync 는 Promise 형(에러를 직접 잡아야 함).",
+    code: `const qc = useQueryClient();
+const addHero = useMutation({
+  mutationFn: (hero) => api.post("/heroes", hero),
+  onSuccess: () => {
+    // "heroes" 로 시작하는 모든 쿼리를 낡음 처리 → 자동 재요청
+    qc.invalidateQueries({ queryKey: ["heroes"] });
+  },
+});
+<button onClick={() => addHero.mutate({ name: "Iron" })}>추가</button>`,
+  },
+  {
+    id: "q-state-8",
+    category: "상태관리",
+    question: "invalidateQueries 와 setQueryData 는 어떻게 다른가?",
+    answer:
+      "invalidateQueries = '이 선반 낡았으니 다시 사 와' — 서버에 재요청해서 진짜 최신값을 받는다 (네트워크 한 번 더). setQueryData = '내가 직접 선반에 물건을 갈아끼움' — 네트워크 없이 캐시를 즉시 바꾼다. 응답에 새 데이터가 이미 있으면 setQueryData 로 바로 반영하고, 서버가 계산하는 값이 있으면 invalidate 로 다시 받는 게 안전하다.",
+    code: `// 즉시 반영 (네트워크 X)
+qc.setQueryData(["heroes"], (old) => [...old, newHero]);
+
+// 재요청으로 동기화 (네트워크 O)
+qc.invalidateQueries({ queryKey: ["heroes"] });`,
+  },
+  {
+    id: "q-state-9",
+    category: "상태관리",
+    question: "낙관적 업데이트(Optimistic Update)란? 어떻게 구현하나?",
+    answer:
+      "'좋아요' 를 누르면 서버 응답을 기다리지 않고 먼저 하트를 빨갛게 칠하는 것. 성공할 거라 '낙관'하고 UI 부터 바꾸니 느린 인터넷에서도 즉각 반응한다. 구현은 3박자: onMutate 에서 (진행 중 쿼리 취소 → 이전 값 백업 → 캐시 즉시 변경), onError 에서 백업으로 롤백, onSettled 에서 invalidate 로 서버와 최종 동기화.",
+    code: `useMutation({
+  mutationFn: likePost,
+  onMutate: async (id) => {
+    await qc.cancelQueries({ queryKey: ["post", id] }); // 덮어쓰기 방지
+    const prev = qc.getQueryData(["post", id]);          // 백업
+    qc.setQueryData(["post", id], (p) => ({ ...p, liked: true })); // 먼저 칠하기
+    return { prev };
+  },
+  onError: (_e, id, ctx) => qc.setQueryData(["post", id], ctx.prev), // 롤백
+  onSettled: (_d, _e, id) => qc.invalidateQueries({ queryKey: ["post", id] }),
+});`,
+  },
+  {
+    id: "q-state-10",
+    category: "상태관리",
+    question: "페이지네이션에서 페이지를 넘길 때 깜빡임을 없애려면? (placeholderData)",
+    answer:
+      "다음 페이지의 키가 새로 생기면 데이터가 없어서 잠깐 스피너가 뜬다. placeholderData: keepPreviousData 를 주면 새 데이터가 올 때까지 '이전 페이지를 임시로 보여준다' — 책장을 넘길 때 앞 장이 사라지지 않고 겹쳐 있는 느낌. 여기에 다음 페이지를 prefetchQuery 로 미리 받아두면 넘길 때 아예 대기가 없다. (v4 의 keepPreviousData: true 옵션은 v5 에서 이 함수로 바뀜)",
+    code: `import { keepPreviousData } from "@tanstack/react-query";
+
+const { data, isPlaceholderData } = useQuery({
+  queryKey: ["posts", page],
+  queryFn: () => fetchPosts(page),
+  placeholderData: keepPreviousData, // 새 페이지 올 때까지 이전 페이지 유지
+});
+
+// 다음 페이지 미리 받아두기
+useEffect(() => {
+  qc.prefetchQuery({ queryKey: ["posts", page + 1], queryFn: () => fetchPosts(page + 1) });
+}, [page]);`,
+  },
+  {
+    id: "q-state-11",
+    category: "상태관리",
+    question: "useInfiniteQuery 로 무한 스크롤은 어떻게 만드나?",
+    answer:
+      "두루마리 휴지를 조금씩 더 푸는 방식. 한 페이지가 아니라 '페이지들의 묶음(data.pages)' 을 들고 있고, getNextPageParam 이 '다음에 뽑을 페이지 번호' 를 알려준다 (undefined 를 돌려주면 끝). 화면 맨 아래에 닿으면 fetchNextPage() 를 부른다. v5 부턴 initialPageParam 이 필수. maxPages 로 메모리에 쌓이는 페이지 수를 제한할 수도 있다.",
+    code: `const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  queryKey: ["feed"],
+  queryFn: ({ pageParam }) => fetchFeed(pageParam),
+  initialPageParam: 1,
+  getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined, // undefined = 끝
+});
+
+data.pages.flatMap((p) => p.items).map(...)  // 모든 페이지 펼쳐서 렌더
+{hasNextPage && <button onClick={() => fetchNextPage()}>더 보기</button>}`,
+  },
+  {
+    id: "q-state-12",
+    category: "상태관리",
+    question: "select 옵션은 무엇이고 왜 쓰나?",
+    answer:
+      "창고에서 물건을 꺼낼 때 '필요한 부분만 잘라서 받는' 가위. 캐시엔 서버 응답 원본이 그대로 남고, 컴포넌트가 받는 data 만 변환된다. 예: 응답의 히어로 배열에서 이름만 뽑기. 캐시를 안 건드리니 여러 컴포넌트가 같은 쿼리를 각자 다른 모양으로 쓸 수 있고, 선택한 부분이 안 바뀌면 리렌더도 줄어든다.",
+    code: `const { data: names } = useQuery({
+  queryKey: ["heroes"],
+  queryFn: getHeroes,                  // 응답: { data: Hero[] }
+  select: (res) => res.data.map((h) => h.name), // names: string[]
+});
+// 캐시에는 { data: Hero[] } 원본이 그대로 저장됨`,
+  },
+  {
+    id: "q-state-13",
+    category: "상태관리",
+    question: "refetchOnWindowFocus · refetchInterval 은 각각 언제 쓰나?",
+    answer:
+      "refetchOnWindowFocus (기본 true) = 다른 탭 갔다가 돌아오면 '그새 바뀐 거 없나?' 하고 stale 쿼리를 자동으로 다시 받는다. 은행 앱 갔다 오면 잔액이 새로고침되는 느낌. 너무 잦으면 staleTime 을 늘리거나 끈다. refetchInterval = 일정 주기로 계속 묻는 폴링(polling). 채팅 알림·주문 상태처럼 실시간성이 필요할 때 쓴다. 탭이 백그라운드여도 계속하려면 refetchIntervalInBackground.",
+    code: `useQuery({
+  queryKey: ["orders"],
+  queryFn: fetchOrders,
+  refetchOnWindowFocus: false,  // 탭 복귀 때 재요청 안 함
+  refetchInterval: 5000,        // 5초마다 폴링
+});`,
+  },
+  {
+    id: "q-state-14",
+    category: "상태관리",
+    question: "useSuspenseQuery 와 ErrorBoundary 로 '선언적 UI' 를 만든다는 건?",
+    answer:
+      "컴포넌트마다 if (isPending) / if (isError) 를 쓰는 대신, 로딩은 <Suspense fallback>, 에러는 <ErrorBoundary> 가 위에서 한 번에 받아준다. 컴포넌트는 '데이터가 있다'고 가정하고 행복한 경로만 쓴다 — 식당에서 손님(컴포넌트)은 음식이 나온 뒤만 신경 쓰고, 대기·사고 처리는 매니저(경계 컴포넌트)가 맡는 구조. v5 에선 suspense: true 옵션이 사라지고 useSuspenseQuery 를 써야 한다. 재시도는 useQueryErrorResetBoundary 의 reset 을 onReset 에 연결.",
+    code: `function HeroList() {
+  const { data } = useSuspenseQuery({ queryKey: ["heroes"], queryFn: getHeroes });
+  return <ul>{data.map((h) => <li key={h.id}>{h.name}</li>)}</ul>; // data 는 항상 있음
+}
+
+const { reset } = useQueryErrorResetBoundary();
+<ErrorBoundary onReset={reset} fallbackRender={({ resetErrorBoundary }) =>
+  <button onClick={resetErrorBoundary}>다시 시도</button>}>
+  <Suspense fallback={<Spinner />}>
+    <HeroList />
+  </Suspense>
+</ErrorBoundary>`,
+  },
+  {
+    id: "q-state-15",
+    category: "상태관리",
+    question: "Context API 를 전역 상태 관리 도구로 쓰면 생기는 문제는?",
+    answer:
+      "Context 는 '방송' 이다. 값이 하나라도 바뀌면 그 Context 를 구독한 모든 컴포넌트가 리렌더된다 — 테마만 바꿨는데 유저 정보만 쓰는 컴포넌트까지 다시 그려진다. 원래 용도는 '자주 안 바뀌는 값(테마, 로케일, 로그인 유저) 을 깊이 내려보내기'. 자주 바뀌는 상태는 Context 를 잘게 쪼개거나, 필요한 조각만 골라 구독(selector)할 수 있는 Zustand 같은 스토어가 낫다.",
+    code: `// ❌ 하나의 Context 에 다 넣으면 count 만 바뀌어도 theme 구독자까지 리렌더
+const AppCtx = createContext({ theme, user, count, setCount });
+
+// ✅ 관심사별로 쪼개거나…
+const ThemeCtx = createContext(theme);
+const CountCtx = createContext(count);
+// ✅ selector 로 조각 구독 (Zustand)
+const count = useStore((s) => s.count); // theme 바뀌어도 리렌더 X`,
+  },
+  {
+    id: "q-state-16",
+    category: "상태관리",
+    question: "Zustand 는 Redux 와 무엇이 다르고, selector 는 왜 중요한가?",
+    answer:
+      "Redux = 관공서. 액션 타입·리듀서·디스패치 서류를 갖춰야 상태 하나를 바꾼다 (대신 추적·규칙이 엄격). Zustand = 동네 가게. create() 하나로 상태와 바꾸는 함수를 같이 두고, Provider 도 필요 없다. 핵심은 selector: useStore((s) => s.count) 처럼 '필요한 조각만' 구독하면 그 조각이 바뀔 때만 리렌더된다. useStore() 로 통째로 꺼내면 아무 필드나 바뀔 때마다 리렌더되니 주의.",
+    code: `const useStore = create((set) => ({
+  count: 0,
+  inc: () => set((s) => ({ count: s.count + 1 })),
+}));
+
+// ✅ 조각만 구독 — count 바뀔 때만 리렌더
+const count = useStore((s) => s.count);
+// ❌ 통째로 — 스토어의 어떤 필드가 바뀌어도 리렌더
+const store = useStore();`,
+  },
+  {
+    id: "q-state-17",
+    category: "상태관리",
+    question: "Flux 단방향 데이터 흐름이 왜 상태 관리의 기본 원칙이 됐나?",
+    answer:
+      "옛날 MVC 는 화면과 모델이 서로를 마음대로 바꿔서, 버그가 나면 '누가 이 값을 바꿨지?' 를 추적하기 어려웠다 (스파게티). Flux 는 물길을 한 방향으로 정한다: 액션(무슨 일이 일어남) → 스토어(상태 갱신) → 뷰(화면) → 다시 액션. 상태를 바꾸는 입구가 하나라서 변경 이력을 남기고, 되돌리고(undo), 디버깅하기 쉽다. Redux·Zustand 의 set 함수도 이 원칙 위에 있다.",
+    code: `// 한 방향으로만 흐른다
+사용자 클릭 → dispatch(action) → reducer/set → 새 state → 화면 갱신
+//                 ↑ 상태를 바꾸는 '유일한 문'`,
+  },
+  {
+    id: "q-state-18",
+    category: "상태관리",
+    question: "상태가 여러 도구에 흩어질 때, 무엇을 어디에 둘지 정리하면?",
+    answer:
+      "① 한 컴포넌트만 쓰는 UI 상태 (모달, 탭) → useState. ② 여러 화면이 공유하는 클라이언트 상태 (로그인 유저, 테마, 장바구니) → Zustand/Redux. ③ 서버에서 온 데이터 (목록, 상세) → React Query — 전역 스토어에 복사해 넣지 말 것 (두 곳이 어긋나는 '이중 진실' 이 생김). ④ URL 이 표현해야 할 상태 (검색어, 페이지, 필터) → 쿼리 스트링. 공유 링크로 재현되어야 하니까. 핵심: 서버 데이터를 전역 스토어에 넣는 실수를 가장 자주 한다.",
+    code: `// ❌ 서버 데이터를 스토어에 복사 → 캐시와 스토어 둘 다 관리해야 함
+const { data } = useQuery(...); useEffect(() => setPosts(data), [data]);
+
+// ✅ 서버 데이터는 React Query 가 단일 진실, 스토어엔 클라이언트 상태만
+const { data: posts } = useQuery({ queryKey: ["posts", page], ... });
+const page = useSearchParams().get("page");     // URL 상태
+const theme = useAppStore((s) => s.theme);      // 클라이언트 전역`,
+  },
 ];
 
 /** 카테고리 목록 — UI 필터에서 사용. Category union 과 동기화 유지. */
@@ -1032,6 +1296,7 @@ export const CATEGORY_EMOJI: Record<Category, string> = {
   CS: "🧠",
   React: "⚛️",
   TypeScript: "🔷",
+  상태관리: "🗄️",
   구조설계: "🏗️",
   Java: "☕",
   SpringBoot: "🌱",
@@ -1075,6 +1340,24 @@ export const SUMMARIES: Record<string, string> = {
   "q-ts-6": "기존 타입 오려서 재활용",
   "q-ts-7": "검사 끄고 우기기 — 최소한만",
   "q-ts-8": "없으면 멈춤 / 기본값 대체",
+  "q-state-1": "내 방 물건 vs 남의 창고 복사본",
+  "q-state-2": "캐시 선반 이름표, 변수 포함",
+  "q-state-3": "유통기한 vs 냉장고 보관 기한",
+  "q-state-4": "fresh→stale→inactive→deleted",
+  "q-state-5": "데이터 없음 vs 뒤에서 재요청 중",
+  "q-state-6": "앞 결과 나와야 다음 실행",
+  "q-state-7": "쓰기는 직접 호출, 후 invalidate",
+  "q-state-8": "재요청 vs 캐시 직접 갈아끼움",
+  "q-state-9": "먼저 칠하고 실패 시 롤백",
+  "q-state-10": "새 페이지 올 때까지 이전 유지",
+  "q-state-11": "페이지 묶음 + 다음 번호 힌트",
+  "q-state-12": "캐시 원본 두고 필요한 부분만",
+  "q-state-13": "탭 복귀 재요청 vs 주기 폴링",
+  "q-state-14": "로딩·에러를 경계가 대신 처리",
+  "q-state-15": "방송이라 구독자 전부 리렌더",
+  "q-state-16": "가게식 스토어, 조각만 구독",
+  "q-state-17": "상태 바꾸는 문은 하나, 한 방향",
+  "q-state-18": "서버 데이터는 스토어에 복사 금지",
   "q-java-1": "바이트코드 실행기",
   "q-java-2": "설계도 vs 실체",
   "q-java-3": "물려받기 vs 구현하기",

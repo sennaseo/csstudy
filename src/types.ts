@@ -10,6 +10,7 @@ export type Category =
   | "CS"
   | "React"
   | "TypeScript"
+  | "상태관리"
   | "구조설계"
   | "Java"
   | "SpringBoot";
