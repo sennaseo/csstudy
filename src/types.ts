@@ -13,7 +13,11 @@ export type Category =
   | "상태관리"
   | "구조설계"
   | "Java"
-  | "SpringBoot";
+  | "SpringBoot"
+  | "운영체제"
+  | "네트워크"
+  | "데이터베이스"
+  | "자료구조";
 
 /** 큰 분류 — 카테고리들을 묶는 상위 그룹. */
 export type CategoryGroup = "프론트엔드" | "백엔드&프로그래밍";

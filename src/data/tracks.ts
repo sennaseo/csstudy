@@ -110,7 +110,8 @@ export const TRACKS: Track[] = [
     id: "backend",
     name: "백엔드",
     emoji: "⚙️",
-    description: "웹 기초 → CS 심화 → Java → SpringBoot → 구조설계. 서버를 만드는 사람의 길.",
+    description:
+      "웹 기초 → CS 심화 → 운영체제·네트워크·DB·자료구조 → Java → SpringBoot → 구조설계. 서버를 만드는 사람의 길.",
     steps: [
       {
         category: "CS",
@@ -123,6 +124,26 @@ export const TRACKS: Track[] = [
         label: "CS 심화",
         questionIds: CS_DEEP,
         blurb: "프로세스·동시성·암호 — 서버를 직접 굴리면 반드시 만난다",
+      },
+      {
+        category: "운영체제",
+        label: "운영체제",
+        blurb: "프로세스·스레드·메모리 — 면접 단골 1순위",
+      },
+      {
+        category: "네트워크",
+        label: "네트워크",
+        blurb: "OSI 7계층부터 TCP·HTTP 까지, 요청이 흐르는 전 구간",
+      },
+      {
+        category: "데이터베이스",
+        label: "데이터베이스",
+        blurb: "정규화·인덱스·트랜잭션 — 서버 개발자의 본진",
+      },
+      {
+        category: "자료구조",
+        label: "자료구조",
+        blurb: "배열부터 B-Tree 까지, 코딩테스트와 면접의 공통 바닥",
       },
       {
         category: "Java",

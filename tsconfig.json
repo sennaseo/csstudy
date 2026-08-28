@@ -18,5 +18,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],
+  // 자체 점검 파일(*.test.ts)은 node 런타임(tsx)에서만 돌리므로 앱 빌드 대상에서 뺀다.
+  "exclude": ["src/**/*.test.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
