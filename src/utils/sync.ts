@@ -117,6 +117,7 @@ export function mergeStates(a: PersistedState, b: PersistedState): PersistedStat
     // 화면 설정류는 "지금 이 기기(a)" 우선, 없으면 상대 쪽.
     activeCategory: a.activeCategory ?? b.activeCategory,
     activeGroup: a.activeGroup ?? b.activeGroup,
+    activeTrack: a.activeTrack ?? b.activeTrack,
     activeBuddyId: a.activeBuddyId ?? b.activeBuddyId,
     // 보상 중복 방지 — 더 최신 날짜가 이긴다 ('YYYY-MM-DD' 는 문자열 비교 OK).
     lastGoalRewardDay:

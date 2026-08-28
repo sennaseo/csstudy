@@ -18,6 +18,10 @@ export type Category =
 /** 큰 분류 — 카테고리들을 묶는 상위 그룹. */
 export type CategoryGroup = "프론트엔드" | "백엔드&프로그래밍";
 
+// 트랙 id 는 데이터 파일에서 정의한다 (역할별 로드맵 — tracks.ts).
+import type { TrackId } from "./data/tracks";
+export type { TrackId };
+
 /** 사용자가 문제 풀이 후 남기는 자기평가 상태. */
 export type ReviewStatus = "understood" | "fuzzy" | "unknown";
 
@@ -172,6 +176,11 @@ export interface PersistedState {
   activeCategory: Category | null;
   /** 선택된 그룹 — null 이면 전체. 그룹을 고르면 그 안의 카테고리만 노출/출제. */
   activeGroup: CategoryGroup | null;
+  /**
+   * 선택된 트랙(역할별 로드맵) — null 이면 "전부 보기"(예전 방식).
+   * 길의 유닛 순서와 언락 순서가 이 값에 따라 달라진다.
+   */
+  activeTrack: TrackId | null;
   /** 보유 캐릭터들 — key 는 캐릭터 id. */
   buddies: Record<string, BuddyRecord>;
   /** 화면에 데리고 다니는 대표 캐릭터 id. */

@@ -18,6 +18,7 @@ import { QuestionCard } from "./components/QuestionCard";
 import { QuickActions } from "./components/QuickActions";
 import { RewardOverlay } from "./components/RewardOverlay";
 import { SyncSettings } from "./components/SyncSettings";
+import { TrackPicker } from "./components/TrackPicker";
 import { useStudyStore } from "./store/useStudyStore";
 
 /** 하트 배지 — 홈 헤더와 퀴즈 상단바에서 공용. */
@@ -63,6 +64,9 @@ function PathScreen() {
       </header>
 
       <GoalGauge />
+
+      {/* 역할별 로드맵(트랙) 선택 + 완주 목표 */}
+      <TrackPicker />
 
       {/* 원탭 시작 — 오늘의 5문제 / 복습 */}
       <QuickActions />

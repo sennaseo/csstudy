@@ -19,7 +19,7 @@
 // =============================================================
 
 import { useStudyStore, MAX_HEARTS } from "../store/useStudyStore";
-import { PATH_UNITS } from "../data/lessonPath";
+import { unitsFor } from "../data/lessonPath";
 import type { LessonNode } from "../data/lessonPath";
 import type { CategoryGroup } from "../types";
 
@@ -124,7 +124,13 @@ export function LessonPath() {
   const lessonProgress = useStudyStore((s) => s.lessonProgress);
   const startRandom = useStudyStore((s) => s.startRandom);
   const hearts = useStudyStore((s) => s.hearts);
+  const activeTrack = useStudyStore((s) => s.activeTrack);
 
+  // 트랙을 골랐으면 그 트랙의 유닛만, 아니면 전체 카테고리.
+  const units = unitsFor(activeTrack);
+
+  // 트랙 모드에서는 그룹 구분선을 안 쓴다 (트랙 자체가 이미 하나의 흐름이라
+  // "프론트엔드 / 백엔드" 구분선이 오히려 길을 끊어 보이게 한다).
   let lastGroup: CategoryGroup | null = null;
 
   return (
@@ -136,18 +142,18 @@ export function LessonPath() {
         </div>
       )}
 
-      {PATH_UNITS.map((unit, unitIndex) => {
+      {units.map((unit, unitIndex) => {
         const color = UNIT_COLORS[unitIndex % UNIT_COLORS.length];
         const total = unit.nodes.length;
         const done = unit.nodes.filter((n) => lessonProgress[n.id]).length;
         // 유닛마다 지그재그 방향을 뒤집어 길이 S자로 흐르게.
         const dir = unitIndex % 2 === 0 ? 1 : -1;
 
-        const showDivider = unit.group !== lastGroup;
+        const showDivider = !activeTrack && unit.group !== lastGroup;
         lastGroup = unit.group;
 
         return (
-          <div key={unit.category}>
+          <div key={`${unit.category}-${unitIndex}`}>
             {showDivider && <GroupDivider group={unit.group} />}
 
             {/* 유닛 배너 — 굵고 두툼하게(바닥 두께 border-b-4, 큰 라운드) */}
@@ -161,7 +167,12 @@ export function LessonPath() {
                 <p className="text-[11px] font-extrabold uppercase tracking-widest opacity-90">
                   유닛 {unitIndex + 1} · {done}/{total} 완료
                 </p>
-                <p className="text-lg font-extrabold">{unit.category}</p>
+                <p className="text-lg font-extrabold">{unit.label}</p>
+                {unit.blurb && (
+                  <p className="mt-0.5 max-w-[15rem] text-[11px] font-semibold leading-snug opacity-90">
+                    {unit.blurb}
+                  </p>
+                )}
               </div>
               <span className="text-3xl drop-shadow">{unit.emoji}</span>
             </div>

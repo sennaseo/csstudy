@@ -28,7 +28,8 @@ import type {
 } from "../types";
 import { CATEGORY_GROUPS, QUESTIONS } from "../data/questions";
 import { buildExercise, shuffle } from "../utils/exercise";
-import { ALL_NODES, NODE_BY_ID } from "../data/lessonPath";
+import { nodesFor, NODE_BY_ID } from "../data/lessonPath";
+import type { TrackId } from "../data/tracks";
 import { CHARACTERS, RARITY_INFO, stageOf } from "../data/characters";
 import type { BuddyCharacter } from "../data/characters";
 import {
@@ -90,6 +91,7 @@ const initialPersisted: PersistedState = {
   lessonProgress: {},
   activeCategory: null,
   activeGroup: null,
+  activeTrack: null,
   buddies: {},
   activeBuddyId: null,
   lastGoalRewardDay: null,
@@ -111,6 +113,7 @@ function loadPersisted(): PersistedState {
       lessonProgress: parsed.lessonProgress ?? {},
       activeCategory: parsed.activeCategory ?? null,
       activeGroup: parsed.activeGroup ?? null,
+      activeTrack: parsed.activeTrack ?? null,
       buddies: parsed.buddies ?? {},
       activeBuddyId: parsed.activeBuddyId ?? null,
       lastGoalRewardDay: parsed.lastGoalRewardDay ?? null,
@@ -273,8 +276,10 @@ interface StudyState extends PersistedState {
   goHome: () => void;
   /** 경과 시간만큼 하트를 회복시킨다 (앱 시작/포커스/레슨 시작 시 호출). */
   regenHearts: () => void;
-  /** 노드 잠금 여부 — 첫 노드이거나 직전 노드를 완료했으면 열림. */
+  /** 노드 잠금 여부 — 첫 노드이거나 (지금 트랙 순서상) 직전 노드를 완료했으면 열림. */
   isNodeUnlocked: (lessonId: string) => boolean;
+  /** 트랙(역할별 로드맵) 선택. null 이면 전체 보기. */
+  setTrack: (t: TrackId | null) => void;
   setActiveBuddy: (id: string) => void;
   clearReward: () => void;
   getTodayCount: () => number;
@@ -331,6 +336,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       lessonProgress,
       activeCategory,
       activeGroup,
+      activeTrack,
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
@@ -344,6 +350,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       lessonProgress,
       activeCategory,
       activeGroup,
+      activeTrack,
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
@@ -381,6 +388,13 @@ export const useStudyStore = create<StudyState>((set, get) => {
     combo: 0, // 세션 한정 — bestCombo 는 persisted 에서 복원된다.
     syncStatus: getSyncConfig() ? "syncing" : "off",
     lastSyncAt: null,
+
+    setTrack: (t) => {
+      // 트랙만 바꾼다 — 진행도(lessonProgress)는 건드리지 않는다.
+      // 이미 푼 레슨은 어느 트랙에서 보든 완료 상태로 남는다.
+      set({ activeTrack: t });
+      persist();
+    },
 
     setGroup: (g) => {
       set({ activeGroup: g, activeCategory: null });
@@ -657,9 +671,11 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     isNodeUnlocked: (lessonId) => {
-      const idx = ALL_NODES.findIndex((n) => n.id === lessonId);
-      if (idx <= 0) return true; // 첫 노드(또는 없는 id)는 열림
-      const prevId = ALL_NODES[idx - 1].id;
+      // 언락 기준은 "지금 고른 트랙의 순서". 트랙을 바꾸면 순서도 같이 바뀐다.
+      const nodes = nodesFor(get().activeTrack);
+      const idx = nodes.findIndex((n) => n.id === lessonId);
+      if (idx <= 0) return true; // 첫 노드(또는 이 트랙에 없는 id)는 열림
+      const prevId = nodes[idx - 1].id;
       return !!get().lessonProgress[prevId]; // 직전 노드 완료해야 열림
     },
 
