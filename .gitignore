@@ -18,3 +18,8 @@ vite.config.js.timestamp-*.mjs
 # tsc 가 만드는 설정 산출물 — 소스는 vite.config.ts 하나뿐이다
 vite.config.js
 vite.config.d.ts
+
+# 릴리스 서명 키 — 유출되면 남이 내 앱 이름으로 앱을 낼 수 있다. 절대 커밋 금지
+*.keystore
+*.jks
+keystore.properties
