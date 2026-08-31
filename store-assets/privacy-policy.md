@@ -1,5 +1,11 @@
 # csStudy 개인정보처리방침
 
+> ⚠️ **이 파일을 고치면 `public/privacy-policy.html` 도 같이 고쳐야 한다.**
+> 스토어에 등록하는 URL(`https://sennaseo.github.io/csstudy/privacy-policy.html`)은
+> `public/` 쪽 사본이 배포된 것이다. 둘이 어긋나면 "방침과 실제가 다르다"는 문제가 된다.
+> 갱신 명령: `cp store-assets/privacy-policy.html public/privacy-policy.html`
+
+
 - **앱 이름**: csStudy
 - **패키지명**: `io.github.sennaseo.csstudy`
 - **시행일**: 2026년 8월 31일
