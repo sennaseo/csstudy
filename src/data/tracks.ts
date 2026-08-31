@@ -81,7 +81,7 @@ export const TRACKS: Track[] = [
     id: "frontend",
     name: "프론트엔드",
     emoji: "🎨",
-    description: "웹 기초 → 타입스크립트 → React → 상태관리. 화면을 만드는 사람의 길.",
+    description: "웹 기초 → 타입스크립트 → React → 상태관리 → 기술면접. 화면을 만드는 사람의 길.",
     steps: [
       {
         category: "CS",
@@ -104,6 +104,11 @@ export const TRACKS: Track[] = [
         label: "상태관리",
         blurb: "화면이 커지면 진짜 어려워지는 것 — 데이터를 어디에 둘까",
       },
+      {
+        category: "기술면접",
+        label: "기술면접",
+        blurb: "내가 쓴 기술을 내 말로 설명하기 — 면접장에 들어가는 건 프로젝트가 아니라 나다",
+      },
     ],
   },
   {
@@ -111,7 +116,7 @@ export const TRACKS: Track[] = [
     name: "백엔드",
     emoji: "⚙️",
     description:
-      "웹 기초 → CS 심화 → 운영체제·네트워크·DB·자료구조 → Java → SpringBoot → 구조설계. 서버를 만드는 사람의 길.",
+      "웹 기초 → CS 심화 → 운영체제·네트워크·DB·자료구조 → Java → SpringBoot → 구조설계 → 기술면접. 서버를 만드는 사람의 길.",
     steps: [
       {
         category: "CS",
@@ -158,7 +163,12 @@ export const TRACKS: Track[] = [
       {
         category: "구조설계",
         label: "구조설계",
-        blurb: "돌아가는 코드에서 오래 가는 코드로 — 마지막 관문",
+        blurb: "돌아가는 코드에서 오래 가는 코드로",
+      },
+      {
+        category: "기술면접",
+        label: "기술면접",
+        blurb: "내가 쓴 기술을 내 말로 설명하기 — 면접장에 들어가는 건 프로젝트가 아니라 나다",
       },
     ],
   },

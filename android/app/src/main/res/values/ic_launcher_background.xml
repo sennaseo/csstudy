@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 적응형 아이콘의 배경 레이어 색.
+         public/icon-512.png 의 보라색을 그대로 뽑아 썼다.
+         전경(ic_launcher_foreground.png)은 기기가 원형/사각형으로 잘라내기 때문에
+         가장자리는 이 색으로 채워져 보인다 — 원본 아이콘과 같은 색이어야 이어져 보인다. -->
+    <color name="ic_launcher_background">#7B6EEF</color>
+</resources>

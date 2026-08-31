@@ -5,7 +5,12 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
-    "strict": true
+    "strict": true,
+    "types": ["node"],
+    // 빌드 산출물(vite.config.js/.d.ts)을 프로젝트 루트에 떨구지 않는다.
+    // 루트에 두면 Vite 가 .ts 대신 그 .js 를 먼저 읽어버려서,
+    // .ts 만 고쳤을 때 "왜 설정이 안 먹지?" 하는 함정에 빠진다.
+    "outDir": "node_modules/.tmp/tsconfig-node"
   },
   "include": ["vite.config.ts"]
 }

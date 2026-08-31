@@ -351,7 +351,7 @@ function TypingView({
             "btn-3d shrink-0 rounded-2xl border-2 border-b-4 px-5 text-sm font-extrabold tracking-wide " +
             // 비활성은 opacity 가 아니라 "진짜 회색"으로 갈아끼운다 (듀오링고 규칙).
             (graded || input.trim() === ""
-              ? "border-[#CECECE] bg-ink-200 text-ink-300"
+              ? "border-ink-300 bg-ink-200 text-ink-300"
               : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
           }
         >
@@ -735,7 +735,7 @@ export function QuestionCard() {
                 // 비활성은 opacity 트릭이 아니라 진짜 회색으로 갈아끼운다.
                 // (opacity 로 흐리게 하면 배경이 비쳐서 "고장난 버튼"처럼 보인다.)
                 (selected === null
-                  ? "border-[#CECECE] bg-ink-200 text-ink-300"
+                  ? "border-ink-300 bg-ink-200 text-ink-300"
                   : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
               }
             >

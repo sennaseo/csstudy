@@ -14,3 +14,7 @@ vite.config.js.timestamp-*.mjs
 *.tsbuildinfo
 .gstack/
 .serena/
+
+# tsc 가 만드는 설정 산출물 — 소스는 vite.config.ts 하나뿐이다
+vite.config.js
+vite.config.d.ts

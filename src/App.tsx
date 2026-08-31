@@ -8,7 +8,10 @@
 // - safe-area padding: 홈 화면에 설치(PWA)했을 때 노치/홈바와 안 겹치게.
 // =============================================================
 
+import { useEffect, useState } from "react";
+
 import { Buddy } from "./components/Buddy";
+import { CardDeck } from "./components/CardDeck";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { DailyStats } from "./components/DailyStats";
 import { GoalGauge } from "./components/GoalGauge";
@@ -45,8 +48,25 @@ function Hearts() {
   );
 }
 
-/** 홈 화면 — 감긴 길(스킬 패스)이 메인. */
+/** 홈 화면 — 감긴 길(스킬 패스)이 메인.
+ *  단어장은 풀이가 아니라 "훑어보기"라 화면(view)을 새로 만들지 않고
+ *  도감과 같은 모달로 띄운다 — 하트·큐 같은 진행 상태를 건드릴 이유가 없다. */
 function PathScreen() {
+  // PWA 홈화면 아이콘을 길게 누르면 나오는 바로가기(manifest 의 shortcuts)가
+  // ./?open=deck / ./?open=today 로 들어온다. 앱이 뜨자마자 그 화면으로 점프시킨다.
+  // 한 번 읽고 주소는 지운다 — 안 지우면 새로고침할 때마다 같은 화면이 다시 열린다.
+  const [isDeckOpen, setIsDeckOpen] = useState(
+    () => new URLSearchParams(window.location.search).get("open") === "deck",
+  );
+  const startToday = useStudyStore((s) => s.startToday);
+
+  useEffect(() => {
+    const open = new URLSearchParams(window.location.search).get("open");
+    if (!open) return;
+    window.history.replaceState(null, "", window.location.pathname);
+    if (open === "today") startToday();
+  }, [startToday]);
+
   return (
     <>
       <header className="flex items-center justify-between">
@@ -57,6 +77,14 @@ function PathScreen() {
           <span className="text-xs text-ink-500">개발 사고 회복</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsDeckOpen(true)}
+            className="rounded-full bg-white px-2.5 py-1.5 text-sm shadow-chip transition-transform active:scale-95"
+            title="단어장 — CS 지식을 한두 줄로 훑어보기"
+            aria-label="단어장 열기"
+          >
+            📇
+          </button>
           <SyncSettings />
           <Hearts />
           <DailyStats />
@@ -76,6 +104,9 @@ function PathScreen() {
 
       {/* 버디(캐릭터) */}
       <Buddy />
+
+      {/* 단어장 — 상단 📇 버튼으로 여는 모달 */}
+      {isDeckOpen && <CardDeck onClose={() => setIsDeckOpen(false)} />}
     </>
   );
 }

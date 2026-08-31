@@ -13,12 +13,15 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
+// 손그림 테마 팔레트 — 형광펜/색연필로 칠한 듯한 탁한 색들.
+// 각 조각은 index.css 의 .confetti-piece 가 검은 테두리를 둘르므로,
+// 원색을 쓰면 선과 따론다 — 채도를 낮춰야 종이 위에 얹힌 것처럼 보인다.
 const COLORS = [
-  "#7c6ff0", // 바이올렛 (accent)
-  "#38bdf8", // 하늘
-  "#34d399", // 민트
-  "#fbbf24", // 노랑
-  "#fb7185", // 핑크
+  "#8B6BC7", // 보라 색연필
+  "#3B5BDB", // 잉크 블루(볼펜)
+  "#4C9A2A", // 초록 색연필
+  "#E8A33D", // 노란 형광펜
+  "#D6453C", // 빨간 펜
 ];
 
 interface Piece {

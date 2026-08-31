@@ -5,7 +5,7 @@
     <!-- viewport-fit=cover: 아이폰 노치 영역까지 배경이 차게 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!-- theme-color: 안드로이드 크롬 주소창 색. 브랜드 초록(Feather Green)으로. -->
-    <meta name="theme-color" content="#58CC02" />
+    <meta name="theme-color" content="#FBFAF7" />
     <title>csStudy — 개발 사고 회복</title>
 
     <!-- ─── PWA: 홈 화면에 앱처럼 설치 가능 ─── -->
@@ -24,15 +24,16 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
     />
 
-    <!-- 듀오링고 느낌의 둥근 폰트 2종 (Google Fonts)
-         - Baloo 2 → font-round : 숫자/영문 라벨용 ("XP 120", "LV 3")
-         - Jua     → font-display : 완료 화면 큰 한글 타이틀용
-         preconnect 는 "폰트 서버에 미리 악수해두기" — 실제 다운로드가 조금 더 빨라진다.
-         display=swap 은 "폰트 받는 동안 기본 글꼴로라도 먼저 보여줘" 옵션(빈 화면 방지). -->
+    <!-- ─── 손그림(스케치) 테마 폰트 ───────────────────────────
+         - Gaegu       → font-hand / font-display : 손글씨 느낌의 한글 폰트. 제목·버튼 라벨용.
+         - Nanum Pen Script → 더 흘려쓴 한글 손글씨. 말풍선/캡션 같은 "낙서" 자리.
+         - Gamja Flower → 본문에 쓸 만큼 또박또박한 손글씨.
+         - Patrick Hand → 숫자/영문 라벨(라틴 글리프)용 손글씨.
+         한 폰트에 없는 글자는 자동으로 뒤 폰트로 넘어간다(폰트 fallback). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&family=Jua&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Gamja+Flower&family=Nanum+Pen+Script&family=Patrick+Hand&display=swap"
       rel="stylesheet"
     />
   </head>

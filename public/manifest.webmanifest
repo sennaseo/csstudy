@@ -3,10 +3,12 @@
   "short_name": "csStudy",
   "description": "하루 1~5문제, 출퇴근길 CS 학습",
   "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#58CC02",
+  "lang": "ko",
+  "background_color": "#FBFAF7",
+  "theme_color": "#FBFAF7",
   "icons": [
     {
       "src": "./icon-192.png",
@@ -23,6 +25,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "단어장",
+      "short_name": "단어장",
+      "description": "CS 용어 카드를 한 장씩 넘겨보기",
+      "url": "./?open=deck",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "오늘의 5문제",
+      "short_name": "5문제",
+      "description": "바로 오늘 분량 풀기",
+      "url": "./?open=today",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
