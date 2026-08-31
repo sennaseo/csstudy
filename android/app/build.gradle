@@ -2,6 +2,21 @@ apply plugin: 'com.android.application'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'org.jetbrains.kotlin.plugin.compose'
 
+// ─── 릴리스 서명 열쇠 꾸러미 ───────────────────────────────
+// 비밀번호를 이 파일(build.gradle)에 직접 쓰면 git 에 그대로 올라간다.
+// 그래서 keystore.properties 라는 별도 파일에 두고, 그 파일은 .gitignore 로 막는다.
+// 파일이 없으면(다른 PC에서 클론했거나 아직 안 만들었을 때) 그냥 건너뛴다 —
+// debug 빌드는 서명 없이도 되므로 개발이 막히지 않게 하려는 것.
+// ⚠️ rootProject 는 android/ 폴더다 (저장소 루트가 아니다).
+// keystore.properties 는 그 한 단계 위, 저장소 루트에 둔다 —
+// Capacitor 가 android/ 를 통째로 재생성할 수 있어서 그 밖에 두는 게 안전하다.
+def keystorePropertiesFile = rootProject.file("../keystore.properties")
+def keystoreProperties = new Properties()
+def hasReleaseKey = keystorePropertiesFile.exists()
+if (hasReleaseKey) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "io.github.sennaseo.csstudy"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -24,10 +39,25 @@ android {
     kotlinOptions {
         jvmTarget = '21'
     }
+    signingConfigs {
+        // keystore.properties 가 있을 때만 release 서명 설정을 만든다.
+        if (hasReleaseKey) {
+            release {
+                storeFile rootProject.file("../" + keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // 열쇠가 없으면 서명 없는 APK 가 나온다 (플레이스토어엔 못 올리지만 빌드는 됨).
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
