@@ -18,24 +18,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="csStudy" />
 
-    <!-- Pretendard — 한글이 예쁘게 나오는 무료 폰트 -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css"
-    />
-
     <!-- ─── 손그림(스케치) 테마 폰트 ───────────────────────────
-         - Gaegu       → font-hand / font-display : 손글씨 느낌의 한글 폰트. 제목·버튼 라벨용.
+         - Gaegu            → font-display : 손글씨 한글. 제목·버튼 라벨용.
          - Nanum Pen Script → 더 흘려쓴 한글 손글씨. 말풍선/캡션 같은 "낙서" 자리.
-         - Gamja Flower → 본문에 쓸 만큼 또박또박한 손글씨.
-         - Patrick Hand → 숫자/영문 라벨(라틴 글리프)용 손글씨.
-         한 폰트에 없는 글자는 자동으로 뒤 폰트로 넘어간다(폰트 fallback). -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&family=Gamja+Flower&family=Nanum+Pen+Script&family=Patrick+Hand&display=swap"
-      rel="stylesheet"
-    />
+         - Gamja Flower     → 본문에 쓸 만큼 또박또박한 손글씨.
+         - Patrick Hand     → 숫자/영문 라벨(라틴 글리프)용 손글씨.
+         한 폰트에 없는 글자는 자동으로 뒤 폰트로 넘어간다(폰트 fallback).
+
+         폰트 파일은 앱에 내장돼 있다 — @font-face 선언은 src/index.css 에.
+         예전엔 여기서 Google Fonts / jsDelivr 를 <link> 로 불러왔는데,
+         (1) 비행기 모드에서 글씨가 깨지고 (2) 앱을 열 때마다 사용자 IP 가
+         남의 서버로 나가서 없앴다. 이제 외부 요청은 0 이다. -->
   </head>
   <body class="text-ink-700 font-sans antialiased">
     <div id="root"></div>

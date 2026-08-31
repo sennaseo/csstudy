@@ -9,14 +9,18 @@ export default {
         // ─── 손그림 테마: 모든 글자가 손글씨다 ───────────────────
         // 기본 본문(font-sans)까지 손글씨로 바꾼다. 스케치 UI 는
         // "종이에 사람이 직접 그린 화면"이 컨셉이라, 글자만 반듯한 산세리프면
-        // 그림과 글씨가 따로 논다. Pretendard 는 손글씨 폰트에 없는 글자를
-        // 받아주는 안전망(fallback)으로 뒤에만 남긴다.
+        // 그림과 글씨가 따로 논다.
+        //
+        // 예전엔 안전망으로 Pretendard 를 뒤에 세웠는데 뺐다. 이유:
+        // 앱이 쓰는 글자 중 손글씨 폰트 3종에 없는 건 전부 이모지·기호였고
+        // (🔥 ✅ 📚 …), Pretendard 에도 그건 없다 — 원래부터 시스템 이모지
+        // 폰트가 그리던 것이다. 즉 2MB 를 내고 실제로 메워지는 글자가
+        // 거의 없었다. 이제 마지막 안전망은 폰이 이미 갖고 있는 system-ui 다
+        // (공짜, 오프라인, 용량 0).
         sans: [
           "Gamja Flower",
           "Gaegu",
           "Patrick Hand",
-          "Pretendard Variable",
-          "Pretendard",
           "system-ui",
           "sans-serif",
         ],
@@ -25,7 +29,6 @@ export default {
         round: [
           "Patrick Hand",
           "Gaegu",
-          "Pretendard Variable",
           "system-ui",
           "sans-serif",
         ],
@@ -33,7 +36,6 @@ export default {
         display: [
           "Gaegu",
           "Patrick Hand",
-          "Pretendard Variable",
           "system-ui",
           "sans-serif",
         ],
@@ -42,7 +44,6 @@ export default {
           "Nanum Pen Script",
           "Gaegu",
           "Patrick Hand",
-          "Pretendard Variable",
           "system-ui",
           "sans-serif",
         ],

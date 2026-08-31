@@ -25,6 +25,11 @@ export function getSyncConfig(): SyncConfig | null {
     const raw = localStorage.getItem(CFG_KEY);
     if (!raw) return null;
     const cfg = JSON.parse(raw) as SyncConfig;
+    // https 가 아니면 동기화를 아예 안 켠다.
+    // 평문(http)으로 보내면 같은 와이파이에 있는 누구나 토큰을 주워갈 수 있다 —
+    // 엽서에 비밀번호를 적어 부치는 셈이다. AWS Lambda 함수 URL 은 항상 https 라
+    // 정상적으로 설정했다면 걸릴 일이 없고, 오타나 잘못된 주소만 걸러진다.
+    if (!cfg.url?.startsWith("https://")) return null;
     return cfg.url && cfg.token ? cfg : null;
   } catch {
     return null;

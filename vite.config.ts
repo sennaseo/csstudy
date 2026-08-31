@@ -14,7 +14,16 @@ function swPrecache() {
     apply: "build" as const,
     closeBundle() {
       const dist = "dist";
-      const assets = readdirSync(join(dist, "assets")).map((f) => `./assets/${f}`);
+      // 해시가 붙는 JS/CSS + 내장 폰트.
+      // 폰트를 빼먹으면 "설치 → 비행기 모드 → 첫 실행"에서 손글씨가 안 나오고
+      // 시스템 고딕으로 나온다. 앱은 안 깨지지만 테마가 무너지니 같이 캐시한다.
+      // (woff2 만 — 같은 폴더의 OFL.txt 는 화면에 안 쓰이므로 캐시할 이유가 없다.)
+      const assets = [
+        ...readdirSync(join(dist, "assets")).map((f) => `./assets/${f}`),
+        ...readdirSync(join(dist, "fonts"))
+          .filter((f) => f.endsWith(".woff2"))
+          .map((f) => `./fonts/${f}`),
+      ];
       // <script crossorigin> 제거.
       // 같은 출처 자산엔 필요 없는 속성인데, 이게 붙으면 모듈 요청이 CORS 모드로 나가고
       // 서비스워커가 돌려주는 캐시 응답엔 CORS 헤더가 없어 오프라인에서 모듈 실행이

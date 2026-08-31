@@ -3,6 +3,77 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════
+   폰트 내장 (@font-face) — 외부 CDN 요청 0
+   ───────────────────────────────────────────────────────────────
+   예전엔 index.html 이 Google Fonts / jsDelivr 에서 폰트를 받아왔다.
+   그건 "글자를 쓸 때마다 남의 집에 가서 펜을 빌려오는" 구조라
+   지하철·비행기 모드에선 펜이 없어 글씨가 깨졌다. 오프라인이 이 앱의
+   핵심 가치인데 그게 무너진 것. 그래서 펜을 아예 가방에 넣고 다닌다.
+
+   url() 은 Vite 가 빌드할 때 알아서 고쳐준다 —
+   웹은 /csstudy/assets/..., 앱은 ./assets/... 로. 그래서 경로를
+   빌드 종류별로 손댈 필요가 없다.
+
+   font-display: swap — 폰트가 준비되기 전에도 시스템 글꼴로 글자를
+   먼저 보여주고, 준비되면 슥 바꿔 낀다. 빈 화면을 안 보여주려는 것.
+
+   용량 줄이기(서브셋): 원본 한글 폰트는 11,172자를 다 담아 하나에
+   2~3MB 다. 실제로 쓰는 글자만 남겨 잘라냈다 —
+   상용한글 2350자(KS X 1001) + 앱 문제 데이터에 실제 등장하는 글자
+   + 라틴/숫자/구두점/화살표/수학기호/한글자모 블록 전체.
+   이모지(🔥 ✅ 등)는 원래도 이 폰트들에 없어서 시스템 이모지 폰트가
+   그리던 것 — 서브셋과 무관하게 그대로 나온다.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Gamja Flower — 본문. 또박또박한 손글씨라 긴 글도 읽힌다. */
+@font-face {
+  font-family: "Gamja Flower";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/GamjaFlower-Regular.woff2") format("woff2");
+}
+
+/* Gaegu — 제목·버튼. 굵게 쓸 수 있어서 "한 방" 자리에 쓴다.
+   Light(300) 는 앱 어디서도 안 써서 뺐다 (480KB 절약). */
+@font-face {
+  font-family: "Gaegu";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Gaegu-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Gaegu";
+  font-style: normal;
+  /* 600~900 을 한 파일로 받는다. 앱은 semibold/bold/extrabold 를 쓰는데
+     Gaegu 에 있는 굵기는 Bold 하나뿐이라, 범위로 묶어 전부 이걸로 보낸다.
+     이렇게 안 하면 브라우저가 없는 굵기를 흉내내려 글자를 억지로 두껍게
+     칠해서(가짜 볼드) 손글씨 획이 뭉개진다. */
+  font-weight: 600 900;
+  font-display: swap;
+  src: url("/fonts/Gaegu-Bold.woff2") format("woff2");
+}
+
+/* Nanum Pen Script — 말풍선/캡션. 더 흘려 쓴 낙서 느낌. */
+@font-face {
+  font-family: "Nanum Pen Script";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/NanumPenScript-Regular.woff2") format("woff2");
+}
+
+/* Patrick Hand — 숫자/영문 라벨. 라틴 글리프만 있어서 33KB 로 가볍다. */
+@font-face {
+  font-family: "Patrick Hand";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/PatrickHand-Regular.woff2") format("woff2");
+}
+
+/* ═══════════════════════════════════════════════════════════════
    손그림(스케치) 테마
    컨셉: "누가 공책에 연필로 그린 앱 화면".
    규칙 세 가지만 기억하면 된다 —
