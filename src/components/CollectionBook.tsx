@@ -12,8 +12,10 @@ import {
   stageProgress,
 } from "../data/characters";
 import { useStudyStore } from "../store/useStudyStore";
+import { useBack } from "../utils/useBack";
 
 export function CollectionBook({ onClose }: { onClose: () => void }) {
+  useBack(onClose); // 안드로이드 뒤로가기 = 닫기
   const buddies = useStudyStore((s) => s.buddies);
   const activeBuddyId = useStudyStore((s) => s.activeBuddyId);
   const setActiveBuddy = useStudyStore((s) => s.setActiveBuddy);

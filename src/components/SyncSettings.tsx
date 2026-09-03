@@ -10,6 +10,7 @@
 import { useState } from "react";
 import { useStudyStore } from "../store/useStudyStore";
 import { getSyncConfig } from "../utils/sync";
+import { useBack } from "../utils/useBack";
 
 function statusIcon(status: string): string {
   if (status === "ok") return "☁️";
@@ -26,6 +27,7 @@ export function SyncSettings() {
   const syncNow = useStudyStore((s) => s.syncNow);
 
   const [open, setOpen] = useState(false);
+  useBack(() => setOpen(false), open); // 안드로이드 뒤로가기 = 닫기
   const [url, setUrl] = useState(() => getSyncConfig()?.url ?? "");
   const [token, setToken] = useState(() => getSyncConfig()?.token ?? "");
 

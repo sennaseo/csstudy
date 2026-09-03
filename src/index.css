@@ -84,6 +84,7 @@
 
 html, body, #root {
   height: 100%;
+  overflow-x: hidden; /* 가로로 삐져나온 요소가 화면 폭을 늘려 비율을 깨지 않게 */
 }
 
 body {

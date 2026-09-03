@@ -8,6 +8,7 @@
 
 import { useState } from "react";
 import { DAILY_GOAL, useStudyStore } from "../store/useStudyStore";
+import { useBack } from "../utils/useBack";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -25,6 +26,7 @@ function intensityClass(count: number): string {
 }
 
 export function StudyCalendar({ onClose }: { onClose: () => void }) {
+  useBack(onClose); // 안드로이드 뒤로가기 = 닫기
   const dailyCounts = useStudyStore((s) => s.dailyCounts);
   const streak = useStudyStore((s) => s.getStreak());
 

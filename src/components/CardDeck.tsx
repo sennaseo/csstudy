@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { CARDS, CARD_DOMAINS, CARD_DOMAIN_EMOJI } from "../data/cards";
 import type { CardDomain, CsCard } from "../data/cards";
+import { useBack } from "../utils/useBack";
 
 /** Fisher–Yates. 원본 배열(CARDS)은 건드리지 않게 복사본을 섞는다. */
 function shuffle(cards: CsCard[]): CsCard[] {
@@ -22,6 +23,7 @@ function shuffle(cards: CsCard[]): CsCard[] {
 }
 
 export function CardDeck({ onClose }: { onClose: () => void }) {
+  useBack(onClose); // 안드로이드 뒤로가기 = 닫기
   const [domain, setDomain] = useState<CardDomain | null>(null);
   // 전체 카드를 한 번만 섞어두고, 도메인 필터는 그 순서 위에서 걸러낸다.
   const [deck] = useState(() => shuffle(CARDS));

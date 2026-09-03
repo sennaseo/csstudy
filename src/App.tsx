@@ -23,6 +23,7 @@ import { RewardOverlay } from "./components/RewardOverlay";
 import { SyncSettings } from "./components/SyncSettings";
 import { TrackPicker } from "./components/TrackPicker";
 import { useStudyStore } from "./store/useStudyStore";
+import { useBack } from "./utils/useBack";
 
 /** 하트 배지 — 홈 헤더와 퀴즈 상단바에서 공용. */
 function Hearts() {
@@ -173,6 +174,9 @@ function QuizScreen() {
 
 export default function App() {
   const view = useStudyStore((s) => s.view);
+  const goHome = useStudyStore((s) => s.goHome);
+  // 안드로이드 뒤로가기: 퀴즈/완료 화면에선 홈으로. 홈에서 한 번 더 누르면 앱 종료(안드로이드 기본).
+  useBack(goHome, view !== "path");
 
   // 퀴즈 화면만 "화면에 딱 맞는 높이"로 만든다 (h-full + overflow-hidden).
   // 그래야 안쪽 QuestionCard 가 본문만 스크롤시키고 확인 버튼을 바닥에 붙여둘 수 있다.
