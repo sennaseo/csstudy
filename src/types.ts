@@ -67,6 +67,12 @@ export interface QuestionRecord {
   status: ReviewStatus;
   lastReviewedAt: number;
   reviewCount: number;
+  /** 누적 오답 횟수 — 약점 문제 랭킹의 기준. */
+  wrongCount?: number;
+  /** 마지막으로 틀렸을 때 고른 보기의 출처 문제 id — "A를 B로 착각" 혼동쌍 분석용. */
+  lastWrongQid?: string;
+  /** 마지막으로 틀린 시각 (epoch ms) — 최근 약점 우선 복습용. */
+  lastWrongAt?: number;
 }
 
 /**

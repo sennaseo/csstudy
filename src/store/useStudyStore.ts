@@ -477,16 +477,24 @@ export const useStudyStore = create<StudyState>((set, get) => {
         buddies,
         activeBuddyId,
         lastGoalRewardDay,
+        selectedQid,
       } = get();
       if (!currentQuestion) return;
 
       // ── 1) 문제 기록 ──
+      // 오답이면 "어떻게 틀렸나"를 같이 남긴다 — 맞았으면 예전 오답 기록을 그대로 보존.
+      // (지웠다간 "예전에 뭘로 헷갈렸는지"가 사라져서 약점 분석이 안 된다.)
       const prev: QuestionRecord | undefined = records[currentQuestion.id];
+      const wrong = status !== "understood";
       const nextRecord: QuestionRecord = {
         id: currentQuestion.id,
         status,
         lastReviewedAt: Date.now(),
         reviewCount: (prev?.reviewCount ?? 0) + 1,
+        wrongCount: (prev?.wrongCount ?? 0) + (wrong ? 1 : 0),
+        // 객관식만 고른 보기가 있다 — 다른 유형은 undefined 로 남는다.
+        lastWrongQid: wrong ? selectedQid ?? undefined : prev?.lastWrongQid,
+        lastWrongAt: wrong ? Date.now() : prev?.lastWrongAt,
       };
 
       const key = todayKey();

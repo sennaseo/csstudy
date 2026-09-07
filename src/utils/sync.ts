@@ -75,15 +75,21 @@ export async function pushRemote(cfg: SyncConfig, data: PersistedState): Promise
 // 규칙: "더 많이 한 쪽 / 더 최신인 쪽"이 이긴다. 데이터가 사라지는 일이 없게.
 
 export function mergeStates(a: PersistedState, b: PersistedState): PersistedState {
-  // 문제 기록: 더 최근에 복습한 쪽이 이긴다. reviewCount 는 큰 쪽.
+  // 문제 기록: 더 최근에 복습한 쪽이 이긴다. reviewCount/wrongCount 는 큰 쪽.
+  // 오답 정보(lastWrongQid)는 "더 최근에 틀린 쪽"을 따라간다 — 마지막 복습이
+  // 어느 기기였는지와 무관하게, 가장 최신 오답이 약점 분석의 근거라서.
   const records = { ...a.records };
   for (const [id, rb] of Object.entries(b.records)) {
     const ra = records[id];
-    if (!ra || rb.lastReviewedAt > ra.lastReviewedAt) {
-      records[id] = { ...rb, reviewCount: Math.max(rb.reviewCount, ra?.reviewCount ?? 0) };
-    } else {
-      records[id] = { ...ra, reviewCount: Math.max(ra.reviewCount, rb.reviewCount) };
-    }
+    const newer = !ra || rb.lastReviewedAt > ra.lastReviewedAt ? rb : ra;
+    const wrongWinner = (ra?.lastWrongAt ?? 0) >= (rb.lastWrongAt ?? 0) ? ra : rb;
+    records[id] = {
+      ...newer,
+      reviewCount: Math.max(ra?.reviewCount ?? 0, rb.reviewCount),
+      wrongCount: Math.max(ra?.wrongCount ?? 0, rb.wrongCount ?? 0),
+      lastWrongQid: wrongWinner?.lastWrongQid,
+      lastWrongAt: wrongWinner?.lastWrongAt,
+    };
   }
 
   // 일일 카운트: 날짜별로 큰 값 (두 기기에서 풀었어도 최소한 잃진 않는다).
