@@ -133,11 +133,14 @@ function ChoiceView({
   ex,
   picked,
   onPick,
+  onGiveUp,
 }: {
   ex: ChoiceExercise;
   /** 지금 고른 보기의 qid (아직 안 골랐으면 null) */
   picked: string | null;
   onPick: (qid: string) => void;
+  /** "모르겠어요" — 즉시 오답 처리. */
+  onGiveUp: () => void;
 }) {
   const graded = useStudyStore((s) => s.graded);
   const selectedQid = useStudyStore((s) => s.selectedQid);
@@ -167,6 +170,19 @@ function ChoiceView({
           {graded && !c.correct && c.qid === selectedQid && <span className="ml-1.5">✕</span>}
         </button>
       ))}
+
+      {/* 보기 목록과 분리된 "모르겠어요" — 찍기를 강요하지 않는 탈출구.
+          보기 배열에 5번째로 끼워넣지 않는 이유: 채점이 'qid === 문제 id' 라
+          가짜 qid 를 넣으면 채점·숫자 단축키가 다 꼬인다.
+          누르면 바로 오답 처리 → 해설을 보고 넘어간다. */}
+      {!graded && (
+        <button
+          onClick={onGiveUp}
+          className="mt-1 self-center rounded-xl px-4 py-2 text-sm font-extrabold text-ink-500 underline decoration-ink-300 underline-offset-4 hover:text-ink-700"
+        >
+          모르겠어요
+        </button>
+      )}
     </div>
   );
 }
@@ -515,6 +531,8 @@ export function QuestionCard() {
   const mode = useStudyStore((s) => s.mode);
   const gradeExercise = useStudyStore((s) => s.gradeExercise);
   const continueQuiz = useStudyStore((s) => s.continueQuiz);
+  const unsure = useStudyStore((s) => s.unsure);
+  const toggleUnsure = useStudyStore((s) => s.toggleUnsure);
   const pickRandom = useStudyStore((s) => s.pickRandom);
 
   const [burstId, setBurstId] = useState(0);
@@ -643,6 +661,7 @@ export function QuestionCard() {
             ex={exercise}
             picked={typeof selected === "string" ? selected : null}
             onPick={setSelected}
+            onGiveUp={() => handleGrade(false)}
           />
         );
       case "blank":
@@ -777,12 +796,30 @@ export function QuestionCard() {
 
               <div className="flex items-center gap-2 text-xs font-extrabold">
                 <span className={"font-round " + (isCorrect ? "text-duo-green-ink" : "text-duo-red-ink")}>
-                  {isCorrect ? "+12 XP" : "+4 XP"}
+                  {isCorrect ? (unsure ? "+7 XP" : "+12 XP") : "+4 XP"}
                 </span>
                 {combo >= 2 && (
                   <span className="font-round text-duo-fox">🔥 콤보 {combo}연속</span>
                 )}
               </div>
+
+              {/* 찍어서 맞춘 경우용 자수 버튼.
+                  맞혔을 때만 뜬다 — 틀렸으면 이미 '모름'으로 기록되니 의미가 없다.
+                  누르면 understood 대신 fuzzy 로 기록돼 복습 큐에 계속 남는다. */}
+              {isCorrect && (
+                <button
+                  onClick={toggleUnsure}
+                  aria-pressed={unsure}
+                  className={
+                    "w-full rounded-xl border-2 px-4 py-2.5 text-sm font-extrabold transition " +
+                    (unsure
+                      ? "border-duo-fox bg-duo-fox text-white"
+                      : "border-ink-300 bg-white/70 text-ink-500 hover:bg-white")
+                  }
+                >
+                  {unsure ? "✓ 사실 몰랐어요 — 다시 복습할게요" : "🤔 사실 몰랐어요 (찍었어요)"}
+                </button>
+              )}
 
               <button
                 onClick={handleContinue}

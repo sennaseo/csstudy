@@ -236,6 +236,12 @@ interface StudyState extends PersistedState {
 
   /** 지금 세션의 연속 정답 수 (transient). 최고 기록(bestCombo)은 PersistedState 에 있다. */
   combo: number;
+  /**
+   * 이번 문제를 "사실 몰랐다"고 스스로 표시했는지 (transient).
+   * 맞혔어도 찍은 거면 understood 로 기록하지 않으려고 둔다 —
+   * 안 그러면 복습 큐에서 빠져서 영영 안 나온다.
+   */
+  unsure: boolean;
 
   setGroup: (g: CategoryGroup | null) => void;
   setCategory: (c: Category | null) => void;
@@ -250,6 +256,8 @@ interface StudyState extends PersistedState {
   gradeExercise: (correct: boolean, selectedQid?: string | null) => void;
   /** 결과만 기록한다(XP·캐릭터·일일카운트). 다음 문제로 넘기지 않는다. */
   recordStatus: (status: ReviewStatus) => void;
+  /** "몰랐어요" 토글 — 채점 후 피드백 시트에서 누른다. 다시 누르면 해제. */
+  toggleUnsure: () => void;
   /** "계속" 버튼: 결과 기록 후 모드에 맞게 진행(랜덤=다음 랜덤, 레슨=다음 or 완료). */
   continueQuiz: () => void;
   /** 스킬트리 노드를 눌러 레슨 시작. 잠긴 노드면 무시. */
@@ -386,6 +394,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
     lessonXp: 0,
     lessonResult: null,
     combo: 0, // 세션 한정 — bestCombo 는 persisted 에서 복원된다.
+    unsure: false,
     syncStatus: getSyncConfig() ? "syncing" : "off",
     lastSyncAt: null,
 
@@ -426,6 +435,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         selectedQid: null,
         graded: false,
         lastCorrect: null,
+        unsure: false,
       });
     },
 
@@ -467,6 +477,12 @@ export const useStudyStore = create<StudyState>((set, get) => {
       const q = get().currentQuestion;
       if (!q) return;
       get().gradeExercise(qid === q.id, qid);
+    },
+
+    // 채점 후에만 의미가 있다 (찍어서 맞춘 걸 되돌아보는 버튼이라).
+    toggleUnsure: () => {
+      if (!get().graded) return;
+      set((s) => ({ unsure: !s.unsure }));
     },
 
     recordStatus: (status) => {
@@ -556,10 +572,12 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     continueQuiz: () => {
-      const { currentQuestion, graded, lastCorrect, mode } = get();
+      const { currentQuestion, graded, lastCorrect, mode, unsure } = get();
       if (!currentQuestion || !graded) return;
       const correct = lastCorrect === true;
-      const status: ReviewStatus = correct ? "understood" : "unknown";
+      // "몰랐어요"를 눌렀으면 맞혔어도 understood 가 아니다 —
+      // fuzzy 는 SRS 에서 항상 복습 대상이라, 찍어서 맞춘 문제가 다시 돌아온다.
+      const status: ReviewStatus = !correct ? "unknown" : unsure ? "fuzzy" : "understood";
 
       // 1) 결과 기록 (XP·캐릭터·일일카운트). 다음 문제로는 안 넘김.
       get().recordStatus(status);
@@ -605,6 +623,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
           selectedQid: null,
           graded: false,
           lastCorrect: null,
+          unsure: false,
         });
         return;
       }
@@ -650,6 +669,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
           selectedQid: null,
           graded: false,
           lastCorrect: null,
+          unsure: false,
         });
         return;
       }
@@ -708,6 +728,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         selectedQid: null,
         graded: false,
         lastCorrect: null,
+        unsure: false,
       });
     },
 
@@ -740,6 +761,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         selectedQid: null,
         graded: false,
         lastCorrect: null,
+        unsure: false,
       });
     },
 
@@ -769,6 +791,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         selectedQid: null,
         graded: false,
         lastCorrect: null,
+        unsure: false,
       });
     },
 
