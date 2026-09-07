@@ -71,11 +71,21 @@ function PathScreen() {
   return (
     <>
       <header className="flex items-center justify-between">
-        <div className="flex items-baseline gap-2">
-          <h1 className="text-lg font-extrabold tracking-tight text-ink-900">
-            cs<span className="text-accent">Study</span>
-          </h1>
-          <span className="text-xs text-ink-500">개발 사고 회복</span>
+        <div className="flex items-center gap-2">
+          {/* 로고 고양이 — 글자는 이미지로 안 넣는다.
+              원본 로고의 'Study'가 흰색이라 앱의 밝은 배경(#FBFAF7)에서 안 보인다.
+              글자는 기존처럼 텍스트로 두는 게 대비도 확실하고 어느 크기에서도 안 흐려진다. */}
+          <img
+            src={`${import.meta.env.BASE_URL}logo-cat.png`}
+            alt=""
+            className="h-7 w-auto"
+          />
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-extrabold tracking-tight text-ink-900">
+              cs<span className="text-accent">Study</span>
+            </h1>
+            <span className="text-xs text-ink-500">개발 사고 회복</span>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <button

@@ -21,6 +21,7 @@ const SHELL = [
   "./index.html",
   "./manifest.webmanifest",
   "./icon-192.png",
+  "./logo-cat.png", // 헤더 로고 — 없으면 오프라인에서 깨진 이미지로 뜬다
   // 해시 자산(JS/CSS)까지 넣어야 "설치 후 첫 실행이 오프라인"인 경우에도 앱이 뜬다.
   ...(Array.isArray(BUILD_ASSETS) ? BUILD_ASSETS : []),
 ];
