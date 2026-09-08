@@ -7,11 +7,13 @@
 //   1) 빈칸/타이핑 정답이 '사전에 실릴 법한 단어'다 — 조사·어미·괄호·등호가 붙어 있지 않다.
 //   2) 요약(SUMMARIES)이 읽어서 개념이 파악되는 문장이다 — 길이 범위 안, 중복 없음.
 //   3) 적당한 키워드가 없으면 억지로 뚫지 않고 null 을 돌려준다 (호출부가 객관식으로 폴백).
-//   4) OX 의 거짓 문장은 같은 카테고리에서만 온다 (엉뚱한 과목이 뜨면 문제가 성립 안 함).
+//   4) OX 의 거짓 문장은 OX_FALSE(이 문제를 비튼 것) 아니면 같은 카테고리 요약이다.
+//   5) OX_FALSE 자체가 성립한다 — 존재하는 id, 원문과 다른 문장, 비슷한 길이.
 // =============================================================
 
 import assert from "node:assert/strict";
 import { QUESTIONS, SUMMARIES } from "../data/questions";
+import { OX_FALSE } from "../data/oxFalse";
 import {
   keywordOf,
   summaryOf,
@@ -128,7 +130,8 @@ for (const q of QUESTIONS) {
   assert.equal(keywordOf("exec=통째로 교체"), "exec", "등호가 토큰 경계여야 한다");
 }
 
-// 4) OX 의 거짓 문장은 같은 카테고리에서만 온다.
+// 4) OX 의 거짓 문장 출처 검사.
+//    OX_FALSE 에 있으면 그 문장이 그대로 나와야 하고, 없으면 같은 카테고리 요약이어야 한다.
 //    (무작위라 문제마다 여러 번 굴려서 확인)
 {
   for (const q of QUESTIONS) {
@@ -140,12 +143,34 @@ for (const q of QUESTIONS) {
         continue;
       }
       assert.notEqual(ox.statement, summaryOf(q), `거짓 문장이 자기 요약이면 안 된다: ${q.id}`);
+      const twisted = OX_FALSE[q.id];
+      if (twisted) {
+        assert.equal(
+          ox.statement,
+          twisted,
+          `OX_FALSE 가 있으면 그 문장을 써야 한다: ${q.id} → "${ox.statement}"`
+        );
+        continue;
+      }
       const cats = CATEGORIES_BY_SUMMARY.get(ox.statement);
       assert.ok(
         cats?.has(CATEGORY_OF.get(q.id)!),
         `OX 거짓 문장이 다른 카테고리에서 왔다: ${q.id}(${q.category}) → "${ox.statement}"`
       );
     }
+  }
+}
+
+// 5) OX_FALSE 위생 검사 — 없는 id, 원문 그대로 복붙, 길이 급변을 잡는다.
+{
+  for (const [id, s] of Object.entries(OX_FALSE)) {
+    const orig = SUMMARIES[id];
+    assert.ok(orig, `OX_FALSE 에 SUMMARIES 없는 id 가 있다: ${id}`);
+    assert.notEqual(s, orig, `거짓 문장이 원문과 똑같다: ${id}`);
+    assert.ok(
+      Math.abs(s.length - orig.length) <= 6,
+      `거짓 문장 길이가 원문과 ±6자를 넘게 다르다: ${id} → ${orig.length}자 vs ${s.length}자`
+    );
   }
 }
 
@@ -157,5 +182,10 @@ console.log("✅ exercise 자체 점검 통과");
   console.log(
     `   요약 ${lens.length}개 · 길이 ${lens[0]}~${lens[lens.length - 1]}자` +
       ` · 빈칸 출제 가능 ${blanks}개 · 타이핑 출제 가능 ${typings}개`
+  );
+  const covered = QUESTIONS.filter((q) => OX_FALSE[q.id]).length;
+  console.log(
+    `   OX 거짓 문장 직접 작성 ${covered}/${QUESTIONS.length}개` +
+      ` (나머지 ${QUESTIONS.length - covered}개는 같은 카테고리 요약으로 폴백)`
   );
 }

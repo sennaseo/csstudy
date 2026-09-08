@@ -27,7 +27,7 @@
 // - 키보드 단축키: 1~4 = 보기 "선택", O/X = 선택, Enter = 확인(또는 계속).
 // =============================================================
 
-import { Fragment, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useStudyStore } from "../store/useStudyStore";
 import type {
   BlankExercise,
@@ -135,7 +135,7 @@ const BTN_DIM = BTN_BASE + "border-2 border-b-4 border-ink-200 bg-white text-ink
 const PROMPT_BY_TYPE: Record<string, string> = {
   choice: "맞는 설명을 골라보세요",
   blank: "빈칸에 들어갈 말을 골라보세요",
-  ox: "이 설명이 맞으면 O, 틀리면 X!",
+  ox: "위 질문에 대한 설명이 맞으면 O, 틀리면 X!",
   typing: "빈칸의 용어를 직접 입력해보세요",
   speak: "소리 내어(또는 머릿속으로) 설명해보세요",
   match: "질문과 설명을 짝지어 연결해보세요",
@@ -286,7 +286,8 @@ function BlankView({
             aria-checked={w === picked}
             className={wordCls(w)}
           >
-            <span className="mr-1.5 inline-block rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60">
+            {/* 숫자키 힌트라 모바일에선 숨김 — 객관식과 통일 */}
+            <span className="mr-1.5 hidden rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60 sm:inline-block">
               {i + 1}
             </span>
             {w}
@@ -457,7 +458,8 @@ function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) =>
             playSound("click");
             setRevealed(true);
           }}
-          className="btn-3d w-full rounded-2xl border-2 border-b-4 border-accent-dim bg-accent px-4 py-3.5 text-sm font-extrabold tracking-wide text-white hover:brightness-105"
+          // speak 유형의 "확인" 버튼 = 1차 CTA → TypingView 확인 버튼과 같은 초록 톤.
+          className="btn-3d w-full rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green px-4 py-3.5 text-sm font-extrabold tracking-wide text-white hover:brightness-105"
         >
           다 말했어요 — 정답 확인 🔍
         </button>
@@ -491,27 +493,33 @@ function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) =>
 
 // ─── ⑥ 선 연결하기 (매칭) ──────────────────────────────────
 
+// 왜 2열을 버렸나 — 360px 2열은 셀 폭 141px라 27자짜리 요약도 3줄이 된다.
+// (12px 한글이 141px 안에 11~12자, 실측 12개 중 7개가 3줄) 요약을 줄여도 폰트를
+// 낮춰도 안 바뀌는 구조 문제였다. 전폭(328px)이면 31자가 1~2줄 — 객관식과 같은 조건.
+// 그래서 "좌우 짝 고르기" 를 "질문 1개씩 순서대로 + 설명 4개 전폭" 으로 바꿨다.
 function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: boolean) => void }) {
   const graded = useStudyStore((s) => s.graded);
-  // 좌(질문)/우(설명)를 서로 다른 순서로 섞는다 — 첫 렌더에만 (lazy init).
-  const [left] = useState(() => shuffle(ex.pairs));
-  const [right] = useState(() => shuffle(ex.pairs));
-  const [pickedLeft, setPickedLeft] = useState<string | null>(null); // 고른 왼쪽 qid
+  // 질문 순서와 설명 위치를 따로 섞는다 — 첫 렌더에만 (lazy init).
+  const [order] = useState(() => shuffle(ex.pairs)); // 물어보는 순서
+  const [defs] = useState(() => shuffle(ex.pairs)); // 설명 버튼 위치 (고정)
+  const [idx, setIdx] = useState(0); // 지금 몇 번째 질문인가
   const [matched, setMatched] = useState<Set<string>>(new Set()); // 완성된 qid 들
-  const [wrongFlash, setWrongFlash] = useState<string | null>(null); // 방금 틀린 우측 qid
+  const [wrongFlash, setWrongFlash] = useState<string | null>(null); // 방금 틀린 설명 qid
   // ref 가 아니라 state 다 — ref 를 바꿔도 React 는 다시 그리지 않아서
   // "실수 N번" 문구가 다음 리렌더까지 옛날 숫자로 남아 있었다.
   const [mistakes, setMistakes] = useState(0);
 
-  const pickRight = (qid: string) => {
-    if (graded || !pickedLeft || matched.has(qid)) return;
-    if (qid === pickedLeft) {
-      // 짝 완성!
+  const current = order[idx];
+
+  const pickDef = (qid: string) => {
+    if (graded || !current || matched.has(qid)) return;
+    if (qid === current.qid) {
+      // 짝 완성! 다음 질문으로 넘어간다.
       playSound("click");
       const next = new Set(matched);
       next.add(qid);
       setMatched(next);
-      setPickedLeft(null);
+      setIdx((i) => i + 1);
       // 전부 연결 → 실수 없이 끝냈을 때만 정답 처리
       if (next.size === ex.pairs.length) onGrade(mistakes === 0);
     } else {
@@ -522,17 +530,10 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
     }
   };
 
-  const sideCls = (qid: string, isPicked: boolean, isWrong: boolean) => {
-    // h-full = 같은 행의 좌/우가 그 행에서 제일 높은 쪽에 맞춰 늘어난다.
-    // (예전엔 좌우가 따로 노는 flex 열이라 3줄짜리 카드 하나가 아래 행 전체를 밀어냈다.)
-    // 글자는 11px → 12px 이상(text-xs). 손글씨 폰트라 11px 은 읽기 어렵다.
-    const base =
-      "h-full w-full break-keep rounded-xl border-2 px-2 py-2 text-left text-xs font-semibold leading-snug transition-all sm:px-3 sm:py-2.5 sm:text-[13px] ";
-    if (matched.has(qid))
-      return base + "border-duo-green-dim bg-duo-green-soft text-duo-green-ink opacity-70";
-    if (isWrong) return base + "animate-shake border-duo-red-dim bg-duo-red-soft text-duo-red-ink";
-    if (isPicked) return base + "border-accent bg-accent-soft text-accent-dim";
-    return base + "border-ink-200 bg-white text-ink-700 hover:bg-ink-100";
+  const defCls = (qid: string) => {
+    if (matched.has(qid)) return BTN_RIGHT + " opacity-70";
+    if (wrongFlash === qid) return BTN_WRONG + " animate-shake";
+    return BTN_IDLE;
   };
 
   return (
@@ -542,38 +543,34 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
           앗, 실수 {mistakes}번 — 그래도 끝까지 연결해보자!
         </p>
       )}
-      {/* 좌/우를 각각 flex 열로 두면 열마다 높이가 따로 놀아서 행이 어긋난다.
-          → 한 그리드에 좌·우를 번갈아 넣어 "같은 행"으로 만든다.
-            (items-stretch 는 grid 기본값 + 버튼의 h-full 로 행 높이가 맞춰진다)
-          320px 대응: 좁은 화면에선 간격·글자를 줄여 8개 버튼이 한 화면에 들어오게. */}
-      <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2">
-        {left.map((l, i) => {
-          const r = right[i];
-          return (
-            <Fragment key={l.qid}>
-              {/* 왼쪽: 질문 */}
-              <button
-                disabled={graded || matched.has(l.qid)}
-                onClick={() => setPickedLeft(pickedLeft === l.qid ? null : l.qid)}
-                className={sideCls(l.qid, pickedLeft === l.qid, false)}
-              >
-                {l.term}
-              </button>
-              {/* 오른쪽: 한 줄 설명 (같은 행) */}
-              <button
-                disabled={graded || matched.has(r.qid) || !pickedLeft}
-                onClick={() => pickRight(r.qid)}
-                className={sideCls(r.qid, false, wrongFlash === r.qid)}
-              >
-                {r.def}
-              </button>
-            </Fragment>
-          );
-        })}
+
+      {/* 진행 캡션 — 질문을 하나씩 주므로 "몇 개 남았나"를 대신 알려준다. */}
+      <p className="text-center text-[11px] font-semibold text-ink-500">
+        {Math.min(idx + 1, ex.pairs.length)} / {ex.pairs.length}
+      </p>
+
+      {/* 지금 답할 질문 하나 (객관식 제목 카드와 같은 톤) */}
+      <div className="rounded-2xl bg-white px-5 py-4 text-[15px] font-semibold leading-relaxed text-ink-900 shadow-card">
+        {current ? `Q. ${current.term}` : "모두 연결했어요!"}
       </div>
-      {!pickedLeft && !graded && (
+
+      {/* 설명 4개 — 전폭이라 객관식 보기와 완전히 같은 조건이 된다. */}
+      <div className="flex flex-col gap-2.5">
+        {defs.map((d) => (
+          <button
+            key={d.qid}
+            onClick={() => pickDef(d.qid)}
+            disabled={graded || matched.has(d.qid)}
+            className={defCls(d.qid)}
+          >
+            {d.def}
+          </button>
+        ))}
+      </div>
+
+      {!graded && (
         <p className="text-center text-[11px] font-semibold text-ink-500">
-          왼쪽 질문을 먼저 누르고 → 어울리는 오른쪽 설명을 눌러요
+          질문에 맞는 설명을 골라요 — 4개 다 맞추면 자동 채점
         </p>
       )}
     </div>
@@ -612,10 +609,24 @@ export function QuestionCard() {
   const [selected, setSelected] = useState<string | boolean | null>(null);
   useEffect(() => setSelected(null), [q?.id]);
 
+  // 📜 스크롤 두 가지 — 둘 다 조기 return 위에 둔다 (훅 순서 규칙).
+  //  ① 채점 순간: 보기(본문)를 화면 위로 끌어올린다. 안 그러면 시트가 올라오면서
+  //     본문이 짧아져 "내가 뭘 골랐는지" 가 화면 밖으로 밀린다.
+  const exerciseRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (graded) exerciseRef.current?.scrollIntoView({ block: "start" });
+  }, [graded]);
+  //  ② 문제가 바뀔 때: 스크롤 컨테이너가 <article key={q.id}> 바깥이라
+  //     key 리마운트로 지워지지 않는다 → scrollTop 이 남아 다음 문제가 중간부터 보였다.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0);
+  }, [q?.id]);
+
   const isCorrect = graded && lastCorrect === true;
   const isTwoStep = !!exercise && (TWO_STEP_TYPES as readonly string[]).includes(exercise.type);
-  /** q.question 을 큰 제목으로 띄워도 되는 유형인가. (match·ox 는 안 된다 — 아래 주석) */
-  const showTitle = !!exercise && exercise.type !== "match" && exercise.type !== "ox";
+  /** q.question 을 큰 제목으로 띄워도 되는 유형인가. (match 만 제외 — 아래 주석) */
+  const showTitle = !!exercise && exercise.type !== "match";
 
   /** 모든 유형이 공유하는 채점 처리 — 사운드/컨페티/XP 플로트까지 한 곳에서. */
   const handleGrade = (correct: boolean, selectedQid?: string) => {
@@ -772,7 +783,7 @@ export function QuestionCard() {
       <Confetti burstId={burstId} />
 
       {/* ── 본문: 여기만 스크롤된다 ── */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         <div className={shake ? "animate-shake" : ""}>
           <article key={q.id} className="animate-pop flex flex-col gap-4">
             <header className="flex items-center justify-between">
@@ -806,11 +817,10 @@ export function QuestionCard() {
             {/* 버디가 문제 옆에서 응원한다 (듀오 캐릭터처럼) */}
             <QuizBuddy qid={q.id} graded={graded} correct={isCorrect} />
 
-            {/* 큰 제목을 생략하는 유형:
-                - match: 질문이 4개라 하나만 크게 띄울 수 없다.
-                - ox: 판정 문장이 "다른 문제의 요약"일 수 있다(buildOxExercise).
-                      그때 q.question 을 제목으로 띄우면 전혀 다른 주제가 나란히 떠서
-                      무엇을 판단하라는 건지 알 수 없다 → 판정 문장 하나만 보여준다.
+            {/* 큰 제목을 생략하는 유형은 match 뿐 — 질문이 4개라 하나만 크게 띄울 수 없다.
+                ox 는 이제 판정문이 항상 이 문제에 대한 것이라 제목을 띄운다
+                (exercise.ts buildOxExercise 참고). 예전엔 판정문이 "다른 문제의 요약"일
+                수 있어서 제목을 띄우면 전혀 다른 주제가 나란히 떴다.
                 제목이 없으면 흰 카드는 한 줄짜리 빈 상자가 되므로, 안내 문구만
                 맨몸으로 둔다 (작은 화면에서 60px 을 벌어 보기가 화면 안에 들어온다). */}
             {showTitle ? (
@@ -828,7 +838,7 @@ export function QuestionCard() {
               </p>
             )}
 
-            {renderExercise()}
+            <div ref={exerciseRef}>{renderExercise()}</div>
           </article>
         </div>
         {/* footer 에 가려지는 걸 막는 여백.
@@ -886,10 +896,13 @@ export function QuestionCard() {
             <div className="mx-auto flex min-h-0 w-full max-w-xl flex-col gap-3">
               {/* aria-live: 스크린리더가 "정답/오답"을 소리로 알려준다.
                   (지금까지는 색만 바뀌어서 눈으로 봐야만 알 수 있었다) */}
+              {/* XP 표시는 xpFor() 한 곳에서만 만든다 — "몰랐어요"를 켜면 즉시 +7 로 바뀐다.
+                  제목 줄 오른쪽 끝(ml-auto)에 얹어서 세로 한 줄을 아꼈다 —
+                  그 자리를 아래 "Q. 지문" 이 쓴다. */}
               <p
                 aria-live="polite"
                 className={
-                  "flex items-center gap-2 text-lg font-extrabold " +
+                  "flex shrink-0 items-center gap-2 text-lg font-extrabold " +
                   (isCorrect ? "text-duo-green-ink" : "text-duo-red-ink")
                 }
               >
@@ -897,7 +910,23 @@ export function QuestionCard() {
                   {isCorrect ? "🎉" : "💡"}
                 </span>
                 {isCorrect ? "정답이에요!" : "아쉬워요"}
+                <span className="ml-auto flex items-center gap-2 text-xs font-extrabold">
+                  <span className="font-round">+{xpFor(isCorrect, unsure)} XP</span>
+                  {combo >= 2 && (
+                    <span className="font-round text-duo-fox-ink">🔥 콤보 {combo}연속</span>
+                  )}
+                </span>
               </p>
+
+              {/* 채점 직후 본문이 짧아져 지문이 잘려 보이던 문제 —
+                  해설 중앙값이 217자라 해설 칸이 늘 max-h 까지 부푼다.
+                  시트를 조이면 해설이 2줄 구멍이 되므로, 지문을 시트 안으로 데려왔다.
+                  (match 는 질문이 4개라 하나만 띄울 수 없어 제외) */}
+              {exercise.type !== "match" && (
+                <p className="line-clamp-2 shrink-0 text-xs font-bold leading-snug text-ink-500">
+                  Q. {q.question}
+                </p>
+              )}
 
               {/* 해설 — 시트에 남는 공간만 쓰고, 넘치면 여기 안에서만 스크롤한다.
                   (max-h-[30vh] 고정이던 걸 flex-1 min-h-0 으로 바꿔서
@@ -908,17 +937,6 @@ export function QuestionCard() {
                   <pre className="mt-3 overflow-x-auto rounded-xl bg-ink-900 p-4 font-mono text-xs leading-relaxed text-ink-100">
                     <code>{q.code}</code>
                   </pre>
-                )}
-              </div>
-
-              {/* XP 표시는 xpFor() 한 곳에서만 만든다 — "몰랐어요"를 켜면 즉시 +7 로 바뀐다.
-                  (예전엔 +12 가 하드코딩이라 실제 기록값과 어긋날 수 있었다) */}
-              <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold">
-                <span className={"font-round " + (isCorrect ? "text-duo-green-ink" : "text-duo-red-ink")}>
-                  +{xpFor(isCorrect, unsure)} XP
-                </span>
-                {combo >= 2 && (
-                  <span className="font-round text-duo-fox-ink">🔥 콤보 {combo}연속</span>
                 )}
               </div>
 

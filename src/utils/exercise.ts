@@ -20,6 +20,7 @@ import type {
   TypingExercise,
 } from "../types";
 import { QUESTIONS, SUMMARIES } from "../data/questions";
+import { OX_FALSE } from "../data/oxFalse";
 
 // ─── 공용 헬퍼 ────────────────────────────────────────────
 
@@ -226,16 +227,21 @@ export function buildBlankExercise(q: Question): BlankExercise | null {
 }
 
 /**
- * OX 퀴즈: 50% 확률로 진짜 요약(O) 또는 "같은 카테고리 다른 문제"의 요약(X).
+ * OX 퀴즈: 50% 확률로 진짜 요약(O) 또는 거짓 문장(X).
  *
- * X 문장을 아무 데서나 가져오면 안 된다 — DB 문제를 풀다가 갑자기 자바 요약이 뜨면
- * 틀렸다는 건 알아도 '무엇에 대한 설명인지'조차 모른다. 같은 과목 안에서 골라야
- * "비슷한데 다른 개념"을 구별하는 진짜 연습이 된다.
- * 같은 카테고리에 다른 문제가 없으면 null → 다른 유형으로 폴백.
+ * 거짓 문장 우선순위 = ① 이 문제 요약을 비튼 OX_FALSE ② 없으면 같은 카테고리 다른 요약(폴백).
+ * 화면이 질문 제목을 띄우므로 ②도 "위 질문의 답인가"로 성립한다.
+ *
+ * ①을 먼저 두는 이유: 카테고리가 넓어서(CS 안에 프로세스·TLS·암호화가 다 있다)
+ * ②만 쓰면 "스레드 안전"을 묻는데 "IPC 는…" 같은 완전히 다른 주제가 떠서
+ * 학습자가 '이게 이 문제랑 무슨 상관이지?'가 된다. 같은 문장을 한 곳만 비틀면
+ * 그 문제의 해설이 곧바로 왜 틀렸는지 알려준다.
+ * 폴백할 짝조차 없으면 null → 다른 유형으로 폴백.
  */
 export function buildOxExercise(q: Question): OxExercise | null {
-  const isTrue = Math.random() < 0.5;
-  if (isTrue) return { type: "ox", statement: summaryOf(q), isTrue: true };
+  if (Math.random() < 0.5) return { type: "ox", statement: summaryOf(q), isTrue: true };
+  const twisted = OX_FALSE[q.id];
+  if (twisted) return { type: "ox", statement: twisted, isTrue: false };
   const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
   const [other] = shuffle(sameCat);
   if (!other) return null;
