@@ -8,22 +8,15 @@
 //
 // 쓰는 법: 열려 있는 동안 마운트되는 컴포넌트(모달)에서 useBack(onClose).
 //          화면처럼 늘 마운트된 곳에선 useBack(goHome, view !== "path").
+//
+// 히스토리를 언제 쌓고 언제 되감는지(장부 규칙)는 backStack.ts 참고.
 // =============================================================
 import { useEffect, useRef } from "react";
 import { App as CapApp } from "@capacitor/app";
+import { createBackStack } from "./backStack";
 
-// 열린 순서대로 쌓인 닫기 콜백. 뒤로가기는 항상 맨 위(가장 최근에 연 것)를 닫는다.
-const stack: Array<() => void> = [];
-// UI 버튼으로 닫아서 우리가 직접 history.back() 을 부른 경우 — 그 popstate 는 무시한다.
-let ignoreNextPop = false;
-
-window.addEventListener("popstate", () => {
-  if (ignoreNextPop) {
-    ignoreNextPop = false;
-    return;
-  }
-  stack.pop()?.();
-});
+const back = createBackStack(window.history);
+window.addEventListener("popstate", (e) => back.onPop(e.state));
 
 // ─── 안드로이드 제스처 뒤로가기 ────────────────────────────
 // targetSdk 36(안드로이드 16)부터 "예측형 뒤로가기"가 기본으로 켜진다.
@@ -54,15 +47,7 @@ export function useBack(onBack: () => void, active = true) {
   useEffect(() => {
     if (!active) return;
     const entry = () => cb.current();
-    stack.push(entry);
-    window.history.pushState({ back: stack.length }, "");
-    return () => {
-      const i = stack.indexOf(entry);
-      if (i < 0) return; // 뒤로가기로 이미 빠져나간 경우 — 히스토리도 이미 정리됨
-      // UI(✕ 버튼 등)로 닫힌 경우 — 남은 히스토리 항목을 치워 다음 뒤로가기가 두 번 필요하지 않게.
-      stack.splice(i, 1);
-      ignoreNextPop = true;
-      window.history.back();
-    };
+    back.push(entry);
+    return () => back.remove(entry);
   }, [active]);
 }

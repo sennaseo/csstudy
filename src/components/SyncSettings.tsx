@@ -70,7 +70,16 @@ export function SyncSettings() {
             className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-card outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 id="sync-title" className="text-base font-extrabold text-ink-900">☁️ 클라우드 동기화</h3>
+            <div className="flex items-center justify-between">
+              <h3 id="sync-title" className="text-base font-extrabold text-ink-900">☁️ 클라우드 동기화</h3>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="동기화 설정 닫기"
+                className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500 hover:bg-ink-200"
+              >
+                닫기 ✕
+              </button>
+            </div>
             <p className="mt-1 text-xs leading-relaxed text-ink-500">
               AWS 에 만든 서버 주소와 토큰을 넣으면, 폰이든 컴퓨터든 진행상황이
               이어져요. (설정 방법: 프로젝트의 <b>AWS-DEPLOY.md</b> 참고)
