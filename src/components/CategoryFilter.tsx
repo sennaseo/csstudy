@@ -18,15 +18,47 @@ const GROUP_TABS: Array<{ label: string; value: CategoryGroup | null }> = [
 ];
 
 /** 카테고리별 색상 — [비활성, 활성] 클래스 쌍.
- *  비활성은 옅은 파스텔, 활성은 진한 단색 + 흰 글자. */
+ *
+ *  규칙 세 가지:
+ *  1) 팔레트 토큰만 쓴다. sky/cyan/blue 같은 테일윈드 기본 원색은 채도가 높아
+ *     "크림 종이에 색연필" 톤에서 혼자 형광등처럼 튄다.
+ *  2) 비활성 = 형광펜으로 슥 그은 옅은 틴트, 활성 = 그 색을 꽉 칠한다.
+ *  3) 글자 대비는 전부 4.5:1 이상. 그래서 활성 칩의 글자색이 두 종류다 —
+ *     파랑·초록·빨강처럼 어두운 색은 흰 글자(그 대신 한 톤 진한 -dim 을 깐다),
+ *     노랑·주황처럼 밝은 색은 흰 글자가 3점대라 미달이라서 잉크색 글자를 얹는다.
+ *     (duo-fox 위: 흰 글자 3.06:1 미달 → ink-900 글자 5.69:1 통과)
+ *     -ink 토큰은 "글자 전용"이라 배경으로는 쓰지 않는다.
+ *
+ *  색 계열은 6개인데 카테고리는 12개다. 한 계열을 둘이 나눠 쓰되 짝끼리
+ *  모양을 다르게 한다 — 하나는 "칠한 틴트", 다른 하나는 "테두리만 두른 종이".
+ *  덕분에 같은 계열 둘이 나란히 놓여도 구별된다.
+ *  (테두리 유무로 칩 키가 달라지지 않게 border-2 는 공통 클래스에 깔고 색만 바꾼다) */
 const CHIP_COLORS: Record<string, [string, string]> = {
   전체: ["bg-white text-ink-500 hover:bg-ink-100", "bg-ink-900 text-white"],
-  CS: ["bg-sky-50 text-sky-600 hover:bg-sky-100", "bg-sky-500 text-white"],
-  React: ["bg-cyan-50 text-cyan-600 hover:bg-cyan-100", "bg-cyan-500 text-white"],
-  TypeScript: ["bg-blue-50 text-blue-600 hover:bg-blue-100", "bg-blue-500 text-white"],
-  구조설계: ["bg-amber-50 text-amber-600 hover:bg-amber-100", "bg-amber-500 text-white"],
-  Java: ["bg-orange-50 text-orange-600 hover:bg-orange-100", "bg-orange-500 text-white"],
-  SpringBoot: ["bg-emerald-50 text-emerald-600 hover:bg-emerald-100", "bg-emerald-500 text-white"],
+
+  // ─ 잉크 블루 ─ 프론트엔드의 뼈대
+  React: ["bg-accent-soft text-accent-dim hover:bg-accent-soft/70", "bg-accent text-white"],
+  TypeScript: ["bg-white text-accent-dim border-accent/40 hover:bg-accent-soft/50", "bg-accent-dim text-white"],
+
+  // ─ 색연필 초록 ─ 데이터가 담기고 흐르는 것들
+  상태관리: ["bg-duo-green-soft text-duo-green-ink hover:bg-duo-green-soft/70", "bg-duo-green-dim text-white"],
+  데이터베이스: ["bg-white text-duo-green-ink border-duo-green/40 hover:bg-duo-green-soft/50", "bg-duo-green-ink text-white"],
+
+  // ─ 연필 회갈색 ─ 컴퓨터 밑바닥(OS·자료구조)은 색을 안 쓴 "흑연" 느낌으로
+  운영체제: ["bg-ink-100 text-ink-700 hover:bg-ink-200", "bg-ink-500 text-white"],
+  자료구조: ["bg-white text-ink-700 border-ink-300 hover:bg-ink-100", "bg-ink-700 text-white"],
+
+  // ─ 주황 색연필 ─ 바깥과 이어지는 것들
+  네트워크: ["bg-duo-fox/10 text-duo-fox-ink hover:bg-duo-fox/20", "bg-duo-fox text-ink-900"],
+  구조설계: ["bg-white text-duo-fox-ink border-duo-fox/40 hover:bg-duo-fox/10", "bg-duo-fox text-ink-900"],
+
+  // ─ 노란 형광펜 ─ 자바 계열
+  Java: ["bg-duo-bee/10 text-duo-bee-ink hover:bg-duo-bee/25", "bg-duo-bee-dim text-ink-900"],
+  SpringBoot: ["bg-white text-duo-bee-ink border-duo-bee/50 hover:bg-duo-bee/10", "bg-duo-bee text-ink-900"],
+
+  // ─ 빨간 펜 첨삭 ─ 개념(CS)과 말하기 훈련(기술면접)
+  CS: ["bg-duo-red-soft text-duo-red-ink hover:bg-duo-red-soft/70", "bg-duo-red-dim text-white"],
+  기술면접: ["bg-white text-duo-red-ink border-duo-red/40 hover:bg-duo-red-soft/50", "bg-duo-red-ink text-white"],
 };
 
 export function CategoryFilter() {
@@ -91,7 +123,7 @@ export function CategoryFilter() {
               aria-selected={isActive}
               onClick={() => setCategory(it.value)}
               className={
-                "shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold shadow-chip transition-all active:scale-95 " +
+                "shrink-0 rounded-full border-2 border-transparent px-4 py-1.5 text-sm font-semibold shadow-chip transition-all active:scale-95 " +
                 (isActive ? on : idle)
               }
             >

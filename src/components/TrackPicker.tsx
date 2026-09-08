@@ -37,7 +37,7 @@ function TrackChip({
         "flex-1 rounded-xl border-b-4 px-3 py-2.5 text-xs font-extrabold transition-colors " +
         (active
           ? "border-duo-green-dim bg-duo-green text-white"
-          : "border-ink-200 bg-white text-ink-500 hover:bg-ink-50")
+          : "border-ink-200 bg-white text-ink-500 hover:bg-ink-100")
       }
     >
       <span className="mr-1">{emoji}</span>
@@ -60,7 +60,7 @@ export function TrackPicker() {
 
   return (
     <div className="rounded-2xl border-2 border-b-4 border-ink-200 bg-white px-4 py-3.5">
-      <p className="mb-2 text-[11px] font-extrabold uppercase tracking-widest text-ink-300">
+      <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-ink-400">
         학습 트랙
       </p>
 
@@ -83,21 +83,28 @@ export function TrackPicker() {
       </div>
 
       {/* 고른 트랙 소개 — 전체 보기일 땐 안내 문구 */}
-      <p className="mt-2.5 text-[11px] font-semibold leading-snug text-ink-500">
+      <p className="mt-2.5 text-xs font-semibold leading-snug text-ink-500">
         {current ? current.description : "모든 카테고리를 순서대로 — 트랙을 고르면 목표에 맞게 정렬돼요."}
       </p>
 
       {/* 완주 게이지 — 장기 목표 */}
       <div className="mt-3">
         <div className="mb-1 flex items-baseline justify-between">
-          <span className="text-[11px] font-extrabold text-ink-500">
+          <span className="text-xs font-extrabold text-ink-500">
             {current ? `${current.name} 완주` : "전체 진도"}
           </span>
           <span className="font-round text-xs font-extrabold tabular-nums text-duo-green">
             {done}/{nodes.length} · {pct}%
           </span>
         </div>
-        <div className="progress-track">
+        <div
+          className="progress-track"
+          role="progressbar"
+          aria-label={`${current ? current.name + " 완주" : "전체"} 진도 ${done}/${nodes.length}`}
+          aria-valuenow={pct}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div className="progress-fill" style={{ width: `${pct}%` }} />
         </div>
       </div>

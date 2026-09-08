@@ -41,7 +41,19 @@ import { CATEGORY_EMOJI } from "../data/questions";
 import { findCharacter, stageOf } from "../data/characters";
 import { gradeTyping, shuffle } from "../utils/exercise";
 import { Confetti } from "./Confetti";
-import { playSound } from "../utils/sound";
+import { playSound, isMuted, toggleMute, vibrate } from "../utils/sound";
+
+// ─── XP 표시값 — 스토어의 XP_BY_STATUS 와 같은 값을 쓴다 ───
+// ⚠️ 스토어의 XP_BY_STATUS 가 export 가 아니라서 지금은 여기 상수로 둔다.
+//    (원래는 import 해서 단일 소스로 만드는 게 맞다 — 총괄 판단 대기 중)
+//    화면에 찍는 숫자를 여기 한 곳에서만 만들어, 최소한 "+12" 하드코딩이
+//    여러 군데 흩어지는 일은 막는다.
+const XP_UNDERSTOOD = 12;
+const XP_FUZZY = 7;
+const XP_UNKNOWN = 4;
+/** 지금 이 채점 결과로 실제 기록될 XP. (정답+"몰랐어요" = fuzzy) */
+const xpFor = (correct: boolean, unsure: boolean) =>
+  !correct ? XP_UNKNOWN : unsure ? XP_FUZZY : XP_UNDERSTOOD;
 
 // ─── 버디 말풍선 대사 — 문제 id 로 정해지는 랜덤(리렌더에도 안 바뀜) ───
 const CHEER_IDLE = ["이건 알 것 같은데?", "천천히 읽어봐!", "집중 집중!", "골라볼까?"];
@@ -114,7 +126,7 @@ const BTN_RIGHT =
   BTN_BASE + "border-2 border-b-4 border-duo-green-dim bg-duo-green-soft text-duo-green-ink";
 const BTN_WRONG =
   BTN_BASE + "border-2 border-b-4 border-duo-red-dim bg-duo-red-soft text-duo-red-ink";
-const BTN_DIM = BTN_BASE + "border-2 border-b-4 border-ink-200 bg-white text-ink-300 opacity-60";
+const BTN_DIM = BTN_BASE + "border-2 border-b-4 border-ink-200 bg-white text-ink-400 opacity-60";
 
 /** 유형별 상단 안내 문구. */
 const PROMPT_BY_TYPE: Record<string, string> = {
@@ -124,6 +136,22 @@ const PROMPT_BY_TYPE: Record<string, string> = {
   typing: "빈칸의 용어를 직접 입력해보세요",
   speak: "소리 내어(또는 머릿속으로) 설명해보세요",
   match: "질문과 설명을 짝지어 연결해보세요",
+};
+
+/** 하단 키보드 단축키 안내 — 2단계 유형(확인 버튼이 있는 유형)에서만 쓴다.
+ *  예전엔 객관식 숫자만 버튼 안에 숨어 있고 OX 의 o/x 는 안내가 아예 없었다. */
+const KEY_HINT_BY_TYPE: Record<string, string> = {
+  choice: "⌨️ 숫자키 1~4 로 고르고 · Enter 로 확인",
+  blank: "⌨️ 숫자키로 단어를 고르고 · Enter 로 확인",
+  ox: "⌨️ O / X 키로 고르고 · Enter 로 확인",
+};
+
+/** 자체 제출 버튼이 있는 유형(typing/speak/match)의 하단 한 줄.
+ *  "위에서 답을 제출해주세요" 같은 빈 안내 대신, 그 유형에서 진짜 필요한 팁을 준다. */
+const SUBMIT_HINT_BY_TYPE: Record<string, string> = {
+  typing: "⌨️ 입력하고 Enter — 오타 1글자는 정답으로 봐줘요",
+  speak: "🎤 입으로 설명해본 뒤 정답을 열어 비교해요",
+  match: "🔗 4쌍을 모두 연결하면 자동으로 채점돼요",
 };
 
 // ─── ① 객관식 ──────────────────────────────────────────────
@@ -153,16 +181,20 @@ function ChoiceView({
   };
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-2.5" role="radiogroup" aria-label="보기 목록">
       {ex.choices.map((c, i) => (
         <button
           key={c.qid}
           onClick={() => !graded && onPick(c.qid)}
           disabled={graded}
+          // 색만으로 선택 상태를 알리면 스크린리더 사용자는 알 수 없다 → radio 시맨틱.
+          role="radio"
+          aria-checked={c.qid === picked}
           className={cls(c)}
         >
-          {/* 데스크탑 전용 숫자 힌트 — 1~4 키로 바로 선택 가능 */}
-          <span className="mr-2 hidden rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-50 sm:inline-block">
+          {/* 번호 배지 — 모바일에선 "몇 번째 보기"인지 알려주고,
+              데스크탑에선 그대로 1~4 단축키 힌트가 된다. */}
+          <span className="mr-2 inline-block rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60">
             {i + 1}
           </span>
           {c.text}
@@ -240,10 +272,17 @@ function BlankView({
           <p className="mt-2 text-sm font-bold text-duo-green-ink">정답: {ex.answer}</p>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="단어 은행">
         {ex.bank.map((w, i) => (
-          <button key={w} onClick={() => !graded && onPick(w)} disabled={graded} className={wordCls(w)}>
-            <span className="mr-1.5 hidden rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-50 sm:inline-block">
+          <button
+            key={w}
+            onClick={() => !graded && onPick(w)}
+            disabled={graded}
+            role="radio"
+            aria-checked={w === picked}
+            className={wordCls(w)}
+          >
+            <span className="mr-1.5 inline-block rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60">
               {i + 1}
             </span>
             {w}
@@ -278,7 +317,7 @@ function OxView({
     // 채점 후: 정답 쪽은 초록, 내가 고른 오답은 빨강, 나머지는 흐리게
     if (isO === ex.isTrue) return base + "border-duo-green-dim bg-duo-green-soft text-duo-green-ink";
     if (picked === isO) return base + "border-duo-red-dim bg-duo-red-soft text-duo-red-ink";
-    return base + "border-ink-200 bg-white text-ink-300 opacity-60";
+    return base + "border-ink-200 bg-white text-ink-400 opacity-60";
   };
 
   return (
@@ -286,11 +325,25 @@ function OxView({
       <div className="rounded-2xl border-2 border-dashed border-ink-200 bg-white px-5 py-5 text-[15px] font-semibold leading-relaxed text-ink-900 shadow-card">
         💬 {ex.statement}
       </div>
-      <div className="flex gap-3">
-        <button onClick={() => !graded && onPick(true)} disabled={graded} className={btnCls(true)}>
+      <div className="flex gap-3" role="radiogroup" aria-label="맞으면 O, 틀리면 X">
+        <button
+          onClick={() => !graded && onPick(true)}
+          disabled={graded}
+          role="radio"
+          aria-checked={picked === true}
+          aria-label="맞아요 (O)"
+          className={btnCls(true)}
+        >
           O
         </button>
-        <button onClick={() => !graded && onPick(false)} disabled={graded} className={btnCls(false)}>
+        <button
+          onClick={() => !graded && onPick(false)}
+          disabled={graded}
+          role="radio"
+          aria-checked={picked === false}
+          aria-label="틀려요 (X)"
+          className={btnCls(false)}
+        >
           X
         </button>
       </div>
@@ -367,7 +420,7 @@ function TypingView({
             "btn-3d shrink-0 rounded-2xl border-2 border-b-4 px-5 text-sm font-extrabold tracking-wide " +
             // 비활성은 opacity 가 아니라 "진짜 회색"으로 갈아끼운다 (듀오링고 규칙).
             (graded || input.trim() === ""
-              ? "border-ink-300 bg-ink-200 text-ink-300"
+              ? "border-ink-300 bg-ink-200 text-ink-400"
               : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
           }
         >
@@ -442,7 +495,9 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
   const [pickedLeft, setPickedLeft] = useState<string | null>(null); // 고른 왼쪽 qid
   const [matched, setMatched] = useState<Set<string>>(new Set()); // 완성된 qid 들
   const [wrongFlash, setWrongFlash] = useState<string | null>(null); // 방금 틀린 우측 qid
-  const mistakesRef = useRef(0);
+  // ref 가 아니라 state 다 — ref 를 바꿔도 React 는 다시 그리지 않아서
+  // "실수 N번" 문구가 다음 리렌더까지 옛날 숫자로 남아 있었다.
+  const [mistakes, setMistakes] = useState(0);
 
   const pickRight = (qid: string) => {
     if (graded || !pickedLeft || matched.has(qid)) return;
@@ -454,9 +509,10 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
       setMatched(next);
       setPickedLeft(null);
       // 전부 연결 → 실수 없이 끝냈을 때만 정답 처리
-      if (next.size === ex.pairs.length) onGrade(mistakesRef.current === 0);
+      if (next.size === ex.pairs.length) onGrade(mistakes === 0);
     } else {
-      mistakesRef.current += 1;
+      setMistakes((m) => m + 1);
+      vibrate([60, 40, 60]);
       setWrongFlash(qid);
       setTimeout(() => setWrongFlash(null), 500);
     }
@@ -464,7 +520,7 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
 
   const sideCls = (qid: string, isPicked: boolean, isWrong: boolean) => {
     const base =
-      "w-full rounded-xl border-2 px-3 py-2.5 text-left text-xs font-semibold leading-snug transition-all ";
+      "w-full break-keep rounded-xl border-2 px-2 py-2 text-left text-[11px] font-semibold leading-snug transition-all sm:px-3 sm:py-2.5 sm:text-xs ";
     if (matched.has(qid))
       return base + "border-duo-green-dim bg-duo-green-soft text-duo-green-ink opacity-70";
     if (isWrong) return base + "animate-shake border-duo-red-dim bg-duo-red-soft text-duo-red-ink";
@@ -474,14 +530,16 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
 
   return (
     <div className="flex flex-col gap-3">
-      {mistakesRef.current > 0 && !graded && (
-        <p className="text-center text-xs font-bold text-duo-red-ink">
-          앗, 실수 {mistakesRef.current}번 — 그래도 끝까지 연결해보자!
+      {mistakes > 0 && !graded && (
+        <p className="text-center text-xs font-bold text-duo-red-ink" aria-live="polite">
+          앗, 실수 {mistakes}번 — 그래도 끝까지 연결해보자!
         </p>
       )}
-      <div className="grid grid-cols-2 gap-2">
+      {/* 320px 대응: 좁은 화면에선 열 간격·글자를 줄여 8개 버튼이 한 화면에 들어오게.
+          (sm 이상에서는 원래 크기로 돌아온다) */}
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
         {/* 왼쪽: 질문들 */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 sm:gap-2">
           {left.map((p) => (
             <button
               key={p.qid}
@@ -494,7 +552,7 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
           ))}
         </div>
         {/* 오른쪽: 한 줄 설명들 */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5 sm:gap-2">
           {right.map((p) => (
             <button
               key={p.qid}
@@ -538,6 +596,8 @@ export function QuestionCard() {
   const [burstId, setBurstId] = useState(0);
   const [shake, setShake] = useState(false);
   const [floatText, setFloatText] = useState<string | null>(null);
+  // 음소거 — 진짜 값은 sound.ts 가 들고 있고(localStorage 에 저장), 여기선 화면 갱신용 사본만 둔다.
+  const [muted, setMuted] = useState(isMuted);
 
   // 🔵 2단계 플로우의 심장 — "아직 채점 안 한, 내가 고른 답".
   //   choice → 보기의 qid(string) / blank → 단어(string) / ox → O인지(boolean)
@@ -555,14 +615,21 @@ export function QuestionCard() {
     gradeExercise(correct, selectedQid ?? null);
     const nextCombo = correct ? combo + 1 : 0;
 
+    // 이 시점의 unsure 는 항상 false(문제가 바뀔 때 스토어가 초기화한다) →
+    // 뜨는 숫자는 "지금 기록될 XP" 와 일치한다. 이후 "몰랐어요"를 누르면
+    // 아래 피드백 시트의 XP 표시가 unsure 를 반영해 다시 계산된다.
+    const xp = xpFor(correct, false);
+
     if (correct) {
       setBurstId((b) => b + 1);
       playSound("correct");
-      setFloatText(nextCombo >= 2 ? `+12 🔥x${nextCombo}` : "+12");
+      vibrate(30);
+      setFloatText(nextCombo >= 2 ? `+${xp} 🔥x${nextCombo}` : `+${xp}`);
     } else {
       setShake(true);
       playSound("wrong");
-      setFloatText("+4");
+      vibrate([60, 40, 60]);
+      setFloatText(`+${xpFor(false, false)}`);
     }
     setTimeout(() => {
       setShake(false);
@@ -705,15 +772,27 @@ export function QuestionCard() {
                 <span>{CATEGORY_EMOJI[q.category]}</span>
                 {q.category}
               </span>
-              {mode === "random" && (
+              <div className="flex items-center gap-1">
+                {mode === "random" && (
+                  <button
+                    onClick={pickRandom}
+                    className="rounded-full px-2.5 py-1 text-xs font-bold text-ink-500 transition-colors hover:bg-accent-soft hover:text-accent-dim"
+                    title="다음 문제"
+                  >
+                    건너뛰기 →
+                  </button>
+                )}
+                {/* 🔇 음소거 — 지하철/도서관용. 설정은 새로고침해도 남는다. */}
                 <button
-                  onClick={pickRandom}
-                  className="rounded-full px-2.5 py-1 text-xs font-bold text-ink-500 transition-colors hover:bg-accent-soft hover:text-accent-dim"
-                  title="다음 문제"
+                  onClick={() => setMuted(toggleMute())}
+                  aria-label={muted ? "소리 켜기" : "소리 끄기"}
+                  aria-pressed={muted}
+                  title={muted ? "소리 켜기" : "소리 끄기"}
+                  className="rounded-full px-2 py-1 text-base transition-colors hover:bg-accent-soft"
                 >
-                  건너뛰기 →
+                  {muted ? "🔇" : "🔊"}
                 </button>
-              )}
+              </div>
             </header>
 
             {/* 버디가 문제 옆에서 응원한다 (듀오 캐릭터처럼) */}
@@ -734,8 +813,10 @@ export function QuestionCard() {
             {renderExercise()}
           </article>
         </div>
-        {/* footer 에 가려지는 걸 막는 여백 — 시트가 제일 두꺼울 때를 넉넉히 잡았다. */}
-        <div className="h-40" aria-hidden />
+        {/* footer 에 가려지는 걸 막는 여백.
+            채점 전엔 확인 버튼 한 개뿐이라 조금만, 채점 후엔 시트가 두꺼우니 더 준다.
+            h-40 고정이던 걸 상황별로 나눴다 — 그래야 문제 지문이 덜 밀린다. */}
+        <div className={graded ? "h-24" : "h-16"} aria-hidden />
       </div>
 
       {/* ── 하단 고정 footer ──
@@ -743,49 +824,67 @@ export function QuestionCard() {
           채점 후 = 듀오링고식 피드백 시트(초록/빨강 + 해설 + 계속).
           -mx-4 px-4 로 좌우 여백을 뚫고 나가 화면 폭을 꽉 채운다
           (부모 main 이 px-4 를 주고 있어서, 그만큼 음수 마진으로 되돌리는 흔한 기법). */}
-      <div className="-mx-4 shrink-0 border-t-2 border-ink-200 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+      {/* 시트가 화면을 다 먹지 않도록 전체 높이에 상한을 건다.
+          dvh = "지금 실제로 보이는 화면 높이" (모바일 주소창이 접혔다 펴져도 정확).
+          55dvh 로 묶으면 667px 짜리 작은 폰에서도 위쪽 문제 지문이 두 줄 이상 남는다. */}
+      <div className="-mx-4 flex max-h-[55dvh] shrink-0 flex-col border-t-2 border-ink-200 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         {!graded ? (
           isTwoStep ? (
-            <button
-              onClick={handleCheck}
-              disabled={selected === null}
-              className={
-                "btn-3d w-full rounded-2xl border-2 border-b-4 px-4 py-3.5 text-base font-extrabold tracking-wide " +
-                // 비활성은 opacity 트릭이 아니라 진짜 회색으로 갈아끼운다.
-                // (opacity 로 흐리게 하면 배경이 비쳐서 "고장난 버튼"처럼 보인다.)
-                (selected === null
-                  ? "border-ink-300 bg-ink-200 text-ink-300"
-                  : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
-              }
-            >
-              확인
-            </button>
+            <>
+              <button
+                onClick={handleCheck}
+                disabled={selected === null}
+                className={
+                  "btn-3d w-full rounded-2xl border-2 border-b-4 px-4 py-3.5 text-base font-extrabold tracking-wide " +
+                  // 비활성은 opacity 트릭이 아니라 진짜 회색으로 갈아끼운다.
+                  // (opacity 로 흐리게 하면 배경이 비쳐서 "고장난 버튼"처럼 보인다.)
+                  (selected === null
+                    ? "border-ink-300 bg-ink-200 text-ink-400"
+                    : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
+                }
+              >
+                확인
+              </button>
+              {/* 키보드 힌트 — 물리 키보드가 있을 때만 의미가 있어서 sm 이상에서만.
+                  유형별로 실제 동작하는 키를 그대로 안내한다 (보기 번호는 버튼 안 배지). */}
+              <p className="mt-1.5 hidden text-center text-[11px] font-bold text-ink-400 sm:block">
+                {KEY_HINT_BY_TYPE[exercise.type]}
+              </p>
+            </>
           ) : (
-            // typing/speak/match 는 본문 안에 자기 제출 버튼이 있다 → 여기선 안내만.
+            // typing/speak/match 는 본문 안에 자기 제출 버튼이 있다.
+            // 빈 안내문 대신 이 유형에서 실제로 도움이 되는 한 줄을 보여준다.
             <p className="py-2 text-center text-xs font-bold text-ink-500">
-              위에서 답을 제출해주세요
+              {SUBMIT_HINT_BY_TYPE[exercise.type]}
             </p>
           )
         ) : (
           <div
             className={
-              "feedback-rise -mx-4 -mb-[max(0.75rem,env(safe-area-inset-bottom))] -mt-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 " +
+              "feedback-rise -mx-4 -mb-[max(0.75rem,env(safe-area-inset-bottom))] -mt-3 flex min-h-0 flex-col px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-4 " +
               (isCorrect ? "bg-duo-green-soft" : "bg-duo-red-soft")
             }
           >
-            <div className="mx-auto flex max-w-xl flex-col gap-3">
+            <div className="mx-auto flex min-h-0 w-full max-w-xl flex-col gap-3">
+              {/* aria-live: 스크린리더가 "정답/오답"을 소리로 알려준다.
+                  (지금까지는 색만 바뀌어서 눈으로 봐야만 알 수 있었다) */}
               <p
+                aria-live="polite"
                 className={
                   "flex items-center gap-2 text-lg font-extrabold " +
                   (isCorrect ? "text-duo-green-ink" : "text-duo-red-ink")
                 }
               >
-                <span className="text-2xl">{isCorrect ? "🎉" : "💡"}</span>
+                <span className="text-2xl" aria-hidden>
+                  {isCorrect ? "🎉" : "💡"}
+                </span>
                 {isCorrect ? "정답이에요!" : "아쉬워요"}
               </p>
 
-              {/* 해설 — 길면 시트가 화면을 다 먹지 않도록 여기 안에서만 스크롤한다. */}
-              <div className="max-h-[30vh] overflow-y-auto rounded-xl bg-white/70 p-4 text-sm font-semibold leading-relaxed text-ink-700">
+              {/* 해설 — 시트에 남는 공간만 쓰고, 넘치면 여기 안에서만 스크롤한다.
+                  (max-h-[30vh] 고정이던 걸 flex-1 min-h-0 으로 바꿔서
+                   시트 전체 상한 55dvh 안에 알아서 들어가게 했다.) */}
+              <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white/70 p-4 text-sm font-semibold leading-relaxed text-ink-700">
                 {q.answer}
                 {q.code && (
                   <pre className="mt-3 overflow-x-auto rounded-xl bg-ink-900 p-4 font-mono text-xs leading-relaxed text-ink-100">
@@ -794,12 +893,14 @@ export function QuestionCard() {
                 )}
               </div>
 
-              <div className="flex items-center gap-2 text-xs font-extrabold">
+              {/* XP 표시는 xpFor() 한 곳에서만 만든다 — "몰랐어요"를 켜면 즉시 +7 로 바뀐다.
+                  (예전엔 +12 가 하드코딩이라 실제 기록값과 어긋날 수 있었다) */}
+              <div className="flex shrink-0 items-center gap-2 text-xs font-extrabold">
                 <span className={"font-round " + (isCorrect ? "text-duo-green-ink" : "text-duo-red-ink")}>
-                  {isCorrect ? (unsure ? "+7 XP" : "+12 XP") : "+4 XP"}
+                  +{xpFor(isCorrect, unsure)} XP
                 </span>
                 {combo >= 2 && (
-                  <span className="font-round text-duo-fox">🔥 콤보 {combo}연속</span>
+                  <span className="font-round text-duo-fox-ink">🔥 콤보 {combo}연속</span>
                 )}
               </div>
 
@@ -811,7 +912,7 @@ export function QuestionCard() {
                   onClick={toggleUnsure}
                   aria-pressed={unsure}
                   className={
-                    "w-full rounded-xl border-2 px-4 py-2.5 text-sm font-extrabold transition " +
+                    "w-full shrink-0 rounded-xl border-2 px-4 py-2.5 text-sm font-extrabold transition " +
                     (unsure
                       ? "border-duo-fox bg-duo-fox text-white"
                       : "border-ink-300 bg-white/70 text-ink-500 hover:bg-white")
@@ -824,7 +925,7 @@ export function QuestionCard() {
               <button
                 onClick={handleContinue}
                 className={
-                  "btn-3d w-full rounded-2xl border-2 border-b-4 px-4 py-3.5 text-base font-extrabold tracking-wide text-white hover:brightness-105 " +
+                  "btn-3d w-full shrink-0 rounded-2xl border-2 border-b-4 px-4 py-3.5 text-base font-extrabold tracking-wide text-white hover:brightness-105 " +
                   (isCorrect
                     ? "border-duo-green-dim bg-duo-green"
                     : "border-duo-red-dim bg-duo-red")
@@ -841,7 +942,7 @@ export function QuestionCard() {
           Bee 노랑(#FFC800)은 흰 배경에서 너무 흐려 보여서 Fox 주황을 썼다. */}
       {floatText && (
         <div className="pointer-events-none absolute left-1/2 top-1/3 z-10 -translate-x-1/2">
-          <div className="float-up font-round text-3xl font-extrabold text-duo-fox">
+          <div className="float-up font-round text-3xl font-extrabold text-duo-fox-ink">
             {floatText}
           </div>
         </div>

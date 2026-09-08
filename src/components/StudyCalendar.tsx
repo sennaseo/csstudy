@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { DAILY_GOAL, useStudyStore } from "../store/useStudyStore";
 import { useBack } from "../utils/useBack";
+import { useDialog } from "../utils/useDialog";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -19,7 +20,7 @@ function keyOf(y: number, m: number, d: number): string {
 
 /** 푼 문제 수 → 잔디 농도 클래스 */
 function intensityClass(count: number): string {
-  if (count === 0) return "bg-ink-100 text-ink-300";
+  if (count === 0) return "bg-ink-100 text-ink-400";
   if (count < 3) return "bg-accent-soft text-accent-dim"; // 1~2: 연하게
   if (count < DAILY_GOAL) return "bg-accent/50 text-white"; // 3~4: 중간
   return "bg-accent text-white font-bold"; // 5+: 목표 달성 — 찐하게!
@@ -27,6 +28,7 @@ function intensityClass(count: number): string {
 
 export function StudyCalendar({ onClose }: { onClose: () => void }) {
   useBack(onClose); // 안드로이드 뒤로가기 = 닫기
+  const dialogRef = useDialog<HTMLDivElement>(onClose); // Esc·포커스 가둠·포커스 복귀
   const dailyCounts = useStudyStore((s) => s.dailyCounts);
   const streak = useStudyStore((s) => s.getStreak());
 
@@ -61,20 +63,25 @@ export function StudyCalendar({ onClose }: { onClose: () => void }) {
     <div
       className="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 p-6 backdrop-blur-sm"
       onClick={onClose}
-      role="dialog"
-      aria-label="학습 달력"
     >
+      {/* 본체 — role="dialog" 는 배경 막이 아니라 여기 */}
       <div
-        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-card animate-pop"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="calendar-title"
+        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-card outline-none animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ─── 헤더: 스트릭 + 닫기 ─── */}
         <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-ink-900">
+          <h2 id="calendar-title" className="text-base font-extrabold text-ink-900">
             🔥 {streak}일 연속 학습 중
           </h2>
           <button
             onClick={onClose}
+            aria-label="달력 닫기"
             className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500 hover:bg-ink-200"
           >
             닫기 ✕

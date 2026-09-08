@@ -18,6 +18,8 @@
 // 유닛이 바뀔 때마다 곡선 방향을 뒤집어 길이 S자로 흐르게 한다.
 // =============================================================
 
+import { useEffect, useRef } from "react";
+
 import { useStudyStore, MAX_HEARTS } from "../store/useStudyStore";
 import { unitsFor } from "../data/lessonPath";
 import type { LessonNode } from "../data/lessonPath";
@@ -29,11 +31,12 @@ import type { CategoryGroup } from "../types";
 const UNIT_COLORS = [
   { bg: "bg-duo-green", dim: "border-duo-green-dim" },
   { bg: "bg-accent", dim: "border-accent-dim" },
-  { bg: "bg-sky-500", dim: "border-sky-600" },
-  { bg: "bg-amber-400", dim: "border-amber-500" },
-  { bg: "bg-rose-400", dim: "border-rose-500" },
-  { bg: "bg-teal-500", dim: "border-teal-600" },
+  { bg: "bg-duo-bee", dim: "border-duo-bee-dim" },
+  { bg: "bg-duo-fox", dim: "border-duo-fox-ink" },
+  { bg: "bg-duo-red", dim: "border-duo-red-dim" },
 ] as const;
+// duo-beetle(보라)은 짝이 되는 -dim 토큰이 없어서 뺐다. 새 색 토큰을 만드는 대신
+// 이미 짝이 맞는 5색을 돌린다 — 유닛이 5개를 넘어가면 처음 색부터 다시 시작.
 
 /** 노드 하나 — 동그란 3D 버튼 + (현재 노드면) 시작 말풍선.
  *  노드 색은 이제 유닛 색이 아니라 상태(완료/현재/잠금) 기반이라 유닛 color 는 안 받는다. */
@@ -92,6 +95,9 @@ function PathNode({
       <button
         onClick={() => startLesson(node.id)}
         disabled={locked}
+        // 마운트 시 자동 스크롤의 표적. ref 를 노드마다 위로 끌어올리는 대신
+        // 부모가 querySelector 한 번으로 찾게 표시만 해둔다.
+        data-current={current || undefined}
         aria-label={`${node.category} ${node.label}${
           completed ? " (완료)" : locked ? " (잠김)" : " (지금 풀 차례)"
         }`}
@@ -112,7 +118,7 @@ function GroupDivider({ group }: { group: CategoryGroup }) {
   return (
     <div className="my-4 flex items-center gap-3">
       <div className="h-0.5 flex-1 rounded bg-ink-200" />
-      <span className="text-xs font-extrabold uppercase tracking-wider text-ink-300">
+      <span className="text-xs font-extrabold uppercase tracking-wider text-ink-400">
         {group}
       </span>
       <div className="h-0.5 flex-1 rounded bg-ink-200" />
@@ -133,8 +139,26 @@ export function LessonPath() {
   // "프론트엔드 / 백엔드" 구분선이 오히려 길을 끊어 보이게 한다).
   let lastGroup: CategoryGroup | null = null;
 
+  // ─── 마운트 시 "지금 풀 차례" 노드로 스크롤 ───────────────────
+  // 전체 보기는 노드가 80개를 넘어 길이가 8000px 가까이 된다. 진도가 중반이면
+  // 홈에 들어올 때마다 손으로 한참 굴려야 내 자리를 찾는다 — 그걸 대신 해준다.
+  // behavior 는 auto(즉시). smooth 로 8000px 를 훑으면 멀미가 나고,
+  // 모션에 민감한 사용자에게도 좋을 게 없다.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const firstNodeId = units[0]?.nodes[0]?.id;
+  // 아직 아무것도 안 푼 신규 사용자(= 첫 노드가 현재)는 스크롤하지 않는다.
+  // 앱을 처음 열자마자 화면이 아래로 튀면 "뭐지?" 싶다.
+  const isAtStart = !!firstNodeId && !lessonProgress[firstNodeId];
+
+  useEffect(() => {
+    if (isAtStart) return;
+    const current = rootRef.current?.querySelector("[data-current]");
+    current?.scrollIntoView({ block: "center", behavior: "auto" });
+    // 트랙을 바꾸면 길 자체가 다시 깔리므로 그때도 새 위치를 잡아준다.
+  }, [activeTrack, isAtStart]);
+
   return (
-    <div className="flex flex-col">
+    <div ref={rootRef} className="flex flex-col">
       {/* 하트가 바닥났을 때만 뜨는 안내 배너 */}
       {hearts === 0 && (
         <div className="mb-3 rounded-2xl border-2 border-b-4 border-duo-red-dim bg-duo-red-soft px-4 py-3 text-center text-xs font-extrabold text-duo-red-ink">
@@ -152,42 +176,53 @@ export function LessonPath() {
         const showDivider = !activeTrack && unit.group !== lastGroup;
         lastGroup = unit.group;
 
+        // 다 끝낸 유닛은 접어둔다 — 이미 지나온 길이 8000px 를 차지할 이유가 없다.
+        // 상태도 모달도 안 쓰고 네이티브 <details> 로 (LessonComplete 와 같은 방식).
+        // 접힌 유닛엔 "지금 풀 차례" 노드가 있을 수 없으므로 자동 스크롤과도 안 부딪힌다.
+        const unitDone = done === total;
+
         return (
           <div key={`${unit.category}-${unitIndex}`}>
             {showDivider && <GroupDivider group={unit.group} />}
 
-            {/* 유닛 배너 — 굵고 두툼하게(바닥 두께 border-b-4, 큰 라운드) */}
-            <div
-              className={
-                "mb-6 mt-2 flex items-center justify-between rounded-2xl border-b-4 px-5 py-4 text-white " +
-                `${color.bg} ${color.dim}`
-              }
-            >
-              <div>
-                <p className="text-[11px] font-extrabold uppercase tracking-widest opacity-90">
-                  유닛 {unitIndex + 1} · {done}/{total} 완료
-                </p>
-                <p className="text-lg font-extrabold">{unit.label}</p>
-                {unit.blurb && (
-                  <p className="mt-0.5 max-w-[15rem] text-[11px] font-semibold leading-snug opacity-90">
-                    {unit.blurb}
+            <details open={!unitDone}>
+              {/* 유닛 배너 = 접기 손잡이. 굵고 두툼하게(바닥 두께 border-b-4, 큰 라운드) */}
+              <summary
+                className={
+                  "mb-6 mt-2 flex cursor-pointer list-none items-center justify-between rounded-2xl border-b-4 px-5 py-4 text-white [&::-webkit-details-marker]:hidden " +
+                  `${color.bg} ${color.dim}`
+                }
+              >
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-widest opacity-90">
+                    유닛 {unitIndex + 1} · {done}/{total} 완료
                   </p>
-                )}
-              </div>
-              <span className="text-3xl drop-shadow">{unit.emoji}</span>
-            </div>
+                  <p className="text-lg font-extrabold">{unit.label}</p>
+                  {unit.blurb && (
+                    <p className="mt-0.5 max-w-[15rem] text-xs font-semibold leading-snug opacity-90">
+                      {unit.blurb}
+                    </p>
+                  )}
+                </div>
+                <span className="flex items-center gap-2">
+                  {/* 완료 유닛만 "눌러서 펼칠 수 있다"는 힌트를 준다 */}
+                  {unitDone && <span className="text-lg opacity-90">✓ ⌄</span>}
+                  <span className="text-3xl drop-shadow">{unit.emoji}</span>
+                </span>
+              </summary>
 
-            {/* 지그재그 노드 길 */}
-            <div className="mb-8 flex flex-col gap-7">
-              {unit.nodes.map((node, i) => (
-                <PathNode
-                  key={node.id}
-                  node={node}
-                  // sin 곡선으로 좌우 왕복 (최대 ±48px)
-                  offsetX={Math.round(Math.sin(((i + 1) * Math.PI) / 3) * 48) * dir}
-                />
-              ))}
-            </div>
+              {/* 지그재그 노드 길 */}
+              <div className="mb-8 flex flex-col gap-7">
+                {unit.nodes.map((node, i) => (
+                  <PathNode
+                    key={node.id}
+                    node={node}
+                    // sin 곡선으로 좌우 왕복 (최대 ±48px)
+                    offsetX={Math.round(Math.sin(((i + 1) * Math.PI) / 3) * 48) * dir}
+                  />
+                ))}
+              </div>
+            </details>
           </div>
         );
       })}
@@ -200,7 +235,7 @@ export function LessonPath() {
         🎲 랜덤 연습 <span className="opacity-80 normal-case tracking-normal">— 하트 걱정 없이</span>
       </button>
 
-      <p className="mt-3 text-center text-[11px] font-semibold leading-relaxed text-ink-300">
+      <p className="mt-3 text-center text-xs font-semibold leading-relaxed text-ink-400">
         길을 따라 한 칸씩. 천천히, 꾸준히 🐢 (❤️ 최대 {MAX_HEARTS}개)
       </p>
     </div>

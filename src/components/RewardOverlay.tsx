@@ -8,12 +8,16 @@
 import { useEffect, useState } from "react";
 import { findCharacter, RARITY_INFO, stageOf } from "../data/characters";
 import { useStudyStore } from "../store/useStudyStore";
+import { useDialog } from "../utils/useDialog";
 import { Confetti } from "./Confetti";
 
 export function RewardOverlay() {
   const reward = useStudyStore((s) => s.pendingReward);
   const buddies = useStudyStore((s) => s.buddies);
   const clearReward = useStudyStore((s) => s.clearReward);
+
+  // 훅은 아래 early return 보다 위에 있어야 한다 (호출 순서가 매 렌더 같아야 함).
+  const dialogRef = useDialog<HTMLDivElement>(clearReward, !!reward); // Esc·포커스 가둠·포커스 복귀
 
   // 모달이 새로 열릴 때마다 컨페티 1발
   const [burstId, setBurstId] = useState(0);
@@ -37,11 +41,15 @@ export function RewardOverlay() {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/50 p-6 backdrop-blur-sm"
       onClick={clearReward}
-      role="dialog"
-      aria-label={isNew ? "새 버디 획득" : "버디 진화"}
     >
+      {/* 본체 — role="dialog" 는 어두운 배경이 아니라 여기에 */}
       <div
-        className="relative w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-card animate-pop"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reward-title"
+        className="relative w-full max-w-xs rounded-3xl bg-white p-6 text-center shadow-card outline-none animate-pop"
         onClick={(e) => e.stopPropagation()}
       >
         <Confetti burstId={burstId} />
@@ -61,7 +69,7 @@ export function RewardOverlay() {
           </pre>
         </div>
 
-        <h3 className="mt-3 text-lg font-extrabold text-ink-900">
+        <h3 id="reward-title" className="mt-3 text-lg font-extrabold text-ink-900">
           {stageInfo.title}
         </h3>
         <div className="mt-1 flex items-center justify-center gap-1.5">

@@ -5,16 +5,64 @@
 
 > 목적: 공부의 완벽함이 아니라 **개발 사고 회복**.
 
+## 담고 있는 것
+
+| | 개수 |
+| --- | --- |
+| 문제 | 139개 (12개 카테고리) |
+| 단어장 카드 | 120장 |
+| 트랙(역할별 로드맵) | 2개 — 프론트엔드 32노드 / 백엔드 63노드 |
+| 버디 캐릭터 | 12종 × 3단계 진화 |
+
+---
+
 ## 주요 기능
 
-- **듀오링고식 감긴 길** — 유닛 배너 + 지그재그 노드가 홈에서 한 길로 이어지고, 순서대로 언락.
-- **하트(목숨)** — 레슨에서 틀리면 ❤️ 1개 소모, 0개면 레슨 실패. 30분마다 1개 자동 회복 + 복습 완료 시 즉시 1개 회복.
-- **오늘의 5문제 / 복습** — 원탭 시작. 복습은 망각곡선(1→3→7→14→30일) 기반으로 만기된 문제를 자동 선별.
-- **버디(캐릭터) 수집** — 12종 · 3단계 진화 · 도감. 퀴즈 화면 옆에서 정답/오답에 반응하며 응원해준다.
-- **콤보** — 연속 정답 시 🔥 콤보 표시, 최고 기록은 기기 간 동기화까지 보존.
+### 스킬 패스 (홈)
+- **감긴 길** — 유닛 배너 + 지그재그 노드가 한 길로 이어지고, 앞 노드를 풀어야 다음이 열린다.
+- **트랙 선택** — roadmap.sh 식 역할별 로드맵. 프론트엔드/백엔드 중 고르면 그 역할에 필요한 유닛만 그 순서로 늘어선다. 노드 id 는 그대로라서 트랙을 바꿔도 기존 진행도가 유지된다.
+- **원탭 시작** — `⚡ 오늘의 5문제`(복습 급한 것 우선 + 새 문제 자동 조합), `🔁 복습`(만기된 문제만).
+- **단어장 📇** — 문제와 별개인 훑어보기용 카드 덱. 화면 전환 없이 모달로 뜬다.
+
+### 6가지 출제 유형
+문제 하나(`Question`)를 화면에 낼 때마다 다른 형태(`Exercise`)로 포장한다. 같은 문제라도 오늘은 객관식, 내일은 빈칸으로 나온다.
+
+| 유형 | 방식 |
+| --- | --- |
+| 객관식 | 보기 4개 중 맞는 설명 고르기 |
+| 빈칸 | 요약 문장의 핵심 단어를 단어 은행에서 골라 채우기 |
+| OX | 제시된 설명이 맞는지 판단 |
+| 타이핑 | 핵심 용어를 직접 입력 |
+| 말하기 | 소리 내어 답하고 스스로 확인 |
+| 매칭 | 용어–설명 짝짓기 |
+
+뽑힌 유형이 그 문제에서 성립하지 않으면(키워드가 없는 등) 객관식으로 폴백한다.
+
+### 게임화
+- **하트** — 레슨에서 틀리면 ❤️ 1개 소모, 0개면 레슨 실패. 30분마다 1개 자동 회복 + 복습 완료 시 즉시 회복.
+- **콤보** — 연속 정답 시 🔥 표시. 최고 기록은 기기 간 동기화까지 보존.
+- **XP · 버디** — 문제를 풀 때마다 대표 캐릭터가 XP 를 얻고 3단계로 진화한다. 퀴즈 화면 옆에서 정답/오답에 반응하며 응원해준다.
+- **캐릭터 뽑기 · 도감** — 12종 수집. 전부 모으면 뽑기가 대표 캐릭터 보너스 XP 로 바뀐다.
+- **일일 목표** — 하루 5문제 게이지 + 잔디 캘린더.
+- **SRS 복습** — 망각곡선(1→3→7→14→30일) 기반으로 만기된 문제를 자동 선별. '이해함'으로 넘긴 문제도 때가 되면 다시 나온다.
+- **오답 기록** — 문제별 누적 오답 수와 "A를 B로 착각"한 혼동 대상을 남긴다.
+
+### 세션 결과 분석 화면
+레슨/복습을 끝내면 건강검진 결과지처럼 생긴 화면이 뜬다.
+- 종합 점수 도넛 (안에 내 버디가 앉아 있다) + 등급 배지
+- 맞음/틀림 개수, 획득 XP, 최고 콤보
+- 카테고리별 미니 도넛 — 어느 과목이 약한지 한눈에
+- 푼 문제 목록 펼쳐보기 (네이티브 `<details>`)
+- CTA 2개: [홈] [복습하기]
+
+도넛은 차트 라이브러리 없이 SVG `<circle>` 2개로 그린다. 외부 의존성 0.
+
+### 그 외
 - **키보드 단축키** — `1`~`4` 보기 선택, `Enter` 계속 (데스크탑).
 - **기기 간 동기화** — AWS Lambda + 토큰 방식 (선택 사항, `AWS-DEPLOY.md` 참고).
-- **PWA** — 홈 화면 설치 지원.
+- **PWA** — 홈 화면 설치 + 아이콘 길게 눌러 단어장/오늘의 5문제 바로가기.
+- **안드로이드 앱** — Capacitor 로 APK 빌드. 뒤로가기 키 처리 포함.
+- **오프라인** — 폰트를 앱에 내장했다. 외부 요청 0.
 
 ---
 
@@ -30,9 +78,25 @@ npm run dev      # http://localhost:5173
 # 3. 프로덕션 빌드
 npm run build
 npm run preview
+
+# 4. 자체 점검 (데이터 정합성 + 순수 함수)
+npm test
 ```
 
-> Node 18+ 권장. `npm` 대신 `pnpm` / `bun` 도 그대로 동작.
+> Node 18+ 권장.
+
+### 자체 점검이 보는 것
+
+`npm test` 는 테스트 프레임워크 없이 `tsx`/`node` 로 어서션 스크립트를 직접 돌린다.
+
+| 스크립트 | 확인하는 것 |
+| --- | --- |
+| `src/data/questions.test.ts` | 문제 id 중복·형식, 카테고리 배치 |
+| `src/data/cards.test.ts` | 카드 id·용어 유일성, oneLiner 형식 규칙 |
+| `src/data/tracks.test.ts` | 트랙이 참조하는 문제 id 가 실제로 존재하는지 |
+| `src/utils/score.test.ts` | 정답률·등급·카테고리 집계 |
+| `src/utils/status.test.mjs` | 자기평가 상태 전이 |
+| `src/utils/sync.test.mjs` | 기기 간 상태 병합(merge) |
 
 ---
 
@@ -40,84 +104,78 @@ npm run preview
 
 ```
 csStudy/
-├─ index.html              # 다크 클래스 고정 + #root
-├─ vite.config.ts          # 최소 Vite 설정 (React 플러그인만)
-├─ tailwind.config.js      # darkMode: "class", 자체 ink/accent 팔레트
-├─ tsconfig.json
+├─ index.html              # #root + PWA 메타
+├─ vite.config.ts
+├─ tailwind.config.js      # 손그림 팔레트 + rounded-* 오버라이드
+├─ capacitor.config.ts     # 안드로이드 앱 빌드 설정
+├─ android/                # Capacitor 안드로이드 프로젝트
+├─ public/                 # manifest, 아이콘, sw.js
+├─ server/                 # 동기화용 AWS Lambda
 ├─ src/
-│  ├─ main.tsx             # 진입점 (StrictMode + createRoot)
-│  ├─ App.tsx              # 레이아웃 + 최초 문제 픽
-│  ├─ index.css            # Tailwind 베이스 + 전역
+│  ├─ main.tsx             # 진입점 (StrictMode + SW 등록)
+│  ├─ App.tsx              # 화면 3분기 (path / quiz / lessonComplete)
+│  ├─ index.css            # Tailwind 베이스 + 손그림 전역 스타일 + 내장 폰트
 │  ├─ types.ts             # 도메인 타입 단일 소스
 │  ├─ data/
-│  │  └─ questions.ts      # 하드코딩 문제 데이터 + CATEGORIES
+│  │  ├─ questions.ts      # 문제 139개 + 카테고리 + 한 줄 요약
+│  │  ├─ cards.ts          # 단어장 카드 120장
+│  │  ├─ characters.ts     # 버디 12종 × 3단계
+│  │  ├─ tracks.ts         # 역할별 로드맵 대본
+│  │  └─ lessonPath.ts     # 문제 → 노드/유닛 자동 생성
 │  ├─ store/
 │  │  └─ useStudyStore.ts  # Zustand 전역 스토어 + localStorage 영속화
-│  └─ components/
-│     ├─ CategoryFilter.tsx
-│     ├─ QuestionCard.tsx
-│     └─ DailyStats.tsx
+│  ├─ utils/
+│  │  ├─ exercise.ts       # 문제 → 6가지 출제 유형 변환
+│  │  ├─ srs.ts            # 망각곡선 간격 계산
+│  │  ├─ score.ts          # 결과 화면용 집계
+│  │  ├─ sync.ts           # AWS 동기화 + 상태 병합
+│  │  ├─ sound.ts          # 효과음 (Web Audio)
+│  │  └─ useBack.ts        # 안드로이드 뒤로가기
+│  └─ components/          # 15개
+└─ scripts/                # 카드 내보내기 등
 ```
 
-### 역할 요약
+### 컴포넌트 (15개)
 
-| 파일 | 역할 |
+| 컴포넌트 | 역할 |
 | --- | --- |
-| `types.ts` | `Question`, `QuestionRecord`, `Category` 등 도메인 타입. 다른 파일은 이걸만 import. |
-| `data/questions.ts` | 문제 데이터(하드코딩). 추후 JSON 파일이나 API 로 교체 가능. |
-| `store/useStudyStore.ts` | 전역 상태 + 액션. localStorage 읽기/쓰기. **확장의 중심**. |
-| `App.tsx` | 컴포지션만 담당 — 로직 없음. |
-| `components/*` | 표현 컴포넌트. 모두 store 셀렉터로 데이터 접근. |
+| `LessonPath` | 감긴 길 — 유닛 배너 + 지그재그 노드 |
+| `TrackPicker` | 프론트엔드/백엔드 트랙 선택 |
+| `QuickActions` | 오늘의 5문제 / 복습 원탭 버튼 |
+| `QuestionCard` | 6가지 유형 전부를 렌더 + 채점 + 피드백 시트 |
+| `LessonComplete` | 세션 결과 분석 화면 |
+| `Buddy` | 대표 캐릭터 표시 + 반응 |
+| `CollectionBook` | 캐릭터 도감 |
+| `RewardOverlay` | 획득/진화 축하 모달 |
+| `CardDeck` | 단어장 모달 |
+| `GoalGauge` | 일일 목표 게이지 |
+| `DailyStats` | 오늘/누적 통계 |
+| `StudyCalendar` | 잔디 캘린더 |
+| `CategoryFilter` | 랜덤 연습용 카테고리 필터 |
+| `Confetti` | 색종이 효과 (CSS만) |
+| `SyncSettings` | 동기화 주소/토큰 입력 |
 
 ---
 
-## Zustand 스토어 구조
+## 구조 규칙
 
-`useStudyStore` 하나에 모든 상태/액션이 모여 있다.
-
-**Persisted (localStorage 저장)**
-
-- `records: Record<id, QuestionRecord>` — 문제별 마지막 평가/리뷰 횟수.
-- `dailyCounts: Record<'YYYY-MM-DD', number>` — 날짜별 푼 개수.
-- `activeCategory: Category | null` — 현재 필터.
-
-**In-memory only**
-
-- `currentQuestion` — 현재 화면 문제.
-- `isAnswerVisible` — 정답 토글.
-
-**Actions**
-
-- `setCategory(c)` — 필터 변경 + 새 문제 자동 픽.
-- `pickRandom()` — 현재 필터 풀에서 랜덤 1개 (직전과 같지 않게).
-- `toggleAnswer()` — 정답 보기 토글.
-- `recordStatus(status)` — 평가 저장 + 오늘 카운트 +1 + 다음 문제로 이동.
-- `getTodayCount()` — 오늘 푼 개수 selector.
-
-> 컴포넌트는 항상 **셀렉터로 좁혀서** 구독한다: `useStudyStore(s => s.currentQuestion)`.
-> 그래야 다른 상태가 바뀌어도 리렌더가 안 일어난다.
+- **타입은 `types.ts` 한 곳** — 컴포넌트/스토어가 같은 언어를 쓴다.
+- **상태는 `useStudyStore` 하나** — 컴포넌트는 항상 셀렉터로 좁혀 구독한다: `useStudyStore(s => s.hearts)`. 그래야 다른 상태가 바뀌어도 리렌더가 안 일어난다.
+- **길은 자동 생성** — `lessonPath.ts` 가 `QUESTIONS` 에서 유닛/노드를 만든다. 문제를 추가하면 길도 따라온다.
+- **노드 id 는 진행도 저장 키** — `lesson-<카테고리>-<n>`, `review-<카테고리>`. 함부로 바꾸면 학습 기록이 날아간다.
+- **의존성 최소** — React / Zustand / Capacitor 뿐. 애니메이션·차트·토스트 라이브러리 없이 CSS 와 SVG 로 직접 그린다.
 
 ---
 
-## 확장 로드맵 (구조에 미리 자리만 잡아둠)
+## 디자인 컨셉
 
-| 기능 | 어디서 시작할지 |
-| --- | --- |
-| ~~**Spaced repetition (망각곡선)**~~ | ✅ 구현됨 — `utils/srs.ts` 참고. '이해함' 문제도 1→3→7→14→30일 간격으로 만기(due)가 되어 복습에 다시 나온다. |
-| **AI 면접관 모드** | `store` 에 `askFollowup()` async 액션 추가. OpenAI/Claude API 호출 → `currentQuestion.hint` 에 후속 질문 채우기. UI 는 `QuestionCard` 거의 그대로. |
-| **실무 구조 암기 카드** | `Category` union 에 `"실무구조"` 추가 + `questions.ts` 에 새 카테고리 항목들. |
-| **코드 빈칸 맞추기** | `Question` 에 `cloze?: string[]` 옵셔널 추가. `QuestionCard` 에서 cloze 가 있으면 빈칸 입력 컴포넌트 렌더. |
-| **데이터 분리** | `data/questions.ts` → `data/questions.json` 으로 분리하고 import 만 바꿔도 끝. |
+"크림색 종이 + 연필로 그린 손그림 스케치".
 
----
-
-## 디자인 원칙
-
-- **자극 최소**: 색은 ink(어두운 그레이) 1톤 + accent(청록) 1포인트.
-- **모노 폰트**: 개발자 메모 느낌.
-- **애니메이션 없음**: 색 트랜지션만 허용.
-- **한 컬럼 max-w-xl**: 모바일/데스크탑 동일 — 시선이 흩어지지 않게.
-- **버튼 하나 누르면 다음 문제**: 평가 → 자동 진행으로 마찰 제거.
+- **색은 칠하지 않는다** — 형광펜으로 슥 그은 것처럼 흐리게.
+- **모서리는 삐뚤** — `tailwind.config.js` 에서 `rounded-lg/xl/2xl/3xl` 을 비대칭 값으로 덮어썼다.
+- **그림자는 blur 0** — 오프셋만 준 종이 그림자.
+- **손글씨 폰트** — Gaegu / Nanum Pen Script / Gamja Flower / Patrick Hand. 앱에 내장돼 있다.
+- **한 컬럼 max-w-xl** — 모바일/데스크탑 동일. 시선이 흩어지지 않게.
 
 ---
 

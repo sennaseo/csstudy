@@ -13,9 +13,11 @@ import {
 } from "../data/characters";
 import { useStudyStore } from "../store/useStudyStore";
 import { useBack } from "../utils/useBack";
+import { useDialog } from "../utils/useDialog";
 
 export function CollectionBook({ onClose }: { onClose: () => void }) {
   useBack(onClose); // 안드로이드 뒤로가기 = 닫기
+  const dialogRef = useDialog<HTMLDivElement>(onClose); // Esc·포커스 가둠·포커스 복귀
   const buddies = useStudyStore((s) => s.buddies);
   const activeBuddyId = useStudyStore((s) => s.activeBuddyId);
   const setActiveBuddy = useStudyStore((s) => s.setActiveBuddy);
@@ -27,16 +29,19 @@ export function CollectionBook({ onClose }: { onClose: () => void }) {
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={onClose}
-      role="dialog"
-      aria-label="캐릭터 도감"
     >
-      {/* 본체 (클릭이 배경으로 새지 않게 stopPropagation) */}
+      {/* 본체 (클릭이 배경으로 새지 않게 stopPropagation) — role="dialog" 도 여기 붙는다 */}
       <div
-        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-card sm:rounded-3xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="collection-title"
+        className="max-h-[85vh] w-full max-w-xl overflow-y-auto rounded-t-3xl bg-white p-5 shadow-card outline-none sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-extrabold text-ink-900">
+          <h2 id="collection-title" className="text-base font-extrabold text-ink-900">
             📖 버디 도감{" "}
             <span className="text-sm font-semibold text-ink-500">
               {ownedCount}/{CHARACTERS.length}
@@ -44,6 +49,7 @@ export function CollectionBook({ onClose }: { onClose: () => void }) {
           </h2>
           <button
             onClick={onClose}
+            aria-label="도감 닫기"
             className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500 hover:bg-ink-200"
           >
             닫기 ✕
@@ -68,8 +74,8 @@ export function CollectionBook({ onClose }: { onClose: () => void }) {
                   key={c.id}
                   className="flex flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-ink-200 p-4 text-center"
                 >
-                  <span className="text-2xl text-ink-300">❓</span>
-                  <span className="text-xs font-bold text-ink-300">???</span>
+                  <span className="text-2xl text-ink-400">❓</span>
+                  <span className="text-xs font-bold text-ink-400">???</span>
                   <span
                     className={
                       "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +

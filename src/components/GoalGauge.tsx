@@ -38,7 +38,14 @@ export function GoalGauge() {
 
       {/* 게이지 바 — .progress-track/.progress-fill 이 채움 색(초록 그라디언트)과
           하이라이트 줄까지 알아서 그려준다. width 만 % 로 넘기면 된다. */}
-      <div className="progress-track">
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-label={`오늘의 목표 ${count}/${DAILY_GOAL}문제`}
+        aria-valuenow={Math.round(percent)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
         <div className="progress-fill" style={{ width: `${percent}%` }} />
       </div>
 

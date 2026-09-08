@@ -222,7 +222,9 @@ export function LessonComplete() {
           label={`정답률 ${pct}퍼센트`}
         >
           {buddyArt ? (
-            <pre className="font-mono text-sm leading-tight text-ink-900">
+            // 카오모지는 폰트마다 글자 폭이 제각각이라, 3줄짜리 아트(꼬꼬대장 등)는
+            // 200px 링을 그냥 넘어간다. 글자를 한 단계 줄이고 폭에 상한을 걸어 안에 가둔다.
+            <pre className="max-w-[130px] overflow-hidden font-mono text-xs leading-tight text-ink-900">
               {buddyArt.join("\n")}
             </pre>
           ) : (
@@ -255,30 +257,34 @@ export function LessonComplete() {
         {/* 맞음·틀림 개수 — 도넛은 %만 보여주니 여기서 실제 개수를 박아준다 */}
         <p className="flex flex-wrap justify-center gap-x-3 font-extrabold tabular-nums">
           <span className="text-duo-green-ink">✅ 맞음 {result.correct}개</span>
-          <span className={wrong > 0 ? "text-duo-red-ink" : "text-ink-300"}>
+          <span className={wrong > 0 ? "text-duo-red-ink" : "text-ink-400"}>
             ❌ 틀림 {wrong}개
           </span>
           {unanswered > 0 && <span>안 푼 {unanswered}개</span>}
         </p>
         <p>{subtitle}</p>
         <p className="flex flex-wrap justify-center gap-x-3 text-xs font-extrabold">
-          <span className="text-duo-bee-dim">+{result.xpGained} XP</span>
-          {showCombo && <span className="text-duo-fox">🔥 콤보 {combo}</span>}
+          <span className="text-duo-bee-ink">+{result.xpGained} XP</span>
+          {showCombo && <span className="text-duo-fox-ink">🔥 콤보 {combo}</span>}
         </p>
         {showCombo && combo === bestCombo && bestCombo >= 3 && (
-          <p className="text-xs font-extrabold text-duo-fox">🏅 콤보 신기록!</p>
+          <p className="text-xs font-extrabold text-duo-fox-ink">🏅 콤보 신기록!</p>
         )}
         {result.heartsRecovered && (
-          <p className="text-xs font-extrabold text-duo-red">❤️ 하트 1개 회복!</p>
+          <p className="text-xs font-extrabold text-duo-red-ink">❤️ 하트 1개 회복!</p>
         )}
       </div>
 
-      {/* 6. 카테고리별 미니 도넛 — 과목이 하나뿐이면 카드도 하나. 열 수를 개수에 맞춘다. */}
+      {/* 6. 카테고리별 미니 도넛 — 과목이 하나뿐이면 카드도 하나.
+             열 수를 개수에 맞추되, 3열을 강제하면 320px 폰에서 카드가 ~90px 로 눌려
+             56px 링과 라벨이 잘린다. auto-fit + 최소폭 140px 으로 바꾸면 좁은 폰에선
+             알아서 2열로 접히고, 앱 최대 폭(max-w-xl = 544px 내용폭)에서도 3열이
+             한계라 예전 "최대 3열"이 그대로 유지된다. */}
       {cats.length > 0 && (
         <div
           className="grid gap-2"
           style={{
-            gridTemplateColumns: `repeat(${Math.min(cats.length, 3)}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(auto-fit, minmax(140px, 1fr))`,
           }}
         >
           {cats.map((c, i) => {
@@ -327,7 +333,7 @@ export function LessonComplete() {
             ? failed
               ? "❤️ 복습하고 하트 회복"
               : `🔁 복습하기 (${Math.min(reviewCount, DAILY_GOAL)})`
-            : "계속"}
+            : "홈으로"}
         </button>
       </div>
     </div>

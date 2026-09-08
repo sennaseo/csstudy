@@ -10,7 +10,7 @@
     "build:native": "tsc -b && vite build --mode native",
     "preview": "vite preview",
     "export:cards": "tsx scripts/export-cards.mjs",
-    "test": "tsx src/data/questions.test.ts && tsx src/data/cards.test.ts && tsx src/data/tracks.test.ts && tsx src/utils/score.test.ts && node src/utils/status.test.mjs && node src/utils/sync.test.mjs"
+    "test": "tsx src/data/questions.test.ts && tsx src/data/cards.test.ts && tsx src/data/tracks.test.ts && tsx src/utils/score.test.ts && tsx src/utils/exercise.test.ts && node src/utils/status.test.mjs && node src/utils/sync.test.mjs && node src/utils/sound.test.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

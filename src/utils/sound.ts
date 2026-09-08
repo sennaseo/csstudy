@@ -1,8 +1,46 @@
 // =============================================================
 // Sound — Web Audio API (설치 없이 즉시 사운드)
+//
+// 🔇 음소거: 지하철에서도 쓰는 앱이라 소리를 끌 수 있어야 한다.
+//   설정은 localStorage 키 "csStudy:sound" 에 따로 저장한다 —
+//   학습 기록("csStudy:v1")과 섞지 않아야 스키마가 오염되지 않는다.
+//   (비유: 공부 노트와 리모컨 배터리는 서랍을 따로 쓴다.)
 // =============================================================
 
 type SoundType = 'correct' | 'wrong' | 'click' | 'levelup' | 'achievement'
+
+const MUTE_KEY = 'csStudy:sound'
+
+/** 사파리 프라이빗 모드 등에서 localStorage 접근이 던질 수 있어 try 로 감싼다. */
+function readMuted(): boolean {
+  try {
+    return localStorage.getItem(MUTE_KEY) === 'off'
+  } catch {
+    return false
+  }
+}
+
+let muted = readMuted()
+
+export function isMuted(): boolean {
+  return muted
+}
+
+/** 음소거를 뒤집고 "지금 음소거인가"를 돌려준다 (버튼이 바로 화면을 갱신할 수 있게). */
+export function toggleMute(): boolean {
+  muted = !muted
+  try {
+    localStorage.setItem(MUTE_KEY, muted ? 'off' : 'on')
+  } catch {
+    // 저장 실패해도 이번 세션 동안은 동작한다
+  }
+  return muted
+}
+
+/** 촉각 피드백 — 미지원 브라우저(데스크탑 등)에서는 조용히 무시된다. */
+export function vibrate(pattern: number | number[]) {
+  navigator.vibrate?.(pattern)
+}
 
 let ctx: AudioContext | null = null
 
@@ -12,11 +50,13 @@ function ensure(): AudioContext {
 }
 
 export function initAudio() {
+  if (muted) return
   const c = ensure()
   if (c.state === 'suspended') c.resume()
 }
 
 export function playSound(type: SoundType) {
+  if (muted) return
   try {
     const current = ensure()
     const c = current

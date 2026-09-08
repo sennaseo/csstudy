@@ -59,14 +59,17 @@ export const RARITY_INFO: Record<
   rare: {
     label: "레어",
     weight: 25,
-    badge: "bg-sky-100 text-sky-600",
-    glow: "shadow-[0_0_16px_rgba(56,189,248,0.35)]",
+    badge: "bg-accent-soft text-accent-dim",
+    // 스케치 컨셉엔 "빛나는 후광"이 없다 — 종이 위에선 펜으로 한 번 더 덧그은
+    // 이중선이 곧 강조다. 그래서 blur 0 오프셋 그림자 + 같은 색 테두리로 바꿨다.
+    glow: "border-2 border-accent shadow-[3px_3px_0_theme(colors.accent.DEFAULT)]",
   },
   legendary: {
     label: "레전드",
     weight: 5,
-    badge: "bg-amber-100 text-amber-600",
-    glow: "shadow-[0_0_20px_rgba(251,191,36,0.45)]",
+    badge: "bg-duo-bee/20 text-duo-bee-ink",
+    // 레전드는 덧그은 선을 한 겹 더 두껍게 (4px) — 멀리서도 "얘가 제일 세다"가 읽힌다.
+    glow: "border-2 border-duo-bee shadow-[4px_4px_0_theme(colors.duo.bee)]",
   },
 };
 

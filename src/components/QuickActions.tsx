@@ -48,14 +48,14 @@ export function QuickActions() {
         className={
           "btn-3d flex w-full items-center justify-between rounded-2xl border-2 border-b-4 px-5 py-3 text-left " +
           (reviewCount === 0
-            ? "cursor-not-allowed border-ink-200 bg-ink-100 text-ink-300"
+            ? "cursor-not-allowed border-ink-200 bg-ink-100 text-ink-400"
             : "border-ink-200 bg-white text-accent hover:brightness-[0.98]")
         }
       >
         <p className="text-sm font-extrabold">
           🔁 복습
           {reviewCount > 0 && (
-            <span className="ml-2 rounded-full bg-duo-fox px-2 py-0.5 text-[11px] font-round font-extrabold text-white">
+            <span className="ml-2 rounded-full bg-duo-fox px-2 py-0.5 text-xs font-round font-extrabold text-white">
               {reviewCount}
             </span>
           )}

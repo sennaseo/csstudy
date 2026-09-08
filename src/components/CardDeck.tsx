@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { CARDS, CARD_DOMAINS, CARD_DOMAIN_EMOJI } from "../data/cards";
 import type { CardDomain, CsCard } from "../data/cards";
 import { useBack } from "../utils/useBack";
+import { useDialog } from "../utils/useDialog";
 
 /** Fisher–Yates. 원본 배열(CARDS)은 건드리지 않게 복사본을 섞는다. */
 function shuffle(cards: CsCard[]): CsCard[] {
@@ -24,6 +25,7 @@ function shuffle(cards: CsCard[]): CsCard[] {
 
 export function CardDeck({ onClose }: { onClose: () => void }) {
   useBack(onClose); // 안드로이드 뒤로가기 = 닫기
+  const dialogRef = useDialog<HTMLDivElement>(onClose); // Esc·포커스 가둠·포커스 복귀
   const [domain, setDomain] = useState<CardDomain | null>(null);
   // 전체 카드를 한 번만 섞어두고, 도메인 필터는 그 순서 위에서 걸러낸다.
   const [deck] = useState(() => shuffle(CARDS));
@@ -56,16 +58,20 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
     <div
       className="fixed inset-0 z-40 flex items-end justify-center bg-ink-900/40 p-0 backdrop-blur-sm sm:items-center sm:p-6"
       onClick={onClose}
-      role="dialog"
-      aria-label="단어장"
     >
+      {/* 본체 — role="dialog" 는 배경이 아니라 여기에 붙어야 한다(배경은 그냥 어두운 막). */}
       <div
-        className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-paper shadow-card sm:rounded-3xl"
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="carddeck-title"
+        className="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-paper shadow-card outline-none sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
         <div className="flex shrink-0 items-center justify-between p-5 pb-3">
-          <h2 className="font-display text-lg font-extrabold text-ink-900">
+          <h2 id="carddeck-title" className="font-display text-lg font-extrabold text-ink-900">
             📇 단어장{" "}
             <span className="font-round text-sm font-semibold text-ink-500">
               {cards.length ? safeIndex + 1 : 0} / {cards.length}
@@ -73,6 +79,7 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
           </h2>
           <button
             onClick={onClose}
+            aria-label="단어장 닫기"
             className="rounded-full bg-ink-100 px-3 py-1 text-xs font-semibold text-ink-500 hover:bg-ink-200"
           >
             닫기 ✕
@@ -111,7 +118,7 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
         {/* 카드 한 장 */}
         <div className="flex flex-1 items-center justify-center overflow-y-auto px-5 py-4">
           {!card ? (
-            <p className="py-10 text-center text-sm text-ink-300">
+            <p className="py-10 text-center text-sm text-ink-400">
               이 분야 카드가 아직 없어요.
             </p>
           ) : (
@@ -132,7 +139,7 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
                     <p className="text-center font-display text-3xl font-extrabold leading-tight text-ink-900">
                       {card.term}
                     </p>
-                    <span className="font-hand text-sm text-ink-300">
+                    <span className="font-hand text-sm text-ink-400">
                       톡 눌러서 뒤집기 👆
                     </span>
                   </div>

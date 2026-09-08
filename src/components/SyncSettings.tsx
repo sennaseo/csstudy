@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useStudyStore } from "../store/useStudyStore";
 import { getSyncConfig } from "../utils/sync";
 import { useBack } from "../utils/useBack";
+import { useDialog } from "../utils/useDialog";
 
 function statusIcon(status: string): string {
   if (status === "ok") return "☁️";
@@ -28,6 +29,8 @@ export function SyncSettings() {
 
   const [open, setOpen] = useState(false);
   useBack(() => setOpen(false), open); // 안드로이드 뒤로가기 = 닫기
+  // 이 컴포넌트는 늘 마운트돼 있고 open 만 토글된다 → 열려 있을 때만 훅을 켠다.
+  const dialogRef = useDialog<HTMLDivElement>(() => setOpen(false), open);
   const [url, setUrl] = useState(() => getSyncConfig()?.url ?? "");
   const [token, setToken] = useState(() => getSyncConfig()?.token ?? "");
 
@@ -57,28 +60,36 @@ export function SyncSettings() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           onClick={() => setOpen(false)}
         >
+          {/* 본체 — role="dialog" 는 배경 막이 아니라 여기에 붙는다 */}
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-card"
+            ref={dialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sync-title"
+            className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-card outline-none"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-base font-extrabold text-ink-900">☁️ 클라우드 동기화</h3>
+            <h3 id="sync-title" className="text-base font-extrabold text-ink-900">☁️ 클라우드 동기화</h3>
             <p className="mt-1 text-xs leading-relaxed text-ink-500">
               AWS 에 만든 서버 주소와 토큰을 넣으면, 폰이든 컴퓨터든 진행상황이
               이어져요. (설정 방법: 프로젝트의 <b>AWS-DEPLOY.md</b> 참고)
             </p>
 
-            <label className="mt-4 block text-xs font-bold text-ink-500">
+            <label htmlFor="sync-url" className="mt-4 block text-xs font-bold text-ink-500">
               서버 주소 (Lambda 함수 URL)
             </label>
             <input
+              id="sync-url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://xxxx.lambda-url.ap-northeast-2.on.aws/"
               className="mt-1 w-full rounded-xl border-2 border-ink-200 px-3 py-2 text-sm outline-none focus:border-accent"
             />
 
-            <label className="mt-3 block text-xs font-bold text-ink-500">비밀 토큰</label>
+            <label htmlFor="sync-token" className="mt-3 block text-xs font-bold text-ink-500">비밀 토큰</label>
             <input
+              id="sync-token"
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="서버에 설정한 SYNC_TOKEN 과 동일하게"
@@ -109,6 +120,7 @@ export function SyncSettings() {
                   onClick={() => void syncNow()}
                   className="btn-3d rounded-xl border-2 border-ink-200 bg-white px-3 py-2.5 text-sm font-bold text-ink-500"
                   title="지금 동기화"
+                  aria-label="지금 동기화"
                 >
                   🔄
                 </button>
@@ -120,7 +132,7 @@ export function SyncSettings() {
                   disableSync();
                   setOpen(false);
                 }}
-                className="mt-2 w-full text-center text-xs text-ink-300 hover:text-red-400"
+                className="mt-2 w-full text-center text-xs text-ink-400 hover:text-duo-red"
               >
                 동기화 끄기
               </button>

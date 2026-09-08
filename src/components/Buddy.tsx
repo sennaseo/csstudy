@@ -94,7 +94,7 @@ function BuddyCard({ charId, xp }: { charId: string; xp: number }) {
           </span>
           <span
             className={
-              "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
+              "shrink-0 rounded-full px-1.5 py-0.5 text-xs font-bold " +
               rarity.badge
             }
           >
@@ -107,10 +107,17 @@ function BuddyCard({ charId, xp }: { charId: string; xp: number }) {
 
         {/* XP 바 — .progress-track/.progress-fill 재사용. 기본 16px 는 너무 두꺼워서
             !h-2.5 로 이 자리에서만 얇게 override (progress-fill 안의 ::after 하이라이트는 그대로 유지). */}
-        <div className="progress-track !h-2.5 mt-1.5">
+        <div
+          className="progress-track !h-2.5 mt-1.5"
+          role="progressbar"
+          aria-label={`다음 진화까지 진행도 ${Math.round(percent)}%`}
+          aria-valuenow={Math.round(percent)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div className="progress-fill" style={{ width: `${percent}%` }} />
         </div>
-        <p className="mt-0.5 text-[10px] tabular-nums text-ink-300">
+        <p className="mt-0.5 text-xs tabular-nums text-ink-400">
           {isMax
             ? `최종 진화 완료! (XP ${xp})`
             : `다음 진화까지 XP ${xp} / ${STAGE_XP[stage]}`}
