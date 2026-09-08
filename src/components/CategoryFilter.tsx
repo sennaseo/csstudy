@@ -6,6 +6,7 @@
 // - 카테고리마다 고유 파스텔 색 — 활성화하면 그 색이 진해진다.
 // =============================================================
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CATEGORY_GROUPS } from "../data/questions";
 import { useStudyStore } from "../store/useStudyStore";
 import type { Category, CategoryGroup } from "../types";
@@ -77,6 +78,10 @@ export function CategoryFilter() {
     ...visibleCategories.map((c) => ({ label: c, value: c })),
   ];
 
+  // 넘치는 칩 줄의 양끝 페이드. 그룹을 바꾸면 칩 수가 달라지므로 다시 잰다.
+  const fade = useEdgeFade<HTMLDivElement>();
+  useEffect(fade.onScroll, [chips.length]);
+
   return (
     <div className="flex flex-col gap-2.5">
       {/* ─── ① 그룹 탭 ─── */}
@@ -108,6 +113,9 @@ export function CategoryFilter() {
 
       {/* ─── ② 카테고리 칩 ─── */}
       <div
+        ref={fade.ref}
+        onScroll={fade.onScroll}
+        style={fade.style}
         className="no-scrollbar flex gap-2 overflow-x-auto pb-1 -mx-1 px-1"
         role="tablist"
         aria-label="문제 카테고리"
@@ -134,4 +142,54 @@ export function CategoryFilter() {
       </div>
     </div>
   );
+}
+
+// =============================================================
+// 가로 스크롤 줄의 "더 있어요" 단서
+//
+// 문제: 칩 줄이 화면 밖으로 넘치는데 no-scrollbar 라 스크롤바가 없다.
+// 그래서 칩이 글자 중간에서 뚝 잘린 채로 끝나고, 마우스만 쓰는 데스크탑에선
+// 숨은 카테고리가 있다는 사실조차 모른다.
+//
+// 해결: 넘칠 때만 오른쪽 끝을 서서히 투명하게 지운다(mask). 잘린 칩이
+// "칼로 자른 것"이 아니라 "안개 속으로 이어지는 것"처럼 보여서 더 있다는 게 읽힌다.
+// 세로 높이를 안 먹으므로(줄바꿈과 달리) 좁은 모달 안에서도 안전하다.
+//
+// 넘치지 않을 땐 마스크를 끈다 — 늘 켜두면 다 보이는데도 "더 있다"고 거짓말을 한다.
+// 왼쪽으로 스크롤한 뒤에는 왼쪽에도 같은 단서를 준다.
+// =============================================================
+
+/** 스크롤 위치에 따라 양끝 페이드 마스크를 만든다. 넘치지 않으면 undefined(마스크 없음). */
+export function edgeFade(el: HTMLElement | null): string | undefined {
+  if (!el) return undefined;
+  const hiddenLeft = el.scrollLeft > 1;
+  const hiddenRight = el.scrollWidth - el.clientWidth - el.scrollLeft > 1;
+  if (!hiddenLeft && !hiddenRight) return undefined;
+  const from = hiddenLeft ? "transparent, #000 24px" : "#000";
+  const to = hiddenRight ? "#000 calc(100% - 24px), transparent" : "#000";
+  return `linear-gradient(to right, ${from}, ${to})`;
+}
+
+/** 위 마스크를 붙이고 스크롤·리사이즈마다 갱신하는 훅.
+ *  ref 를 스크롤 컨테이너에 걸고, 반환된 핸들러를 onScroll 에 연결하면 된다. */
+export function useEdgeFade<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [mask, setMask] = useState<string | undefined>(undefined);
+
+  const update = useCallback(() => setMask(edgeFade(ref.current)), []);
+
+  // 마운트 직후 한 번(칩 폭이 확정된 뒤) + 창 크기가 바뀔 때마다 다시 잰다.
+  useEffect(() => {
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [update]);
+
+  return {
+    ref,
+    onScroll: update,
+    style: mask
+      ? ({ maskImage: mask, WebkitMaskImage: mask } as React.CSSProperties)
+      : undefined,
+  };
 }

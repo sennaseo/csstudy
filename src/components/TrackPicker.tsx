@@ -34,13 +34,18 @@ function TrackChip({
       onClick={onClick}
       aria-pressed={active}
       className={
-        "flex-1 rounded-xl border-b-4 px-3 py-2.5 text-xs font-extrabold transition-colors " +
+        // "프론트엔드"(5글자)가 87px 칩에서 "프론트엔 / 드"로 쪼개져 마지막 한 글자가
+        // 홀로 떨어지고, 그 칩만 2줄이라 세로 정렬도 어긋났다.
+        // → 가로 padding 을 줄이고 줄바꿈을 막아 한 줄에 앉힌다.
+        //   items-center + 같은 높이(h-full)로 세 칩의 세로 정렬을 맞춘다.
+        "flex h-full min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap " +
+        "rounded-xl border-b-4 px-1.5 py-2.5 text-xs font-extrabold transition-colors " +
         (active
           ? "border-duo-green-dim bg-duo-green text-white"
           : "border-ink-200 bg-white text-ink-500 hover:bg-ink-100")
       }
     >
-      <span className="mr-1">{emoji}</span>
+      <span>{emoji}</span>
       {label}
     </button>
   );
@@ -64,7 +69,8 @@ export function TrackPicker() {
         학습 트랙
       </p>
 
-      <div className="flex gap-2">
+      {/* items-stretch: 칩 높이를 서로 맞춰 세로 정렬이 어긋나지 않게 */}
+      <div className="flex items-stretch gap-2">
         {TRACKS.map((t) => (
           <TrackChip
             key={t.id}

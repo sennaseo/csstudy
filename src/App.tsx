@@ -33,7 +33,7 @@ const HEART_REGEN_MS = 30 * 60 * 1000;
 /** 하트 배지 — 홈 헤더와 퀴즈 상단바에서 공용.
  *  가득 차지 않았으면 "다음 하트까지 N분"을 글자로도 보여준다.
  *  예전엔 title 속성뿐이었는데, 폰에는 마우스 커서가 없어서 아무도 못 봤다. */
-function Hearts() {
+function Hearts({ withTime = false }: { withTime?: boolean }) {
   const hearts = useStudyStore((s) => s.hearts);
   const heartsUpdatedAt = useStudyStore((s) => s.heartsUpdatedAt);
 
@@ -56,8 +56,14 @@ function Hearts() {
 
   return (
     <span
-      className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1.5 shadow-chip"
-      title="하트 — 레슨에서 틀리면 1개 소모, 30분마다 1개 회복"
+      className="flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1.5 shadow-chip"
+      title={
+        "하트 — 레슨에서 틀리면 1개 소모, 30분마다 1개 회복" +
+        (isFull ? "" : ` (다음 하트까지 약 ${leftMin}분)`)
+      }
+      aria-label={
+        `하트 ${hearts}개` + (isFull ? " (가득)" : ` — 다음 하트까지 약 ${leftMin}분`)
+      }
     >
       <span className={"text-sm leading-none" + (hearts === 0 ? " grayscale" : "")}>
         ❤️
@@ -71,12 +77,33 @@ function Hearts() {
       >
         {hearts}
       </span>
-      {!isFull && (
+      {/* "N분"은 좁은 홈 헤더에서 배지를 넓혀 제목 위로 아이콘을 밀어 올렸다.
+          숫자만 남기고, 남은 시간은 title/aria 로만 알린다 (퀴즈 상단바처럼
+          자리가 넉넉한 곳은 withTime 으로 글자도 같이 보여준다). */}
+      {!isFull && withTime && (
         <span className="font-round text-xs font-bold tabular-nums text-ink-400">
           {leftMin}분
         </span>
       )}
     </span>
+  );
+}
+
+/** 하트 0 안내 — 예전엔 길(LessonPath) 맨 위에 있어서 top 758px, 즉
+ *  360x640 첫 화면 밖이었다. 정작 "왜 레슨이 안 열리지?" 를 설명하는 유일한
+ *  문구라서 헤더 바로 밑, 스크롤 없이 보이는 자리로 올렸다. */
+function HeartWarning() {
+  const hearts = useStudyStore((s) => s.hearts);
+  if (hearts > 0) return null;
+  return (
+    <div
+      role="status"
+      className="rounded-2xl border-2 border-b-4 border-duo-red-dim bg-duo-red-soft px-4 py-3 text-center text-xs font-extrabold text-duo-red-ink"
+    >
+      💔 하트를 다 썼어요 — 길의 레슨은 잠깐 쉬어요.
+      <br />
+      🔁 복습이나 ⚡ 오늘의 5문제는 하트 없이 계속할 수 있어요! (30분마다 1개 회복)
+    </div>
   );
 }
 
@@ -95,7 +122,9 @@ function PathScreen() {
   useEffect(() => {
     const open = new URLSearchParams(window.location.search).get("open");
     if (!open) return;
-    window.history.replaceState(null, "", window.location.pathname);
+    // state 는 보존한다 — ?open=deck 로 들어오면 CardDeck 이 먼저 pushState 한 항목 위에 서 있어서,
+    // null 로 덮으면 useBack 장부가 이 항목을 "우리 것 아님"으로 본다.
+    window.history.replaceState(window.history.state, "", window.location.pathname);
     if (open === "today") startToday();
   }, [startToday]);
 
@@ -115,11 +144,13 @@ function PathScreen() {
             className="h-7 w-auto shrink-0"
           />
           <div className="flex min-w-0 items-baseline gap-2">
-            <h1 className="text-lg font-extrabold tracking-tight text-ink-900">
+            {/* whitespace-nowrap: 제목이 "csStud / y" 로 쪼개지지 않게.
+                제목은 앱 이름이라 줄이지 않고, 대신 아래 우측 묶음이 줄어든다. */}
+            <h1 className="whitespace-nowrap text-lg font-extrabold tracking-tight text-ink-900">
               cs<span className="text-accent">Study</span>
             </h1>
             {/* 부제는 있으면 좋고 없어도 되는 정보 — 좁은 화면에선 자리를 양보한다 */}
-            <span className="hidden text-xs text-ink-500 sm:inline">개발 사고 회복</span>
+            <span className="hidden truncate text-xs text-ink-500 sm:inline">개발 사고 회복</span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -136,6 +167,9 @@ function PathScreen() {
           <DailyStats />
         </div>
       </header>
+
+      {/* 하트 0 경고 — 첫 화면 안(스크롤 없이 보이는 자리) */}
+      <HeartWarning />
 
       <GoalGauge />
 
@@ -211,7 +245,7 @@ function QuizScreen() {
               <div className="progress-fill" style={{ width: `${pct}%` }} />
             </div>
             {/* 하트는 레슨 모드에서만 소모되므로 레슨에서만 보여준다 */}
-            {mode === "lesson" && <Hearts />}
+            {mode === "lesson" && <Hearts withTime />}
           </>
         ) : (
           <span className="flex-1 text-sm font-bold text-ink-500">🎲 랜덤 연습</span>

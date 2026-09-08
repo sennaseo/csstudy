@@ -27,7 +27,7 @@
 // - 키보드 단축키: 1~4 = 보기 "선택", O/X = 선택, Enter = 확인(또는 계속).
 // =============================================================
 
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { useStudyStore } from "../store/useStudyStore";
 import type {
   BlankExercise,
@@ -115,8 +115,11 @@ function QuizBuddy({ qid, graded, correct }: { qid: string; graded: boolean; cor
  *  옆·위는 2px 얇은 선, 아래만 4px 두껍게 → "카드에 두께가 있다"는 착시.
  *  (.btn-3d 는 border-bottom-width 를 4px 로 강제하지만, border-2 를 함께 쓰면
  *   Tailwind 쪽이 이겨서 2px 가 될 수 있으므로 border-b-4 를 명시해준다.) */
+// break-keep = 한국어를 단어(어절) 단위로만 줄바꿈. 없으면 "…이다/다" 처럼
+// 한 글자만 둘째 줄로 떨어지는 고아 줄바꿈이 생긴다.
+// 패딩·글자를 조금 줄여 360px 에서 대부분의 보기가 1줄에 들어가게 했다.
 const BTN_BASE =
-  "btn-3d w-full rounded-2xl px-4 py-3.5 text-left text-sm font-semibold leading-snug transition-colors ";
+  "btn-3d w-full break-keep rounded-2xl px-2.5 py-2.5 text-left text-[13px] font-semibold leading-snug transition-colors ";
 const BTN_IDLE =
   BTN_BASE + "border-2 border-b-4 border-ink-200 bg-white text-ink-700 hover:bg-ink-100";
 /** 선택됨 — Macaw 파랑 테두리 + 아주 옅은 파란 틴트. 아직 채점 전이라는 신호. */
@@ -192,9 +195,10 @@ function ChoiceView({
           aria-checked={c.qid === picked}
           className={cls(c)}
         >
-          {/* 번호 배지 — 모바일에선 "몇 번째 보기"인지 알려주고,
-              데스크탑에선 그대로 1~4 단축키 힌트가 된다. */}
-          <span className="mr-2 inline-block rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60">
+          {/* 번호 배지 = 1~4 단축키 힌트. 물리 키보드가 있는 sm 이상에서만 보인다.
+              좁은 폰에서는 배지 폭(≈25px)이 첫 줄을 잘라먹어 요약문이 2줄로
+              넘어가는 원인이었는데, 정작 모바일엔 누를 숫자키도 없다. */}
+          <span className="mr-2 hidden rounded-md border border-current px-1.5 py-0.5 font-round text-[10px] font-bold opacity-60 sm:inline-block">
             {i + 1}
           </span>
           {c.text}
@@ -519,8 +523,11 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
   };
 
   const sideCls = (qid: string, isPicked: boolean, isWrong: boolean) => {
+    // h-full = 같은 행의 좌/우가 그 행에서 제일 높은 쪽에 맞춰 늘어난다.
+    // (예전엔 좌우가 따로 노는 flex 열이라 3줄짜리 카드 하나가 아래 행 전체를 밀어냈다.)
+    // 글자는 11px → 12px 이상(text-xs). 손글씨 폰트라 11px 은 읽기 어렵다.
     const base =
-      "w-full break-keep rounded-xl border-2 px-2 py-2 text-left text-[11px] font-semibold leading-snug transition-all sm:px-3 sm:py-2.5 sm:text-xs ";
+      "h-full w-full break-keep rounded-xl border-2 px-2 py-2 text-left text-xs font-semibold leading-snug transition-all sm:px-3 sm:py-2.5 sm:text-[13px] ";
     if (matched.has(qid))
       return base + "border-duo-green-dim bg-duo-green-soft text-duo-green-ink opacity-70";
     if (isWrong) return base + "animate-shake border-duo-red-dim bg-duo-red-soft text-duo-red-ink";
@@ -535,35 +542,34 @@ function MatchView({ ex, onGrade }: { ex: MatchExercise; onGrade: (correct: bool
           앗, 실수 {mistakes}번 — 그래도 끝까지 연결해보자!
         </p>
       )}
-      {/* 320px 대응: 좁은 화면에선 열 간격·글자를 줄여 8개 버튼이 한 화면에 들어오게.
-          (sm 이상에서는 원래 크기로 돌아온다) */}
-      <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-        {/* 왼쪽: 질문들 */}
-        <div className="flex flex-col gap-1.5 sm:gap-2">
-          {left.map((p) => (
-            <button
-              key={p.qid}
-              disabled={graded || matched.has(p.qid)}
-              onClick={() => setPickedLeft(pickedLeft === p.qid ? null : p.qid)}
-              className={sideCls(p.qid, pickedLeft === p.qid, false)}
-            >
-              {p.term}
-            </button>
-          ))}
-        </div>
-        {/* 오른쪽: 한 줄 설명들 */}
-        <div className="flex flex-col gap-1.5 sm:gap-2">
-          {right.map((p) => (
-            <button
-              key={p.qid}
-              disabled={graded || matched.has(p.qid) || !pickedLeft}
-              onClick={() => pickRight(p.qid)}
-              className={sideCls(p.qid, false, wrongFlash === p.qid)}
-            >
-              {p.def}
-            </button>
-          ))}
-        </div>
+      {/* 좌/우를 각각 flex 열로 두면 열마다 높이가 따로 놀아서 행이 어긋난다.
+          → 한 그리드에 좌·우를 번갈아 넣어 "같은 행"으로 만든다.
+            (items-stretch 는 grid 기본값 + 버튼의 h-full 로 행 높이가 맞춰진다)
+          320px 대응: 좁은 화면에선 간격·글자를 줄여 8개 버튼이 한 화면에 들어오게. */}
+      <div className="grid grid-cols-2 items-stretch gap-1.5 sm:gap-2">
+        {left.map((l, i) => {
+          const r = right[i];
+          return (
+            <Fragment key={l.qid}>
+              {/* 왼쪽: 질문 */}
+              <button
+                disabled={graded || matched.has(l.qid)}
+                onClick={() => setPickedLeft(pickedLeft === l.qid ? null : l.qid)}
+                className={sideCls(l.qid, pickedLeft === l.qid, false)}
+              >
+                {l.term}
+              </button>
+              {/* 오른쪽: 한 줄 설명 (같은 행) */}
+              <button
+                disabled={graded || matched.has(r.qid) || !pickedLeft}
+                onClick={() => pickRight(r.qid)}
+                className={sideCls(r.qid, false, wrongFlash === r.qid)}
+              >
+                {r.def}
+              </button>
+            </Fragment>
+          );
+        })}
       </div>
       {!pickedLeft && !graded && (
         <p className="text-center text-[11px] font-semibold text-ink-500">
@@ -608,6 +614,8 @@ export function QuestionCard() {
 
   const isCorrect = graded && lastCorrect === true;
   const isTwoStep = !!exercise && (TWO_STEP_TYPES as readonly string[]).includes(exercise.type);
+  /** q.question 을 큰 제목으로 띄워도 되는 유형인가. (match·ox 는 안 된다 — 아래 주석) */
+  const showTitle = !!exercise && exercise.type !== "match" && exercise.type !== "ox";
 
   /** 모든 유형이 공유하는 채점 처리 — 사운드/컨페티/XP 플로트까지 한 곳에서. */
   const handleGrade = (correct: boolean, selectedQid?: string) => {
@@ -798,17 +806,27 @@ export function QuestionCard() {
             {/* 버디가 문제 옆에서 응원한다 (듀오 캐릭터처럼) */}
             <QuizBuddy qid={q.id} graded={graded} correct={isCorrect} />
 
-            <div className="rounded-2xl bg-white px-5 py-6 shadow-card">
-              <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-accent">
-                {PROMPT_BY_TYPE[exercise.type]}
-              </p>
-              {/* 매칭은 질문이 4개라서 큰 제목 생략 — 나머지는 질문을 크게 */}
-              {exercise.type !== "match" && (
+            {/* 큰 제목을 생략하는 유형:
+                - match: 질문이 4개라 하나만 크게 띄울 수 없다.
+                - ox: 판정 문장이 "다른 문제의 요약"일 수 있다(buildOxExercise).
+                      그때 q.question 을 제목으로 띄우면 전혀 다른 주제가 나란히 떠서
+                      무엇을 판단하라는 건지 알 수 없다 → 판정 문장 하나만 보여준다.
+                제목이 없으면 흰 카드는 한 줄짜리 빈 상자가 되므로, 안내 문구만
+                맨몸으로 둔다 (작은 화면에서 60px 을 벌어 보기가 화면 안에 들어온다). */}
+            {showTitle ? (
+              <div className="rounded-2xl bg-white px-5 py-6 shadow-card">
+                <p className="mb-2 text-xs font-extrabold uppercase tracking-wider text-accent">
+                  {PROMPT_BY_TYPE[exercise.type]}
+                </p>
                 <h2 className="text-lg font-extrabold leading-relaxed text-ink-900">
                   {q.question}
                 </h2>
-              )}
-            </div>
+              </div>
+            ) : (
+              <p className="text-xs font-extrabold uppercase tracking-wider text-accent">
+                {PROMPT_BY_TYPE[exercise.type]}
+              </p>
+            )}
 
             {renderExercise()}
           </article>

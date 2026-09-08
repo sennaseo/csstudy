@@ -12,6 +12,7 @@ import { CARDS, CARD_DOMAINS, CARD_DOMAIN_EMOJI } from "../data/cards";
 import type { CardDomain, CsCard } from "../data/cards";
 import { useBack } from "../utils/useBack";
 import { useDialog } from "../utils/useDialog";
+import { useEdgeFade } from "./CategoryFilter";
 
 /** Fisher–Yates. 원본 배열(CARDS)은 건드리지 않게 복사본을 섞는다. */
 function shuffle(cards: CsCard[]): CsCard[] {
@@ -31,6 +32,8 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
   const [deck] = useState(() => shuffle(CARDS));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
+  // 도메인 칩 줄도 좁은 화면에서 넘친다 → 양끝 페이드로 "더 있어요" 단서를 준다.
+  const fade = useEdgeFade<HTMLDivElement>();
 
   const cards = useMemo(
     () => (domain ? deck.filter((c) => c.domain === domain) : deck),
@@ -87,7 +90,12 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* 도메인 필터 칩 */}
-        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-5 pb-3">
+        <div
+          ref={fade.ref}
+          onScroll={fade.onScroll}
+          style={fade.style}
+          className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-5 pb-3"
+        >
           <button
             onClick={() => pickDomain(null)}
             className={

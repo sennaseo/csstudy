@@ -204,7 +204,10 @@ export function LessonComplete() {
           {result.answers.map((a, i) => (
             <li key={i} className="flex gap-2 text-sm text-ink-700">
               <span>{a.correct ? "✅" : "❌"}</span>
-              <span className="line-clamp-1">
+              {/* 긴 지문(50자+)은 한 줄로 자르되 "..."를 남긴다.
+                  line-clamp 만 쓰면 text-overflow 가 clip 이라 글자가 소리 없이
+                  잘려서, 뒤에 내용이 더 있다는 걸 알 수가 없다. */}
+              <span className="line-clamp-1 text-ellipsis">
                 {Q_BY_ID.get(a.qid)?.question ?? a.qid}
               </span>
             </li>
