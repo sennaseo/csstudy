@@ -202,6 +202,8 @@ export interface LessonResult {
   failed?: boolean;
   /** 복습 보상으로 하트를 실제로 1개 회복했는지 (가득이면 false). */
   heartsRecovered?: boolean;
+  /** 이번 세션에서 푼 문제와 정오 (큐 순서). 완료 화면의 카테고리별 분석용. */
+  answers: { qid: string; correct: boolean }[];
 }
 
 interface StudyState extends PersistedState {
@@ -233,6 +235,8 @@ interface StudyState extends PersistedState {
   lessonXp: number;
   /** 마지막으로 끝낸 레슨 결과 (완료 화면용). */
   lessonResult: LessonResult | null;
+  /** 이번 세션의 문제별 정오 (transient). 큐를 새로 시작하면 비운다. */
+  lessonAnswers: { qid: string; correct: boolean }[];
 
   /** 지금 세션의 연속 정답 수 (transient). 최고 기록(bestCombo)은 PersistedState 에 있다. */
   combo: number;
@@ -393,6 +397,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
     lessonCorrect: 0,
     lessonXp: 0,
     lessonResult: null,
+    lessonAnswers: [],
     combo: 0, // 세션 한정 — bestCombo 는 persisted 에서 복원된다.
     unsure: false,
     syncStatus: getSyncConfig() ? "syncing" : "off",
@@ -590,6 +595,10 @@ export const useStudyStore = create<StudyState>((set, get) => {
         return;
       }
 
+      set((s) => ({
+        lessonAnswers: [...s.lessonAnswers, { qid: currentQuestion.id, correct }],
+      }));
+
       // ── 하트를 다 잃으면 레슨 실패 (듀오링고식) ──
       if (mode === "lesson" && !correct && get().hearts <= 0) {
         const s = get();
@@ -600,6 +609,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
             total: s.lessonQueue.length,
             xpGained: s.lessonXp,
             failed: true,
+            answers: s.lessonAnswers,
           },
           view: "lessonComplete",
         });
@@ -652,6 +662,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
             total,
             xpGained: get().lessonXp,
             heartsRecovered,
+            answers: get().lessonAnswers,
           },
           view: "lessonComplete",
         });
@@ -664,6 +675,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
           lessonIndex: 0,
           lessonCorrect: 0,
           lessonXp: 0,
+          lessonAnswers: [],
           currentQuestion: firstQ,
           exercise: firstQ ? buildExercise(firstQ) : null,
           selectedQid: null,
@@ -692,7 +704,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       set({
         lessonCorrect: newCorrect,
         lessonResult: activeLessonId
-          ? { lessonId: activeLessonId, correct: newCorrect, total, xpGained }
+          ? { lessonId: activeLessonId, correct: newCorrect, total, xpGained, answers: get().lessonAnswers }
           : null,
         view: "lessonComplete",
       });
@@ -722,6 +734,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonIndex: 0,
         lessonCorrect: 0,
         lessonXp: 0,
+        lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
         exercise: first ? buildExercise(first) : null,
@@ -755,6 +768,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonIndex: 0,
         lessonCorrect: 0,
         lessonXp: 0,
+        lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
         exercise: buildExercise(first),
@@ -785,6 +799,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonIndex: 0,
         lessonCorrect: 0,
         lessonXp: 0,
+        lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
         exercise: buildExercise(first),

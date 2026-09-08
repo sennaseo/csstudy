@@ -424,6 +424,20 @@ button {
   transform: translate(4px, 4px) scale(1.08);
 }
 
+/* ─── 도넛 링 채우기 ───────────────────────────────────────────
+   완료 화면의 원형 게이지. 원 둘레(--circ)만큼 비워둔 상태에서
+   인라인 stroke-dashoffset 값까지 줄어들며 "그려지는" 효과.
+   from 만 쓰고 to 는 안 쓴다 — 요소의 인라인 값이 곧 도착점이다. */
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: var(--circ);
+  }
+}
+
+.ring-fill {
+  animation: ring-fill 0.9s ease-out;
+}
+
 /* ─── XP 플로트 ───────────────────────────────────────────────
    "+10 XP" 같은 숫자가 위로 떠오르며 사라지는 효과.
    forwards = 끝난 뒤 사라진 상태 그대로 유지(안 그러면 도로 나타난다). */
