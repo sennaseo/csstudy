@@ -854,8 +854,13 @@ export function QuestionCard() {
           (부모 main 이 px-4 를 주고 있어서, 그만큼 음수 마진으로 되돌리는 흔한 기법). */}
       {/* 시트가 화면을 다 먹지 않도록 전체 높이에 상한을 건다.
           dvh = "지금 실제로 보이는 화면 높이" (모바일 주소창이 접혔다 펴져도 정확).
-          55dvh 로 묶으면 667px 짜리 작은 폰에서도 위쪽 문제 지문이 두 줄 이상 남는다. */}
-      <div className="-mx-4 flex max-h-[55dvh] shrink-0 flex-col border-t-2 border-ink-200 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
+
+          왜 45dvh 인가: 해설이 평균 217자라 시트는 상한이 얼마든 늘 꽉 찬다.
+          55dvh 였을 때 640px 폰에서 본문에 102px 만 남아, 방금 고른 오답과 정답
+          보기가 화면 밖으로 밀려났다 — 채점 직후에 가장 보고 싶은 두 가지다.
+          10%p 를 본문에 돌려주면 보기 4개가 들어온다. 해설은 어차피 넘쳐서
+          자체 스크롤되므로, 줄어드는 건 "한 번에 보이는 해설 줄 수"뿐이다. */}
+      <div className="-mx-4 flex max-h-[45dvh] shrink-0 flex-col border-t-2 border-ink-200 bg-white px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3">
         {!graded ? (
           isTwoStep ? (
             <>
@@ -930,7 +935,7 @@ export function QuestionCard() {
 
               {/* 해설 — 시트에 남는 공간만 쓰고, 넘치면 여기 안에서만 스크롤한다.
                   (max-h-[30vh] 고정이던 걸 flex-1 min-h-0 으로 바꿔서
-                   시트 전체 상한 55dvh 안에 알아서 들어가게 했다.) */}
+                   시트 전체 상한 45dvh 안에 알아서 들어가게 했다.) */}
               <div className="min-h-0 flex-1 overflow-y-auto rounded-xl bg-white/70 p-4 text-sm font-semibold leading-relaxed text-ink-700">
                 {q.answer}
                 {q.code && (
