@@ -516,3 +516,54 @@ pre.bg-ink-900.text-ink-100 {
   background-color: #FFFDF8;
 }
 /* 말풍선 꼬리(::after)도 같은 종이색이라 자동으로 맞는다 — 위쪽 규칙 참고. */
+
+/* ─── 모션 줄이기(prefers-reduced-motion) ──────────────────────
+   OS 설정에서 "동작 줄이기"를 켠 사람에게는 무한 반복·큰 움직임이
+   멀미를 일으킨다. 그런 것만 끈다 — 요소는 그대로 보이고, 움직임만 멈춘다.
+   (컨페티는 애니메이션이 끝나야 사라지는 구조라 아예 안 보이게 숨긴다.
+    장식이라 없어도 레이아웃에 영향이 없다.) */
+@media (prefers-reduced-motion: reduce) {
+  .animate-bob,
+  .animate-beat,
+  .animate-pop,
+  .animate-bounce-in,
+  .animate-slide-up,
+  .animate-float-up,
+  .ring-fill,
+  .float-up,
+  .feedback-rise,
+  .shake {
+    animation: none !important;
+  }
+  /* 카드 플립은 animation 이 아니라 transition 으로 720도 돈다 — transition 을 꺼야 멈춘다.
+     끄면 즉시 뒤집히므로 기능(앞/뒷면 보기)은 그대로다. */
+  .flip-inner {
+    transition: none !important;
+  }
+  /* 컨페티: 사라지는 애니메이션이 곧 수명이라, 끄면 화면에 영원히 남는다. 그래서 숨긴다. */
+  .confetti-piece {
+    display: none !important;
+  }
+  /* 진행바가 스르륵 차는 것도 큰 움직임에 속한다 — 값은 그대로, 이동만 없앤다. */
+  .progress-fill {
+    transition: none !important;
+  }
+}
+
+/* ─── 키보드 포커스 표시 ───────────────────────────────────────
+   버튼에 -webkit-tap-highlight-color: transparent 를 걸어둔 탓에
+   키보드(Tab)로 이동하는 사람은 지금 어디에 있는지 볼 방법이 없었다.
+   :focus-visible 은 "키보드로 왔을 때만" 켜지므로 마우스/터치 사용자에게는
+   테두리가 뜨지 않는다 — 손그림 톤을 해치지 않는다.
+   outline 은 border-radius 를 브라우저가 알아서 따라가므로 삐뚤한 모서리도 그대로 감싼다. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #3B5BDB; /* accent — 볼펜 파랑 */
+  outline-offset: 2px;
+  border-radius: inherit;     /* 삐뚤한 모서리를 그대로 따라가게 */
+}
