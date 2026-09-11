@@ -1,5 +1,5 @@
 // =============================================================
-// SyncSettings — 클라우드 동기화 설정 (헤더의 ☁️ 버튼)
+// SyncSettings — 클라우드 동기화 설정 (마이 탭의 상태 칩)
 //
 // - AWS 에 배포한 백엔드의 [함수 URL + 비밀 토큰]을 입력하면
 //   이 기기의 진행상황이 서버와 자동으로 오간다.
@@ -12,6 +12,14 @@ import { useStudyStore } from "../store/useStudyStore";
 import { getSyncConfig } from "../utils/sync";
 import { useBack } from "../utils/useBack";
 import { useDialog } from "../utils/useDialog";
+
+/** 칩에 붙는 한 마디. 모달 안의 긴 설명과 같은 4분기를 짧게 줄인 것. */
+function statusLabel(status: string): string {
+  if (status === "ok") return "연결됨";
+  if (status === "syncing") return "동기화 중";
+  if (status === "error") return "오류";
+  return "미설정";
+}
 
 function statusIcon(status: string): string {
   if (status === "ok") return "☁️";
@@ -42,17 +50,17 @@ export function SyncSettings() {
 
   return (
     <>
-      {/* 헤더용 작은 버튼 — 상태가 아이콘으로 보인다 */}
+      {/* 마이 탭의 상태 칩 — 옆 행들(🔥 0일, ❤️ 5)과 같은 생김새로 맞춘다.
+          예전엔 아이콘만 있고 미설정이면 opacity-30 이라, 흰 카드 위에서는
+          그 행만 텅 빈 것처럼 보였다. 글자를 붙여 "눌러도 되는 것"으로 만든다. */}
       <button
         onClick={() => setOpen(true)}
         title="클라우드 동기화 설정"
-        aria-label="동기화 설정"
-        className={
-          "text-lg transition-opacity " +
-          (syncStatus === "off" ? "opacity-30 grayscale" : "opacity-90")
-        }
+        aria-label={`동기화 설정 — ${statusLabel(syncStatus)}`}
+        className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-ink-200 bg-white px-3 py-1.5 text-xs font-extrabold text-ink-700"
       >
-        {statusIcon(syncStatus)}
+        <span aria-hidden>{statusIcon(syncStatus)}</span>
+        {statusLabel(syncStatus)}
       </button>
 
       {open && (

@@ -1,11 +1,19 @@
 // =============================================================
 // App
 // - 화면(view)을 3가지로 분기한다:
-//     · path           : 스킬 패스(홈) — 감긴 길 + 스탯 + 버디 + 랜덤 연습
+//     · path           : 탭 화면 — 하단 탭바로 홈/퀴즈/도감/마이를 오간다
 //     · quiz           : 문제 풀이 — 상단바(닫기/진행도/하트) + 퀴즈 카드
 //     · lessonComplete : 레슨 완료(또는 실패) 화면
+// - 탭 화면(TabsScreen) 안의 4개 탭 (store 의 tab):
+//     · home       : 목표 게이지 · 트랙 고르기 · 원탭 시작 · 버디
+//     · quiz       : 트랙 진행도 + 감긴 길(스킬 패스)
+//     · collection : 캐릭터 도감
+//     · my         : 연속 학습 · 하트 · 단어장 · 클라우드 동기화
+//   예전엔 이 전부가 홈 한 장에 세로로 쌓여 있어서 첫 화면이 8000px 짜리
+//   두루마리였다. 탭으로 나눠 한 화면에 한 가지 일만 보이게 했다.
 // - 좁은 한 컬럼 — 모바일/데스크탑 동일 레이아웃, 가독성 위해 max-w 제한.
 // - safe-area padding: 홈 화면에 설치(PWA)했을 때 노치/홈바와 안 겹치게.
+//   단, 탭 화면은 .safe-area 를 쓰지 않는다 (아래 <main> 주석 참고).
 // =============================================================
 
 import { useEffect, useState } from "react";
@@ -13,6 +21,7 @@ import { useEffect, useState } from "react";
 import { Buddy } from "./components/Buddy";
 import { CardDeck } from "./components/CardDeck";
 import { CategoryFilter } from "./components/CategoryFilter";
+import { CollectionBook } from "./components/CollectionBook";
 import { DailyStats } from "./components/DailyStats";
 import { GoalGauge } from "./components/GoalGauge";
 import { LessonComplete } from "./components/LessonComplete";
@@ -21,7 +30,8 @@ import { QuestionCard } from "./components/QuestionCard";
 import { QuickActions } from "./components/QuickActions";
 import { RewardOverlay } from "./components/RewardOverlay";
 import { SyncSettings } from "./components/SyncSettings";
-import { TrackPicker } from "./components/TrackPicker";
+import { TabBar } from "./components/TabBar";
+import { TrackPicker, TrackProgress } from "./components/TrackPicker";
 import { MAX_HEARTS, useStudyStore } from "./store/useStudyStore";
 import { useBack } from "./utils/useBack";
 
@@ -107,10 +117,57 @@ function HeartWarning() {
   );
 }
 
-/** 홈 화면 — 감긴 길(스킬 패스)이 메인.
- *  단어장은 풀이가 아니라 "훑어보기"라 화면(view)을 새로 만들지 않고
- *  도감과 같은 모달로 띄운다 — 하트·큐 같은 진행 상태를 건드릴 이유가 없다. */
-function PathScreen() {
+/** 마이 탭 — 예전엔 헤더 우측에 아이콘으로 다닥다닥 붙어 있던 것들
+ *  (연속 학습 칩 · 하트 · 단어장 · 클라우드 동기화)을 한 카드에 줄 세운 곳.
+ *  360px 폰에서는 아이콘 4개만으로 헤더 폭이 터졌는데, 하루에 한 번 쓸까 말까 한
+ *  기능들이라 "서랍"을 따로 만들어 옮겼다.
+ *
+ *  App.tsx 안의 로컬 함수인 이유: 하트 행이 이 파일의 <Hearts withTime /> 을
+ *  재사용해야 하는데, 별도 파일로 빼면 App ↔ MyScreen 순환 import 가 된다. */
+function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
+  return (
+    <div className="divide-y-2 divide-ink-200 rounded-2xl border-2 border-ink-200 bg-white">
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-sm font-extrabold text-ink-900">🔥 연속 학습</span>
+        <DailyStats />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <span className="min-w-0">
+          <span className="block text-sm font-extrabold text-ink-900">❤️ 하트</span>
+          <span className="block text-xs text-ink-500">
+            틀리면 1개 소모 · 30분마다 1개 회복
+          </span>
+        </span>
+        <Hearts withTime />
+      </div>
+
+      {/* 행 전체가 버튼 — 폰에서 ›(작은 글자) 만 누르게 하면 과녁이 너무 좁다 */}
+      <button
+        onClick={onOpenDeck}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-extrabold text-ink-900">📇 단어장</span>
+          <span className="block text-xs text-ink-500">CS 지식을 한두 줄로 훑어보기</span>
+        </span>
+        <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
+      </button>
+
+      <div className="flex items-center justify-between px-4 py-3">
+        <span className="text-sm font-extrabold text-ink-900">☁️ 클라우드 동기화</span>
+        <SyncSettings />
+      </div>
+    </div>
+  );
+}
+
+/** 탭 화면 — 헤더 + 지금 고른 탭의 본문 + 하단 탭바.
+ *  단어장은 풀이가 아니라 "훑어보기"라 탭을 따로 주지 않고 모달로 띄운다 —
+ *  하트·큐 같은 진행 상태를 건드릴 이유가 없고, 어느 탭에서든 열려야 하니까. */
+function TabsScreen() {
+  const tab = useStudyStore((s) => s.tab);
+
   // PWA 홈화면 아이콘을 길게 누르면 나오는 바로가기(manifest 의 shortcuts)가
   // ./?open=deck / ./?open=today 로 들어온다. 앱이 뜨자마자 그 화면으로 점프시킨다.
   // 한 번 읽고 주소는 지운다 — 안 지우면 새로고침할 때마다 같은 화면이 다시 열린다.
@@ -130,9 +187,10 @@ function PathScreen() {
 
   return (
     <>
-      {/* 헤더 — 360px 폰에서는 우측 아이콘 4개만으로도 폭이 빠듯하다.
-          그래서 (1) 부제는 좁은 화면에서 숨기고(sm:inline), (2) 로고 묶음은 shrink 를 허용해
-          이름이 필요하면 줄바꿈되게 두고, (3) 우측 아이콘 줄은 shrink-0 으로 절대 안 찌그러뜨린다. */}
+      {/* 헤더 — 우측에 아이콘 4개가 있던 시절엔 360px 폰에서 폭이 터졌다.
+          지금은 나머지를 전부 마이 탭으로 내려보내고 하트만 남겼다.
+          그래도 (1) 부제는 좁은 화면에서 숨기고(sm:inline), (2) 로고 묶음은 shrink 를 허용하고,
+          (3) 우측 묶음은 shrink-0 으로 안 찌그러뜨리는 원칙은 그대로 둔다. */}
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           {/* 로고 고양이 — 글자는 이미지로 안 넣는다.
@@ -154,40 +212,46 @@ function PathScreen() {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <button
-            onClick={() => setIsDeckOpen(true)}
-            className="rounded-full bg-white px-2.5 py-1.5 text-sm shadow-chip transition-transform active:scale-95"
-            title="단어장 — CS 지식을 한두 줄로 훑어보기"
-            aria-label="단어장 열기"
-          >
-            📇
-          </button>
-          <SyncSettings />
           <Hearts />
-          <DailyStats />
         </div>
       </header>
 
       {/* 하트 0 경고 — 첫 화면 안(스크롤 없이 보이는 자리) */}
       <HeartWarning />
 
-      <GoalGauge />
+      {tab === "home" && (
+        <>
+          <GoalGauge />
+          {/* 역할별 로드맵(트랙) 선택 + 완주 목표 */}
+          <TrackPicker />
+          {/* 원탭 시작 — 오늘의 5문제 / 복습 */}
+          <QuickActions />
+          {/* 버디(캐릭터) — 예전엔 길(8000px) 맨 아래라 사실상 아무도 못 봤다.
+              캐릭터가 이 앱의 정서적 핵심이니 스크롤 없이 보이는 자리로 올렸다. */}
+          <Buddy />
+        </>
+      )}
 
-      {/* 역할별 로드맵(트랙) 선택 + 완주 목표 */}
-      <TrackPicker />
+      {tab === "quiz" && (
+        <>
+          {/* 지금 트랙을 어디까지 걸었는지 — 길 위에 붙는 머리말 */}
+          <TrackProgress />
+          {/* 감긴 길 (랜덤 연습 버튼도 길 끝에 포함) */}
+          <LessonPath />
+        </>
+      )}
 
-      {/* 원탭 시작 — 오늘의 5문제 / 복습 */}
-      <QuickActions />
+      {tab === "collection" && <CollectionBook />}
 
-      {/* 버디(캐릭터) — 예전엔 길(8000px) 맨 아래라 사실상 아무도 못 봤다.
-          캐릭터가 이 앱의 정서적 핵심이니 스크롤 없이 보이는 자리로 올렸다. */}
-      <Buddy />
+      {tab === "my" && <MyScreen onOpenDeck={() => setIsDeckOpen(true)} />}
 
-      {/* 감긴 길 (랜덤 연습 버튼도 길 끝에 포함) */}
-      <LessonPath />
-
-      {/* 단어장 — 상단 📇 버튼으로 여는 모달 */}
+      {/* 단어장 — 마이 탭에서 여는 모달. 탭과 무관하게 마운트해 둬서
+          ?open=deck 로 들어왔을 때도 어느 탭에서든 열린다. */}
       {isDeckOpen && <CardDeck onClose={() => setIsDeckOpen(false)} />}
+
+      {/* 하단 탭바 — fixed 라 본문 흐름에서 빠진다.
+          가려지는 만큼은 <main> 의 pb 로 비워준다. */}
+      <TabBar />
     </>
   );
 }
@@ -279,10 +343,16 @@ export default function App() {
           (isQuiz
             ? // 하단 padding 은 footer 가 직접 safe-area 를 챙기므로 여기선 위쪽만.
               "h-full pt-[max(1rem,env(safe-area-inset-top))]"
-            : "safe-area py-6 sm:py-10")
+            : view === "path"
+              ? // 탭 화면은 .safe-area 를 못 쓴다 — index.css 에서 @tailwind utilities
+                // *뒤에* 정의돼 있어서 py-* 를 덮어쓴다(=pb-20 같은 유틸이 안 먹는다).
+                // 그래서 안전영역을 arbitrary value 로 직접 적는다.
+                // 아래 4.5rem 은 fixed 탭바에 가려지는 높이만큼 비워두는 자리.
+                "pt-[max(1.5rem,env(safe-area-inset-top))] pb-[calc(4.5rem+env(safe-area-inset-bottom))]"
+              : "safe-area py-6 sm:py-10")
         }
       >
-        {view === "path" && <PathScreen />}
+        {view === "path" && <TabsScreen />}
         {view === "quiz" && <QuizScreen />}
         {view === "lessonComplete" && <LessonComplete />}
       </main>

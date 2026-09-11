@@ -3,17 +3,12 @@
 // - 오늘의 목표(5문제) 진행 게이지.
 // - 게임의 "경험치 바" 같은 역할 — 채워지는 게 보이면 한 문제 더 풀고 싶어진다.
 // - 목표 달성 후에도 카운트는 계속 올라가지만 바는 100%에서 멈춘다.
+// - 바 아래 응원 문구는 없앴다: 숫자(3/5)가 이미 "몇 개 더"를 말해주고,
+//   목표 달성 시 숫자가 초록으로 바뀌는 피드백도 이미 있다 — 글 한 줄 더 얹으면
+//   "홈을 가볍게"라는 목적에 역행한다.
 // =============================================================
 
 import { DAILY_GOAL, useStudyStore } from "../store/useStudyStore";
-
-/** 진행도에 따라 응원 문구를 바꿔준다 — 단계별 피드백. */
-function messageFor(count: number): string {
-  if (count === 0) return "오늘의 첫 문제를 풀어볼까요?";
-  if (count < DAILY_GOAL) return `좋아요, ${DAILY_GOAL - count}문제만 더!`;
-  if (count === DAILY_GOAL) return "🎉 오늘 목표 달성! 여기서 멈춰도 충분해요.";
-  return `목표 초과 달성! 무리는 금물 🙂`;
-}
 
 export function GoalGauge() {
   const count = useStudyStore((s) => s.getTodayCount());
@@ -48,10 +43,6 @@ export function GoalGauge() {
       >
         <div className="progress-fill" style={{ width: `${percent}%` }} />
       </div>
-
-      <p className={"mt-2 text-xs " + (isDone ? "font-bold text-duo-green-ink" : "text-ink-500")}>
-        {messageFor(count)}
-      </p>
     </div>
   );
 }

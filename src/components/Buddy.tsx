@@ -3,10 +3,9 @@
 // - 대표 캐릭터를 메인 화면에 데리고 다니는 위젯.
 // - 캐릭터 아트 + 단계 이름 + 다음 진화까지의 XP 바.
 // - 아직 한 마리도 없으면 "첫 문제를 풀어보세요" 안내.
-// - 우측 상단 버튼으로 도감(CollectionBook) 열기.
+// - 카드 전체가 도감 탭으로 가는 버튼 — 눌러도 되는 곳이 카드 어디든이라는 신호.
 // =============================================================
 
-import { useState } from "react";
 import {
   findCharacter,
   RARITY_INFO,
@@ -15,50 +14,46 @@ import {
   STAGE_XP,
 } from "../data/characters";
 import { useStudyStore } from "../store/useStudyStore";
-import { CollectionBook } from "./CollectionBook";
 
 export function Buddy() {
   const buddies = useStudyStore((s) => s.buddies);
   const activeBuddyId = useStudyStore((s) => s.activeBuddyId);
-  const [isBookOpen, setIsBookOpen] = useState(false);
+  const setTab = useStudyStore((s) => s.setTab);
 
   const ownedCount = Object.keys(buddies).length;
   const character = activeBuddyId ? findCharacter(activeBuddyId) : undefined;
   const record = activeBuddyId ? buddies[activeBuddyId] : undefined;
 
   return (
-    <>
-      {/* 카드 — 그림자 대신 흰 배경 + Swan(ink-200) 테두리 라운드 카드 */}
-      <div className="rounded-2xl border-2 border-ink-200 bg-white p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-ink-900">내 버디</span>
-          {/* 도감 버튼 — accent-soft 배경 + accent 글자 (토큰이 이제 Macaw 파랑이라 자동 재스킨) */}
-          <button
-            onClick={() => setIsBookOpen(true)}
-            className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent transition-colors hover:bg-accent hover:text-white"
-          >
-            📖 도감 {ownedCount}/12
-          </button>
-        </div>
-
-        {character && record ? (
-          <BuddyCard
-            charId={character.id}
-            xp={record.xp}
-          />
-        ) : (
-          <p className="mt-3 text-center text-sm leading-relaxed text-ink-500">
-            아직 버디가 없어요.
-            <br />
-            <span className="font-semibold text-accent">
-              첫 문제를 풀면 친구가 찾아옵니다! 🐣
-            </span>
-          </p>
-        )}
+    // 카드 전체 — 그림자 대신 흰 배경 + Swan(ink-200) 테두리 라운드 카드. 누르면 도감 탭으로.
+    <button
+      type="button"
+      onClick={() => setTab("collection")}
+      className="w-full text-left rounded-2xl border-2 border-ink-200 bg-white p-4 active:scale-[0.99]"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-ink-900">내 버디</span>
+        {/* 도감 배지 — 버튼이 아니라 span. 진짜 버튼은 바깥 카드 하나뿐(중첩 버튼 금지). ›로 이동 힌트만 남김 */}
+        <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent transition-colors">
+          📖 도감 {ownedCount}/12 ›
+        </span>
       </div>
 
-      {isBookOpen && <CollectionBook onClose={() => setIsBookOpen(false)} />}
-    </>
+      {character && record ? (
+        <BuddyCard
+          charId={character.id}
+          xp={record.xp}
+        />
+      ) : (
+        <p className="mt-3 text-center text-sm leading-relaxed text-ink-500">
+          아직 버디가 없어요.
+          <br />
+          <span className="font-semibold text-accent">
+            첫 문제를 풀면 친구가 찾아옵니다! 🐣
+          </span>
+        </p>
+      )}
+    </button>
   );
 }
 
@@ -76,7 +71,10 @@ function BuddyCard({ charId, xp }: { charId: string; xp: number }) {
   return (
     <div className="mt-3 flex items-center gap-4">
       {/* 아트 — 줄 배열을 그대로 pre 로. 레어 이상은 은은한 글로우 */}
+      {/* 카드 전체가 버튼이 되면서, 스크린리더가 버튼 이름으로 아트의 기호 문자까지
+          읽어버린다. 그림은 장식이니 이름에서 빼고 이름·단계 글자만 읽히게 한다. */}
       <div
+        aria-hidden
         className={
           "flex h-20 min-w-20 items-center justify-center rounded-xl bg-accent-soft/50 px-3 " +
           rarity.glow

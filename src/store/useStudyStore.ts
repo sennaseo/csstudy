@@ -176,8 +176,15 @@ export interface PendingReward {
   stage?: 2 | 3;
 }
 
-/** 지금 보여줄 화면. path=스킬트리(홈), quiz=문제풀이, lessonComplete=레슨 완료 축하. */
+/** 지금 보여줄 화면. path=탭 화면(홈/퀴즈/도감/마이), quiz=문제풀이, lessonComplete=레슨 완료 축하.
+ *  "path" 라는 이름은 원래 스킬트리(길) 화면이라 붙었는데, 하단 탭바가 생기면서
+ *  뜻이 "탭으로 오가는 평소 화면 전체"로 넓어졌다. 이름은 그대로 둔다 —
+ *  goHome·useBack 등 곳곳이 이 리터럴을 쓰고 있어 개명은 득보다 실이 크다. */
 export type AppView = "path" | "quiz" | "lessonComplete";
+
+/** 탭 화면(view:"path") 안에서 지금 어느 탭인지. 건물 층수 같은 것 —
+ *  건물(view)은 그대로고 엘리베이터로 층만 옮겨 다닌다. */
+export type AppTab = "home" | "quiz" | "collection" | "my";
 
 /**
  * 퀴즈 동작 방식.
@@ -222,6 +229,9 @@ interface StudyState extends PersistedState {
 
   // ── 화면/모드 (transient) ──
   view: AppView;
+  /** 탭 화면에서 고른 탭. view 와 마찬가지로 저장하지 않는다 —
+   *  앱을 다시 켜면 언제나 홈에서 출발하는 게 덜 헷갈린다. */
+  tab: AppTab;
   mode: QuizMode;
   /** 진행 중인 레슨 노드 id (lesson 모드일 때). */
   activeLessonId: string | null;
@@ -284,8 +294,11 @@ interface StudyState extends PersistedState {
   configureSync: (cfg: SyncConfig) => void;
   /** 동기화 끄기 (로컬 저장만 유지). */
   disableSync: () => void;
-  /** 홈(스킬 패스)으로 돌아간다. */
+  /** 홈(탭 화면)으로 돌아간다. 탭은 그대로 둔다 — 퀴즈를 끝내고 나오면
+   *  떠났던 탭에 그대로 되돌아오는 게 자연스럽다. */
   goHome: () => void;
+  /** 하단 탭바에서 탭 갈아타기. */
+  setTab: (tab: AppTab) => void;
   /** 경과 시간만큼 하트를 회복시킨다 (앱 시작/포커스/레슨 시작 시 호출). */
   regenHearts: () => void;
   /** 노드 잠금 여부 — 첫 노드이거나 (지금 트랙 순서상) 직전 노드를 완료했으면 열림. */
@@ -390,6 +403,8 @@ export const useStudyStore = create<StudyState>((set, get) => {
     lastCorrect: null,
     pendingReward: null,
     view: "path",
+    // ...persisted 뒤에 하드코딩 — 저장값을 덮어써서 재시작하면 언제나 홈 탭.
+    tab: "home",
     mode: "lesson",
     activeLessonId: null,
     lessonQueue: [],
@@ -847,6 +862,8 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     goHome: () => set({ view: "path" }),
+
+    setTab: (tab) => set({ tab }),
 
     regenHearts: () => {
       const { hearts, heartsUpdatedAt } = get();
