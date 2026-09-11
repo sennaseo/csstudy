@@ -4,5 +4,5 @@
     <string name="title_activity_main">csStudy</string>
     <string name="package_name">io.github.sennaseo.csstudy</string>
     <string name="custom_url_scheme">io.github.sennaseo.csstudy</string>
-    <string name="widget_description">CS 용어 카드 한 장</string>
+    <string name="widget_description">CS 용어 카드 — 좌우를 탭해 넘기기</string>
 </resources>

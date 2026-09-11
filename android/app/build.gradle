@@ -78,7 +78,6 @@ dependencies {
     // 진짜 Compose가 아니라 RemoteViews로 변환되는데, Glance가 그 변환을 대신 해준다.
     implementation platform("androidx.compose:compose-bom:$composeBomVersion")
     implementation "androidx.glance:glance-appwidget:$glanceVersion"
-    implementation "androidx.glance:glance-material3:$glanceVersion"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

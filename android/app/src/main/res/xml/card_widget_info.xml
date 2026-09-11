@@ -2,12 +2,13 @@
 <!--
   updatePeriodMillis 를 일부러 안 넣었다.
   안드로이드 최소 주기가 30분이라 "자주 바뀌는 느낌"도 못 주면서 배터리만 먹는다.
-  카드는 사용자가 "다음"을 누를 때만 바뀐다.
+  카드는 사용자가 위젯 좌/우를 탭할 때만 바뀐다 (왼쪽 절반 = 이전, 오른쪽 절반 = 다음).
+  크기를 키운 이유: 용어·정의·비유를 한 화면에 같이 보여주려면 2x2(140dp)로는 물리적으로 모자란다. 가장 긴 예시가 135자다.
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-    android:minWidth="140dp"
-    android:minHeight="140dp"
-    android:targetCellWidth="2"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
