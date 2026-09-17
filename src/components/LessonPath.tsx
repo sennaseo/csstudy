@@ -149,10 +149,11 @@ export function LessonPath() {
   const lessonProgress = useStudyStore((s) => s.lessonProgress);
   const startRandom = useStudyStore((s) => s.startRandom);
   const activeTrack = useStudyStore((s) => s.activeTrack);
+  const activeLevel = useStudyStore((s) => s.activeLevel);
   const hearts = useStudyStore((s) => s.hearts);
 
-  // 트랙을 골랐으면 그 트랙의 유닛만, 아니면 전체 카테고리.
-  const units = unitsFor(activeTrack);
+  // 트랙을 골랐으면 그 트랙의 유닛만, 레벨을 골랐으면 그 레벨 노드만, 아니면 전체.
+  const units = unitsFor(activeTrack, activeLevel);
 
   // 트랙 모드에서는 그룹 구분선을 안 쓴다 (트랙 자체가 이미 하나의 흐름이라
   // "프론트엔드 / 백엔드" 구분선이 오히려 길을 끊어 보이게 한다).
@@ -216,8 +217,8 @@ export function LessonPath() {
     const delta = nodeTop - scRect.top - Math.round(scRect.height * 0.33);
     // 이미 화면 위쪽에 있으면(delta<=0) 굳이 안 건드린다.
     if (delta > 0) scroller.scrollBy({ top: delta, behavior: "auto" });
-    // 트랙을 바꾸면 길 자체가 다시 깔리므로 그때도 새 위치를 잡아준다.
-  }, [activeTrack, lessonProgress, hearts]);
+    // 트랙/레벨을 바꾸면 길 자체가 다시 깔리므로 그때도 새 위치를 잡아준다.
+  }, [activeTrack, activeLevel, lessonProgress, hearts]);
 
   return (
     <div ref={rootRef} className="flex flex-col">

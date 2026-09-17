@@ -13,6 +13,8 @@ import assert from "node:assert/strict";
 import { QUESTIONS } from "./questions";
 import { ALL_UNITS, TRACK_UNITS, unitsFor, nodesFor, NODE_BY_ID } from "./lessonPath";
 import { TRACKS } from "./tracks";
+import type { TrackId } from "./tracks";
+import type { Level } from "../types";
 
 // 1) 진행도 보존 — 트랙의 첫 등장 카테고리는 예전 노드 id 를 그대로 써야 한다.
 //    (예전 id 형식: lesson-<카테고리>-<n> / review-<카테고리>)
@@ -82,6 +84,55 @@ for (const track of [...TRACKS.map((t) => t.id), null] as const) {
 
 // 6) unitsFor(null) 은 전체 보기와 같아야 한다.
 assert.equal(unitsFor(null).length, ALL_UNITS.length);
+
+// 7) 레벨 뷰 = 노드 부분집합(진행도 보존) + 레슨 ≥3 + 복습 0개 + 유닛 개수 불변.
+//    (9개 뷰: 트랙 3 × 레벨 3)
+{
+  const tracksToCheck: (TrackId | null)[] = ["frontend", "backend", null];
+  const levelsToCheck: Level[] = ["easy", "normal", "hard"];
+  const rows: string[] = [];
+
+  for (const t of tracksToCheck) {
+    const mixIds = new Set(nodesFor(t, null).map((n) => n.id));
+    for (const l of levelsToCheck) {
+      const levelNodes = nodesFor(t, l);
+      const levelIds = levelNodes.map((n) => n.id);
+
+      // (a) 부분집합 = 진행도 보존의 물증.
+      for (const id of levelIds) {
+        assert.ok(
+          mixIds.has(id),
+          `${t ?? "전체"}/${l} 뷰의 노드 id 가 믹스 뷰에 없다 (진행도 소실 위험): ${id}`
+        );
+      }
+
+      // (b) 레슨 노드 최소 개수.
+      assert.ok(
+        levelNodes.length >= 3,
+        `${t ?? "전체"}/${l} 뷰의 레슨 노드가 3개 미만이다: ${levelNodes.length}개`
+      );
+
+      // (c) 복습 노드 0개.
+      assert.equal(
+        levelNodes.filter((n) => n.kind === "review").length,
+        0,
+        `${t ?? "전체"}/${l} 뷰에 복습 노드가 섞여 있다`
+      );
+
+      rows.push(`   ${(t ?? "전체").padEnd(8)} × ${l.padEnd(6)} : 노드 ${levelNodes.length}개`);
+    }
+
+    // (d) unitsFor(t) 와 unitsFor(t, null) 길이 동일 — level 기본값(null)이 예전 시그니처와 동치임을 확인.
+    assert.equal(
+      unitsFor(t).length,
+      unitsFor(t, null).length,
+      `${t ?? "전체"}: unitsFor(t) 와 unitsFor(t, null) 길이가 다르다`
+    );
+  }
+
+  console.log("✅ 레벨 뷰 점검 통과 (9개 뷰)");
+  console.log(rows.join("\n"));
+}
 
 console.log("✅ tracks 자체 점검 통과");
 console.log(

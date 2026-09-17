@@ -6,6 +6,8 @@
 //   같은 문제도 어떤 날은 객관식, 어떤 날은 빈칸으로 나온다 → 지루함 방지 + 기억 강화.
 // - 여기 함수들은 전부 "순수 함수" (입력 → 출력, 부수효과 없음).
 //   그래서 스토어/컴포넌트 어디서든 안심하고 부를 수 있고 테스트도 쉽다.
+// - 레벨 = 출제 형태의 어려움(재인 → 단서회상 → 자유회상).
+//   실무(BackendQuest)의 L1→L3→L4와 같은 사다리.
 // =============================================================
 
 import type {
@@ -13,6 +15,7 @@ import type {
   ChoiceExercise,
   Exercise,
   ExerciseType,
+  Level,
   MatchExercise,
   OxExercise,
   Question,
@@ -272,25 +275,44 @@ export function buildMatchExercise(q: Question): MatchExercise | null {
 // ─── 랜덤 믹스 진입점 ─────────────────────────────────────
 
 /**
- * 유형별 출제 비중 (가중치 룰렛).
- * 객관식을 제일 자주, 매칭/말하기는 가끔 — 매칭은 한 번에 4문제 분량이라
- * 너무 자주 나오면 페이스가 무거워진다.
+ * 레벨별 출제 비중 (가중치 룰렛).
+ * - mix: 기존 표 그대로 (객관식을 제일 자주, 매칭/말하기는 가끔 — 매칭은
+ *   한 번에 4문제 분량이라 너무 자주 나오면 페이스가 무거워진다).
+ * - easy: 고르기(재인) 위주. normal: 빈칸(단서회상). hard: 직접 쓰기/말하기(자유회상).
  */
-const TYPE_WEIGHTS: Array<{ type: ExerciseType; weight: number }> = [
-  { type: "choice", weight: 30 },
-  { type: "blank", weight: 22 },
-  { type: "ox", weight: 18 },
-  { type: "typing", weight: 12 },
-  { type: "speak", weight: 10 },
-  { type: "match", weight: 8 },
-];
+const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight: number }>> = {
+  mix: [
+    { type: "choice", weight: 30 },
+    { type: "blank", weight: 22 },
+    { type: "ox", weight: 18 },
+    { type: "typing", weight: 12 },
+    { type: "speak", weight: 10 },
+    { type: "match", weight: 8 },
+  ],
+  easy: [
+    { type: "choice", weight: 60 },
+    { type: "ox", weight: 40 },
+  ],
+  normal: [
+    { type: "blank", weight: 60 },
+    { type: "match", weight: 20 },
+    { type: "choice", weight: 20 },
+  ],
+  hard: [
+    { type: "typing", weight: 40 },
+    { type: "blank", weight: 30 },
+    { type: "speak", weight: 30 },
+  ],
+};
 
 /**
  * 문제 하나를 "랜덤 유형"으로 포장한다.
- * - 뽑힌 유형이 이 문제에서 성립 안 하면(키워드 없음 등) 객관식으로 폴백.
+ * - level 표에서 가중치 룰렛으로 유형을 뽑는다 (null/미지정 = mix).
+ * - 뽑힌 유형이 이 문제에서 성립 안 하면(키워드 없음 등) 그 레벨 표를 앞에서부터
+ *   순서대로 시도하고, 전부 실패하면 객관식으로 폴백한다.
  * - forceType 을 주면 그 유형을 우선 시도 (디버깅/특정 모드용).
  */
-export function buildExercise(q: Question, forceType?: ExerciseType): Exercise {
+export function buildExercise(q: Question, level: Level | null = null, forceType?: ExerciseType): Exercise {
   const tryBuild = (t: ExerciseType): Exercise | null => {
     switch (t) {
       case "choice":
@@ -313,11 +335,13 @@ export function buildExercise(q: Question, forceType?: ExerciseType): Exercise {
     if (forced) return forced;
   }
 
+  const weights = WEIGHTS_BY_LEVEL[level ?? "mix"];
+
   // 가중치 룰렛으로 유형 하나 뽑기
-  const total = TYPE_WEIGHTS.reduce((s, w) => s + w.weight, 0);
+  const total = weights.reduce((s, w) => s + w.weight, 0);
   let roll = Math.random() * total;
-  let picked: ExerciseType = "choice";
-  for (const w of TYPE_WEIGHTS) {
+  let picked: ExerciseType = weights[0].type;
+  for (const w of weights) {
     roll -= w.weight;
     if (roll <= 0) {
       picked = w.type;
@@ -325,7 +349,16 @@ export function buildExercise(q: Question, forceType?: ExerciseType): Exercise {
     }
   }
 
-  return tryBuild(picked) ?? buildChoiceExercise(q); // 폴백은 언제나 객관식
+  const rolled = tryBuild(picked);
+  if (rolled) return rolled;
+
+  // 뽑힌 유형이 성립 안 하면 그 레벨 표를 앞에서부터 순서대로 시도.
+  for (const w of weights) {
+    const built = tryBuild(w.type);
+    if (built) return built;
+  }
+
+  return buildChoiceExercise(q); // 최종 폴백은 언제나 객관식
 }
 
 // ─── 타이핑 채점 ──────────────────────────────────────────

@@ -1,6 +1,6 @@
 // =============================================================
 // TabBar
-// - 화면 하단에 붙는 4개 탭(홈/퀴즈/도감/마이) 이동 바.
+// - 화면 하단에 붙는 5개 탭(홈/이론/실무/도감/마이) 이동 바.
 // - 게임기 컨트롤러의 방향 버튼처럼, 어디서든 손 안 떼고 다른 화면으로 점프한다.
 //
 // 왜 fixed 인가
@@ -26,7 +26,8 @@ import { useStudyStore, type AppTab } from "../store/useStudyStore";
 
 const TABS: { id: AppTab; emoji: string; label: string }[] = [
   { id: "home", emoji: "🏠", label: "홈" },
-  { id: "quiz", emoji: "📝", label: "퀴즈" },
+  { id: "quiz", emoji: "📝", label: "이론" },
+  { id: "practice", emoji: "🛠️", label: "실무" },
   { id: "collection", emoji: "📖", label: "도감" },
   { id: "my", emoji: "👤", label: "마이" },
 ];

@@ -13,12 +13,17 @@
 // - nodesFor(트랙) = 그 트랙의 노드를 "푸는 순서대로" 한 줄로 편 배열 → 순차 언락 계산에 쓴다.
 // - 트랙(roadmap.sh 식 역할별 로드맵)을 고르면 유닛 순서와 구성이 트랙 대본을 따른다.
 //   트랙을 안 고르면 예전처럼 카테고리 전체가 순서대로 나온다 (ALL_UNITS).
+//
+// 레벨 뷰 = 노드 부분집합, id 불변 → 진행도 이월.
+// 새 노드를 만들지 않고 unitsFor/nodesFor 가 있는 노드를 걸러서 보여준다.
+// 그래서 레벨을 바꿔도 lessonProgress(완료 기록)가 그대로 유지된다.
 // =============================================================
 
-import type { Category, CategoryGroup } from "../types";
+import type { Category, CategoryGroup, Level } from "../types";
 import { CATEGORY_GROUPS, CATEGORY_EMOJI, QUESTIONS } from "./questions";
 import { TRACK_BY_ID } from "./tracks";
 import type { TrackId, TrackStep } from "./tracks";
+import { LEVEL_OF, LEVEL_RANK } from "./levels";
 
 /** 노드 한 개 = 레슨 또는 복습. */
 export interface LessonNode {
@@ -29,6 +34,8 @@ export interface LessonNode {
   questionIds: string[];
   /** 노드 라벨 (예: "레슨 1", "복습"). */
   label: string;
+  /** 노드 난이도 = 담긴 문제들 중 가장 어려운 레벨. "레슨은 가장 어려운 문제만큼 어렵다". */
+  level: Level;
 }
 
 /** 유닛 = 카테고리 하나(트랙 모드에선 스텝 하나). 노드 묶음 + 표시용 메타. */
@@ -67,12 +74,19 @@ function buildNodes(
   // pickIds 가 있으면 그 순서가 아니라 '원래 문제 순서'를 지킨다 (난이도 순서 보존).
   const ids = pickIds ? all.filter((id) => pickIds.includes(id)) : all;
   const key = `${category}${keySuffix}`;
+  /** 문제 id 묶음의 난이도 = 최댓값 (LEVEL_RANK 로 비교). */
+  const maxLevel = (qids: string[]): Level =>
+    qids.reduce<Level>(
+      (max, id) => (LEVEL_RANK[LEVEL_OF[id]] > LEVEL_RANK[max] ? LEVEL_OF[id] : max),
+      "easy"
+    );
   const lessons: LessonNode[] = chunk(ids, 2).map((group, i) => ({
     id: `lesson-${key}-${i + 1}`,
     category,
     kind: "lesson" as const,
     questionIds: group,
     label: `레슨 ${i + 1}`,
+    level: maxLevel(group),
   }));
   // 문제가 2개 미만이면 복습 노드는 군더더기라 생략.
   if (ids.length >= 2) {
@@ -82,6 +96,7 @@ function buildNodes(
       kind: "review",
       questionIds: ids,
       label: "복습",
+      level: maxLevel(ids),
     });
   }
   return lessons;
@@ -140,9 +155,20 @@ export const TRACK_UNITS: Record<TrackId, PathUnit[]> = {
   backend: buildTrackUnits(TRACK_BY_ID.backend.steps),
 };
 
-/** 지금 볼 유닛 목록 — 트랙을 골랐으면 그 트랙, 아니면 전체. */
-export function unitsFor(trackId: TrackId | null): PathUnit[] {
-  return trackId ? TRACK_UNITS[trackId] : ALL_UNITS;
+/**
+ * 지금 볼 유닛 목록 — 트랙을 골랐으면 그 트랙, 아니면 전체.
+ * level 을 주면 그 레벨의 레슨 노드만 남기고(복습 노드는 레벨 뷰에서 제외),
+ * 노드가 하나도 안 남는 유닛은 통째로 뺀다. level 이 null 이면 기존과 완전히 동일.
+ */
+export function unitsFor(trackId: TrackId | null, level: Level | null = null): PathUnit[] {
+  const units = trackId ? TRACK_UNITS[trackId] : ALL_UNITS;
+  if (!level) return units;
+  return units
+    .map((u) => ({
+      ...u,
+      nodes: u.nodes.filter((n) => n.kind === "lesson" && n.level === level),
+    }))
+    .filter((u) => u.nodes.length > 0);
 }
 
 /**
@@ -160,6 +186,6 @@ export const NODE_BY_ID: Record<string, LessonNode> = Object.fromEntries(
  * 트랙마다 순서가 다르므로 트랙별로 따로 만든다. 언락은 이 배열의 '직전 칸'만 보므로,
  * 배열만 갈아끼우면 언락 규칙 코드를 손대지 않고도 트랙 순서를 따라간다.
  */
-export function nodesFor(trackId: TrackId | null): LessonNode[] {
-  return unitsFor(trackId).flatMap((u) => u.nodes);
+export function nodesFor(trackId: TrackId | null, level: Level | null = null): LessonNode[] {
+  return unitsFor(trackId, level).flatMap((u) => u.nodes);
 }

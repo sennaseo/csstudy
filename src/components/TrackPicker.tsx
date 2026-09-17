@@ -11,12 +11,16 @@
 // 완주 게이지는 여기 없다 — 퀴즈 탭(감긴 길 위)에 있는 TrackProgress 로 옮겼다.
 // 완주율은 "이 길을 얼마나 걸었나"를 말하는 숫자라 길 옆이 제자리이고,
 // 홈은 "오늘 뭐 할까"만 가볍게 보여주는 화면으로 남겨두는 게 낫기 때문.
+//
+// 트랙 = 무엇을, 난이도 = 얼마나 어렵게.
+// 트랙 칩 아래에 난이도 칩을 이어 붙인다 (같은 카드, 같은 TrackChip 재사용).
 // =============================================================
 
 import { useStudyStore } from "../store/useStudyStore";
 import { unitsFor } from "../data/lessonPath";
 import { TRACKS } from "../data/tracks";
 import type { TrackId } from "../data/tracks";
+import type { Level } from "../types";
 
 /** 칩 하나 — 트랙 또는 "전체". */
 function TrackChip({
@@ -52,9 +56,19 @@ function TrackChip({
   );
 }
 
+/** 난이도 칩 4개 — (라벨, 값) 순서 그대로 렌더링. */
+const LEVELS: Array<{ level: Level | null; emoji: string; label: string }> = [
+  { level: null, emoji: "🎲", label: "믹스" },
+  { level: "easy", emoji: "🌱", label: "초급" },
+  { level: "normal", emoji: "🌿", label: "중급" },
+  { level: "hard", emoji: "🌳", label: "고급" },
+];
+
 export function TrackPicker() {
   const activeTrack = useStudyStore((s) => s.activeTrack);
   const setTrack = useStudyStore((s) => s.setTrack);
+  const activeLevel = useStudyStore((s) => s.activeLevel);
+  const setLevel = useStudyStore((s) => s.setLevel);
 
   return (
     <div className="rounded-2xl border-2 border-b-4 border-ink-200 bg-white px-4 py-3.5">
@@ -81,6 +95,21 @@ export function TrackPicker() {
           />
         ))}
       </div>
+
+      <p className="mb-2 mt-3 text-xs font-extrabold uppercase tracking-widest text-ink-400">
+        난이도
+      </p>
+      <div className="flex items-stretch gap-2">
+        {LEVELS.map(({ level, emoji, label }) => (
+          <TrackChip
+            key={label}
+            active={activeLevel === level}
+            emoji={emoji}
+            label={label}
+            onClick={() => setLevel(level)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -88,10 +117,11 @@ export function TrackPicker() {
 /** 완주 게이지 — 트랙을 얼마나 걸었는지 보여주는 "장기" 목표 (퀴즈 탭용). */
 export function TrackProgress() {
   const activeTrack = useStudyStore((s) => s.activeTrack);
+  const activeLevel = useStudyStore((s) => s.activeLevel);
   const lessonProgress = useStudyStore((s) => s.lessonProgress);
 
-  // 완주율 — 지금 보고 있는 길의 전체 노드 대비 완료 노드.
-  const nodes = unitsFor(activeTrack).flatMap((u) => u.nodes);
+  // 완주율 — 지금 보고 있는 길(트랙×레벨)의 전체 노드 대비 완료 노드.
+  const nodes = unitsFor(activeTrack, activeLevel).flatMap((u) => u.nodes);
   const done = nodes.filter((n) => lessonProgress[n.id]).length;
   const pct = nodes.length ? Math.round((done / nodes.length) * 100) : 0;
 

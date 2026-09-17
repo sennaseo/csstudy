@@ -1,0 +1,482 @@
+<title>BackendQuest 첫 레슨</title>
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#fff; --ink:#1c1c1a; --dim:#6b6b66; --line:#e3e3de;
+    --accent:#2f7d4f; --accent-soft:#e8f4ec; --wrong:#c0392b; --wrong-soft:#fdeceb;
+    --code-bg:#1e1e1c; --code-ink:#e8e8e3; --pick:#ddeee4;
+  }
+  :root:not([data-theme="light"]){ }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#17171a; --card:#212125; --ink:#ececeb; --dim:#9a9a95; --line:#33333a;
+      --accent:#5fbb85; --accent-soft:#1d3328; --wrong:#e8776a; --wrong-soft:#3a2320;
+      --code-bg:#111114; --code-ink:#e0e0dc; --pick:#24382d;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#17171a; --card:#212125; --ink:#ececeb; --dim:#9a9a95; --line:#33333a;
+    --accent:#5fbb85; --accent-soft:#1d3328; --wrong:#e8776a; --wrong-soft:#3a2320;
+    --code-bg:#111114; --code-ink:#e0e0dc; --pick:#24382d;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg); color:var(--ink); font:15px/1.6 -apple-system,"Segoe UI",Roboto,"Malgun Gothic",sans-serif;}
+  .wrap{max-width:640px; margin:0 auto; padding-block:20px; padding-left:16px; padding-right:16px;}
+
+  .bar{display:flex; align-items:center; gap:12px; margin-bottom:18px;}
+  .prog{flex:1; height:10px; background:var(--line); border-radius:99px; overflow:hidden}
+  .prog i{display:block; height:100%; background:var(--accent); border-radius:99px; transition:width .3s}
+  .xp{font-weight:700; font-size:13px; color:var(--dim); white-space:nowrap}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px; }
+  .qnum{font-size:12px; color:var(--dim); letter-spacing:.04em; margin-bottom:6px}
+  .q{font-size:17px; font-weight:600; margin:0 0 16px; line-height:1.5}
+  .q strong{color:var(--accent)}
+
+  pre{background:var(--code-bg); color:var(--code-ink); padding:14px; border-radius:10px;
+      overflow-x:auto; font:13px/1.7 ui-monospace,Consolas,monospace; margin:0 0 16px}
+  .err{background:var(--wrong-soft); color:var(--wrong); border:1px solid var(--wrong);
+       padding:10px 14px; border-radius:8px; font:13px ui-monospace,monospace; margin-bottom:14px}
+
+  button{font:inherit; color:inherit}
+  .opt{display:block; width:100%; text-align:left; background:var(--card); border:2px solid var(--line);
+       border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:.12s}
+  .opt:hover{border-color:var(--accent)}
+  .opt.sel{border-color:var(--accent); background:var(--pick)}
+  .opt code{font:13px ui-monospace,monospace}
+
+  .zones{display:flex; gap:8px; flex-wrap:wrap}
+  .zones .opt{flex:1; min-width:110px; text-align:center; margin:0}
+
+  .cards li{list-style:none; background:var(--card); border:2px solid var(--line); border-radius:10px;
+            padding:11px 14px; margin-bottom:8px; display:flex; align-items:center; gap:10px}
+  .cards{padding:0; margin:0}
+  .cards .mv{margin-left:auto; display:flex; gap:4px}
+  .cards .mv button{width:30px; height:30px; border:1px solid var(--line); background:transparent;
+                    border-radius:7px; cursor:pointer}
+  .cards .mv button:disabled{opacity:.3; cursor:default}
+
+  .pairs{display:flex; flex-direction:column; gap:8px}
+  .pair{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .pair .lhs{flex:1; min-width:150px; background:var(--card); border:2px solid var(--line);
+             border-radius:10px; padding:10px 12px; font:12.5px ui-monospace,monospace}
+  .pair select{flex:1; min-width:140px; padding:10px; border-radius:10px;
+               border:2px solid var(--line); background:var(--card)}
+
+  input[type=text]{width:100%; padding:12px 14px; border:2px solid var(--line); border-radius:10px;
+                   background:var(--card); font:14px ui-monospace,monospace}
+  input[type=text]:focus{outline:none; border-color:var(--accent)}
+  .sub{font-size:13px; color:var(--dim); margin:14px 0 6px}
+
+  .go{width:100%; margin-top:16px; padding:14px; border:none; border-radius:11px; background:var(--accent);
+      color:#fff; font-weight:700; font-size:15px; cursor:pointer}
+  .go:disabled{opacity:.35; cursor:default}
+  .why{background:none; border:none; color:var(--dim); font-size:13px; cursor:pointer;
+       text-decoration:underline; padding:6px 0; margin-top:10px}
+
+  .fb{margin-top:16px; border-radius:11px; padding:14px 16px; font-size:14px}
+  .fb.ok{background:var(--accent-soft); border:1px solid var(--accent)}
+  .fb.no{background:var(--wrong-soft); border:1px solid var(--wrong)}
+  .fb h4{margin:0 0 6px; font-size:14px}
+  .fb.ok h4{color:var(--accent)} .fb.no h4{color:var(--wrong)}
+
+  .files{margin-top:10px}
+  .file{border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden}
+  .file h5{margin:0; padding:9px 12px; background:var(--card); font:12.5px ui-monospace,monospace;
+           border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center}
+  .file .new{background:var(--accent); color:#fff; font-size:10px; padding:1px 6px; border-radius:4px;
+             font-family:system-ui}
+  .file pre{border-radius:0; margin:0; font-size:12px}
+  .ask{background:var(--card); border:1px solid var(--line); border-radius:11px; padding:16px; margin-top:14px}
+  .ask p{margin:0 0 12px; font-size:14px}
+  .ask .row{display:flex; gap:8px; flex-wrap:wrap}
+  .ask .row button{flex:1; min-width:130px; padding:11px; border-radius:9px; border:2px solid var(--line);
+                   background:transparent; cursor:pointer; font-size:13.5px}
+  .ask .row button:hover{border-color:var(--accent)}
+  .done{text-align:center; padding:10px 0 4px}
+  .done .big{font-size:40px}
+  h2{font-size:20px; margin:.4em 0}
+  .muted{color:var(--dim); font-size:13px}
+
+  /* --- 홈(학습 맵) --- */
+  .home h1{font-size:19px; margin:0 0 2px}
+  .topbar{display:flex; gap:14px; align-items:center; background:var(--card);
+          border:1px solid var(--line); border-radius:12px; padding:12px 16px; margin-bottom:16px}
+  .topbar .it{font-weight:700; font-size:14px}
+  .topbar .sp{margin-left:auto}
+  .map{position:relative; padding:4px 0}
+  .node{display:flex; gap:14px; align-items:flex-start; position:relative; padding-bottom:6px}
+  .node .dot{width:40px; height:40px; border-radius:50%; flex:none; display:grid; place-items:center;
+             font-size:16px; font-weight:700; border:2px solid var(--line); background:var(--card); z-index:1}
+  .node.done .dot{background:var(--accent); border-color:var(--accent); color:#fff}
+  .node.cur  .dot{border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft)}
+  .node.lock .dot{opacity:.45}
+  .node .line{position:absolute; left:20px; top:40px; bottom:-6px; width:2px; background:var(--line)}
+  .node:last-child .line{display:none}
+  .node.done .line{background:var(--accent)}
+  .node .body{flex:1; padding-bottom:16px; min-width:0}
+  .node .ttl{font-weight:600; font-size:15px}
+  .node.lock .ttl{color:var(--dim)}
+  .node .sub2{font-size:12.5px; color:var(--dim); margin-top:1px}
+  .node .act{margin-top:8px; padding:10px 18px; border:none; border-radius:9px;
+             background:var(--accent); color:#fff; font-weight:700; font-size:14px; cursor:pointer}
+  .goal{margin-top:6px; background:var(--card); border:1px solid var(--line);
+        border-radius:12px; padding:13px 16px; font-size:13.5px; color:var(--dim)}
+</style>
+
+<div class="wrap" id="app"></div>
+
+<script>
+// 기획서 6장 커리큘럼. 챕터3만 실제로 풀 수 있다(프로토타입).
+const CHAPTERS = [
+  {n:0, title:"길 익히기",        reward:"문제 푸는 법 익히기",            state:"done"},
+  {n:1, title:"프로젝트 만들기",   reward:"실행되는 빈 앱 (localhost:8080)", state:"done"},
+  {n:2, title:"데이터 모양 잡기",  reward:"posts 테이블 + 데이터 1건",      state:"done"},
+  {n:3, title:"글 목록 보기",      reward:"/posts 에 글 목록이 뜸",         state:"cur", playable:true},
+  {n:4, title:"글 쓰기",           reward:"글을 쓰면 목록에 추가됨",         state:"lock"},
+  {n:5, title:"상세·수정·삭제",    reward:"게시판 CRUD 완성",               state:"lock"},
+  {n:6, title:"API로도 열기",      reward:"/api/posts 가 JSON 반환",        state:"lock"},
+  {n:7, title:"세상에 내보내기",   reward:"친구에게 보낼 인터넷 주소",       state:"lock"},
+];
+
+const LESSON = {
+  title: "글 목록을 화면에 띄우기",
+  chapter: "챕터 3 · 레슨 1",
+  problems: [
+    { id:"p1", type:"SELECT", xp:10,
+      prompt:"누군가 브라우저에 주소를 치고 들어오면, 그 요청을 <strong>가장 먼저 받는</strong> 파일은 누구일까요?",
+      payload:{choices:[{id:"controller",text:"Controller"},{id:"service",text:"Service"},{id:"repository",text:"Repository"}]},
+      answer:"controller",
+      hint:"가게로 치면, 손님이 들어왔을 때 제일 앞에 있는 사람은 누구일까요?",
+      why:"Controller = 가게의 '카운터 직원'. 손님(요청)을 가장 먼저 맞이해요.",
+      ok:"맞아요. 주소로 요청이 들어오면 Controller가 문 앞에서 받아요." },
+
+    { id:"p2", type:"PLACE", xp:10,
+      prompt:"아래 코드를 셋 중 어디에 둘까요?",
+      code:'return postService.findAll();  // 글을 다 가져와',
+      payload:{zones:[{id:"controller",label:"Controller"},{id:"service",label:"Service"},{id:"repository",label:"Repository"}]},
+      answer:"controller",
+      hint:"이 줄은 Service에게 <em>시키는</em> 줄이에요. 시키는 건 누가 하죠? → 카운터 직원.",
+      why:"Controller는 직접 일하지 않아요. Service에게 '이거 해줘'라고 시키기만 해요.",
+      ok:"맞아요. Controller가 Service에게 시키는 줄이에요." },
+
+    { id:"p3", type:"FILL_CHOICE", xp:10,
+      prompt:"<code>/posts</code> 주소로 들어왔을 때 이 함수가 실행되게 하려면?",
+      code:'@______("/posts")\npublic String list(Model model) { ... }',
+      payload:{choices:[{id:"get",text:"@GetMapping"},{id:"post",text:"@PostMapping"},{id:"delete",text:"@DeleteMapping"}]},
+      answer:"get",
+      hint:"글을 '보는' 걸까요, '만드는' 걸까요?",
+      why:"GET = 가져오기. 글을 '보는' 거니까 GET이에요. 만들 때만 POST.",
+      ok:"맞아요! 이제 /posts로 들어오면 이 함수가 실행돼요.",
+      apply:[{file:"src/main/java/com/example/board/post/PostController.java", isNew:true,
+        code:`package com.example.board.post;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+@Controller
+public class PostController {
+
+    private final PostService postService;
+
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+
+    @GetMapping("/posts")
+    public String list(Model model) {
+        // 여기는 다음 문제에서 채웁니다
+    }
+}`, note:"PostController.java가 만들어졌어요! /posts 주소를 받을 준비가 됐습니다."}] },
+
+    { id:"p4", type:"CONNECT", xp:10,
+      prompt:"왼쪽 코드 조각과 오른쪽 '하는 일'을 연결하세요.",
+      payload:{
+        left:[{id:"mapping",text:'@GetMapping("/posts")'},{id:"findall",text:"postService.findAll()"},
+              {id:"addattr",text:'model.addAttribute("posts", …)'},{id:"return",text:'return "posts/list"'}],
+        right:[{id:"r1",text:"/posts 주소로 들어오면 받기"},{id:"r2",text:"글을 전부 가져오기"},
+               {id:"r3",text:"화면에 넘겨줄 데이터 담기"},{id:"r4",text:"list.html 화면을 보여주기"}]},
+      answer:{mapping:"r1",findall:"r2",addattr:"r3",return:"r4"},
+      hint:'return "posts/list"는 templates 폴더의 list.html을 찾아 보여줘요.',
+      why:"이 네 줄이 Controller가 하는 일의 전부예요. 받고 → 가져오고 → 담고 → 보여주고.",
+      ok:"완벽해요. 이 네 줄이 한 세트로 움직여요." },
+
+    { id:"p5", type:"ORDER", xp:10,
+      prompt:'"글 목록 보기"가 작동하는 순서대로 카드를 정렬하세요.',
+      payload:{cards:[{id:"repo",text:"Repository가 DB에서 조회"},{id:"browser",text:"브라우저가 /posts 요청"},
+                      {id:"controller",text:"Controller가 받음"},{id:"view",text:"화면 list.html 표시"},
+                      {id:"service",text:"Service에게 목록 요청"}]},
+      answer:["browser","controller","service","repo","view"],
+      hint:"모든 요청은 브라우저에서 시작해서 화면으로 끝나요.",
+      why:"이게 백엔드의 한 바퀴예요. 앞으로 모든 기능이 이 순서로 돌아가요.",
+      ok:"이게 백엔드의 한 바퀴예요. 앞으로 모든 기능이 이 순서로 돌아가요." },
+
+    { id:"p6", type:"FILL_TEXT", xp:10,
+      prompt:"화면에 글 목록을 넘겨주는 줄을 완성하세요. <span class='muted'>(화면 파일은 <code>posts</code>라는 이름을 기대해요)</span>",
+      code:'List<Post> posts = postService.findAll();\nmodel.addAttribute("______", posts);\nreturn "posts/list";',
+      payload:{placeholder:"여기에 입력"},
+      answer:"posts",
+      hint:"list.html이 posts라는 이름을 부르고 있어요. 같은 이름으로 넘겨야 화면이 찾아요.",
+      why:'addAttribute("이름", 값)의 "이름"으로 화면이 데이터를 찾아요. 이름이 다르면 화면은 빈 손이 돼요.',
+      ok:"list() 함수가 완성됐어요!",
+      apply:[
+        {file:"src/main/java/com/example/board/post/PostController.java", isNew:false,
+         code:`    @GetMapping("/posts")
+    public String list(Model model) {
+        model.addAttribute("posts", postService.findAll());
+        return "posts/list";
+    }`, note:"list() 함수의 속이 채워졌어요."},
+        {file:"src/main/resources/templates/posts/list.html", isNew:true,
+         code:`<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<h1>글 목록</h1>
+<table>
+  <tr><th>제목</th><th>작성자</th></tr>
+  <tr th:each="post : \${posts}">
+    <td th:text="\${post.title}">제목</td>
+    <td th:text="\${post.author}">작성자</td>
+  </tr>
+</table>
+</body>
+</html>`, note:"list.html 화면이 만들어졌어요. 이제 /posts에 들어가면 목록이 보여요!"}] },
+
+    { id:"p7", type:"DEBUG", xp:20,
+      prompt:"<code>/posts</code>에 들어갔더니 흰 화면에 에러가 떴어요. 왜 404일까요?",
+      error:"Whitelabel Error Page (404)",
+      code:'@GetMapping("/post")          // ← 주소\npublic String list(Model model) { ... }',
+      payload:{
+        cause_choices:[{id:"a",text:"DB가 비어서"},{id:"b",text:"주소가 /post라서 /posts를 못 받음"},{id:"c",text:"함수 이름이 틀려서"}],
+        fix_label:'고쳐보세요:  @GetMapping("____")'},
+      answer:{cause:"b", fix:"/posts"},
+      hint:"404 = 그 주소를 받아줄 Controller가 없다는 뜻이에요. 주소를 한 글자씩 비교해 보세요.",
+      why:"주소(@GetMapping)와 실제 접속 주소가 한 글자라도 다르면 못 받아요.",
+      ok:"바로 그거예요. 한 글자 차이가 404를 만들어요." }
+  ]
+};
+
+const norm = s => String(s).trim().replace(/^["'`]|["'`]$/g,"").toLowerCase();
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+let idx = 0, xp = 1240, tries = 0, sel = null, order = null, pairs = null;
+let screen = "home";              // home | lesson | done
+let streak = 8, lessonDone = false;
+const files = {};   // path -> {code, isNew}
+const log = [];     // 문제별 시도 기록
+
+const app = document.getElementById("app");
+
+function renderHome(){
+  const solved = log.length;
+  app.innerHTML = `
+    <div class="home">
+      <div class="topbar">
+        <span class="it">🔥 ${streak}일</span>
+        <span class="it sp">⭐ ${xp.toLocaleString()} XP</span>
+      </div>
+      <div class="map">
+        ${CHAPTERS.map(c => {
+          const st = (c.n === 3 && lessonDone) ? "done" : c.state;
+          const mark = st === "done" ? "✓" : st === "lock" ? "🔒" : c.n;
+          let sub = c.reward;
+          if (c.playable && !lessonDone) sub = `레슨 1 · 글 목록을 화면에 띄우기 (${solved}/7)`;
+          return `
+          <div class="node ${st}">
+            <div class="line"></div>
+            <div class="dot">${mark}</div>
+            <div class="body">
+              <div class="ttl">챕터 ${c.n} · ${c.title}</div>
+              <div class="sub2">${sub}</div>
+              ${c.playable ? `<button class="act" id="start">${lessonDone ? "다시 풀기" : (solved ? "이어서 풀기" : "시작하기")}</button>` : ""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="goal">오늘의 목표: 20 XP · ${Math.max(0, 7 - solved)}문제 남음
+        <div style="margin-top:4px; font-size:12.5px">프로토타입이라 챕터 3만 열려 있어요.</div>
+      </div>
+    </div>`;
+  const b = document.getElementById("start");
+  if (b) b.onclick = () => {
+    if (lessonDone){ log.length = 0; Object.keys(files).forEach(k=>delete files[k]); lessonDone = false; xp = 1240; }
+    idx = log.length; tries = 0; sel = null; order = null; pairs = null;
+    screen = "lesson"; render();
+  };
+}
+
+function check(p){
+  if (p.type === "CONNECT") return Object.keys(p.answer).every(k => pairs[k] === p.answer[k]);
+  if (p.type === "ORDER")   return order.join(",") === p.answer.join(",");
+  if (p.type === "DEBUG")   return sel === p.answer.cause && norm(document.getElementById("fix").value) === norm(p.answer.fix);
+  if (p.type === "FILL_TEXT") return norm(document.getElementById("txt").value) === norm(p.answer);
+  return sel === p.answer;
+}
+function ready(p){
+  if (p.type === "CONNECT") return pairs && Object.values(pairs).filter(Boolean).length === p.payload.left.length;
+  if (p.type === "ORDER")   return true;
+  if (p.type === "DEBUG")   return sel && document.getElementById("fix")?.value.trim();
+  if (p.type === "FILL_TEXT") return document.getElementById("txt")?.value.trim();
+  return !!sel;
+}
+
+function render(){
+  if (screen === "home") return renderHome();
+  if (idx >= LESSON.problems.length) return renderDone();
+  const p = LESSON.problems[idx];
+  const pct = (idx / LESSON.problems.length) * 100;
+
+  let body = "";
+  if (p.error) body += `<div class="err">${esc(p.error)}</div>`;
+  if (p.code)  body += `<pre>${esc(p.code)}</pre>`;
+
+  if (p.type === "SELECT" || p.type === "FILL_CHOICE"){
+    body += p.payload.choices.map(c =>
+      `<button class="opt ${sel===c.id?'sel':''}" data-pick="${c.id}"><code>${esc(c.text)}</code></button>`).join("");
+  }
+  else if (p.type === "PLACE"){
+    body += `<div class="zones">` + p.payload.zones.map(z =>
+      `<button class="opt ${sel===z.id?'sel':''}" data-pick="${z.id}">${esc(z.label)}</button>`).join("") + `</div>`;
+  }
+  else if (p.type === "CONNECT"){
+    pairs = pairs || {};
+    body += `<div class="pairs">` + p.payload.left.map(l => `
+      <div class="pair">
+        <div class="lhs">${esc(l.text)}</div>
+        <select data-left="${l.id}">
+          <option value="">— 고르세요 —</option>
+          ${p.payload.right.map(r=>`<option value="${r.id}" ${pairs[l.id]===r.id?'selected':''}>${esc(r.text)}</option>`).join("")}
+        </select>
+      </div>`).join("") + `</div>`;
+  }
+  else if (p.type === "ORDER"){
+    order = order || p.payload.cards.map(c=>c.id);
+    const byId = Object.fromEntries(p.payload.cards.map(c=>[c.id,c.text]));
+    body += `<ul class="cards">` + order.map((id,i)=>`
+      <li><span>${esc(byId[id])}</span>
+        <span class="mv">
+          <button data-mv="${i}" data-d="-1" ${i===0?'disabled':''}>↑</button>
+          <button data-mv="${i}" data-d="1" ${i===order.length-1?'disabled':''}>↓</button>
+        </span></li>`).join("") + `</ul>`;
+  }
+  else if (p.type === "FILL_TEXT"){
+    body += `<input type="text" id="txt" placeholder="${esc(p.payload.placeholder)}" autocomplete="off">`;
+  }
+  else if (p.type === "DEBUG"){
+    body += `<p class="sub">1. 원인은 뭘까요?</p>`;
+    body += p.payload.cause_choices.map(c =>
+      `<button class="opt ${sel===c.id?'sel':''}" data-pick="${c.id}">${esc(c.text)}</button>`).join("");
+    body += `<p class="sub">2. ${esc(p.payload.fix_label)}</p>`;
+    body += `<input type="text" id="fix" placeholder="/____" autocomplete="off">`;
+  }
+
+  app.innerHTML = `
+    <div class="bar">
+      <button class="why" id="exit" style="margin:0; text-decoration:none; font-size:18px">←</button>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <div class="xp">⭐ ${xp.toLocaleString()} XP</div>
+    </div>
+    <div class="card">
+      <div class="qnum">${LESSON.chapter} · 문제 ${idx+1} / ${LESSON.problems.length}</div>
+      <p class="q">${p.prompt}</p>
+      ${body}
+      <button class="go" id="go" disabled>확인</button>
+      <button class="why" id="whyBtn">💡 왜?</button>
+      <div id="whyBox" hidden class="fb ok" style="margin-top:8px">${p.why}</div>
+      <div id="fb"></div>
+    </div>`;
+
+  app.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => { sel = b.dataset.pick; render(); });
+  app.querySelectorAll("[data-left]").forEach(s => s.onchange = () => { pairs[s.dataset.left] = s.value; render(); });
+  app.querySelectorAll("[data-mv]").forEach(b => b.onclick = () => {
+    const i = +b.dataset.mv, d = +b.dataset.d;
+    [order[i], order[i+d]] = [order[i+d], order[i]]; render();
+  });
+  ["txt","fix"].forEach(id => { const el = document.getElementById(id);
+    if (el) el.oninput = () => { document.getElementById("go").disabled = !ready(p); }; });
+
+  document.getElementById("whyBtn").onclick = () => {
+    const w = document.getElementById("whyBox"); w.hidden = !w.hidden;
+  };
+  document.getElementById("exit").onclick = () => { screen = "home"; render(); };
+  document.getElementById("go").disabled = !ready(p);
+  document.getElementById("go").onclick = () => submit(p);
+}
+
+function submit(p){
+  const good = check(p);
+  tries++;
+  const fb = document.getElementById("fb");
+  document.getElementById("go").style.display = "none";
+
+  if (good){
+    xp += p.xp;
+    log.push({id:p.id, tries});
+    (p.apply||[]).forEach(a => files[a.file] = {code:a.code, isNew:a.isNew});
+    fb.innerHTML = `<div class="fb ok"><h4>✅ 잘했어요! +${p.xp} XP</h4><div>${p.ok}</div>
+      ${(p.apply||[]).map(a=>`<div class="muted" style="margin-top:8px">📁 ${esc(a.note)}</div>`).join("")}
+      <button class="go" id="next">계속</button></div>`;
+    document.getElementById("next").onclick = () => { idx++; tries=0; sel=null; order=null; pairs=null; render(); };
+  } else {
+    const showAnswer = tries >= 2;
+    fb.innerHTML = `<div class="fb no"><h4>❌ 다시 볼까요?</h4>
+      <div>${showAnswer ? p.why : p.hint}</div>
+      ${showAnswer ? `<div class="muted" style="margin-top:8px">한 번 더 해보고 넘어가요.</div>` : ""}
+      <button class="go" id="retry" style="background:var(--wrong)">다시 풀기</button></div>`;
+    document.getElementById("retry").onclick = () => {
+      if (p.type==="DEBUG"||p.type==="FILL_TEXT") sel=null;
+      render();
+    };
+  }
+}
+
+function renderDone(){
+  lessonDone = true;
+  const perfect = log.filter(l=>l.tries===1).length;
+  app.innerHTML = `
+    <div class="card">
+      <div class="done">
+        <div class="big">🎉</div>
+        <h2>레슨 완료!</h2>
+        <p class="muted">${LESSON.title} · +${xp} XP · 7문제 중 ${perfect}개를 한 번에 맞혔어요</p>
+      </div>
+
+      <h3 style="font-size:15px; margin:20px 0 4px">방금 만들어진 파일</h3>
+      <p class="muted" style="margin:0">이 코드는 다음 레슨에서 계속 쌓입니다.</p>
+      <div class="files">
+        ${Object.entries(files).map(([path,f])=>`
+          <div class="file">
+            <h5>${esc(path.split("/").pop())} <span class="new">${f.isNew?'NEW':'수정됨'}</span></h5>
+            <pre>${esc(f.code)}</pre>
+          </div>`).join("")}
+      </div>
+
+      <div class="ask">
+        <p><strong>솔직하게 골라주세요.</strong> 위 코드를 보고 어떤 쪽에 가깝나요?</p>
+        <div class="row">
+          <button data-a="made">내가 만든 것 같다</button>
+          <button data-a="guess">그냥 찍은 건데요?</button>
+          <button data-a="half">반반이다</button>
+        </div>
+        <div id="ans"></div>
+      </div>
+      <button class="go" id="toHome" style="background:transparent; color:var(--dim); border:2px solid var(--line)">홈으로</button>
+    </div>`;
+
+  document.getElementById("toHome").onclick = () => { screen = "home"; render(); };
+
+  app.querySelectorAll("[data-a]").forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    const msg = {
+      made:"✅ 이 기획의 핵심 가설이 통과했습니다.",
+      guess:"🔴 이게 나오면 기획 전체를 다시 봐야 합니다. 가장 값진 답입니다.",
+      half:"🟡 어느 문제에서 '내가 했다'고 느꼈는지가 다음 설계의 단서입니다."
+    }[a];
+    document.getElementById("ans").innerHTML =
+      `<div class="fb ok" style="margin-top:12px">${msg}<div class="muted" style="margin-top:6px">
+       기록: ${JSON.stringify(log)} · 답변: ${a}</div></div>`;
+  });
+}
+
+render();
+</script>

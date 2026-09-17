@@ -1,0 +1,357 @@
+{
+  "lesson_id": "c3-l1",
+  "chapter": 3,
+  "title": "글 목록을 화면에 띄우기",
+  "problems": [
+    {
+      "id": "c3-l1-p1",
+      "type": "SELECT",
+      "prompt": "누군가 브라우저에 주소를 치고 들어오면, 그 요청을 **가장 먼저 받는** 파일은 누구일까요?",
+      "payload": {
+        "choices": [
+          { "id": "controller", "text": "Controller" },
+          { "id": "service", "text": "Service" },
+          { "id": "repository", "text": "Repository" }
+        ]
+      },
+      "answer_key": { "value": "controller" },
+      "hint": "가게로 치면, 손님이 들어왔을 때 제일 앞에 있는 사람은 누구일까요?",
+      "why_explain": "Controller = 가게의 '카운터 직원'. 손님(요청)을 가장 먼저 맞이해요.",
+      "xp": 10,
+      "time_limit_sec": 10
+    },
+
+    {
+      "id": "c3-l1-p2",
+      "type": "PLACE",
+      "prompt": "아래 코드를 셋 중 어디에 둘까요?",
+      "payload": {
+        "item": "return postService.findAll();  // 글을 다 가져와",
+        "zones": [
+          { "id": "controller", "label": "Controller" },
+          { "id": "service", "label": "Service" },
+          { "id": "repository", "label": "Repository" }
+        ]
+      },
+      "answer_key": { "value": "controller" },
+      "hint": "이 줄은 Service에게 *시키는* 줄이에요. 시키는 건 누가 하죠? → 카운터 직원.",
+      "why_explain": "Controller는 직접 일하지 않아요. Service에게 '이거 해줘'라고 시키기만 해요.",
+      "xp": 10,
+      "time_limit_sec": 15
+    },
+
+    {
+      "id": "c3-l1-p3",
+      "type": "FILL",
+      "prompt": "`/posts` 주소로 들어왔을 때 이 함수가 실행되게 하려면?",
+      "code": {
+        "lang": "java",
+        "body": "@______(\"/posts\")\npublic String list(Model model) { ... }"
+      },
+      "payload": {
+        "input": "choice",
+        "choices": [
+          { "id": "get", "text": "@GetMapping" },
+          { "id": "post", "text": "@PostMapping" },
+          { "id": "delete", "text": "@DeleteMapping" }
+        ]
+      },
+      "answer_key": { "value": "get" },
+      "hint": "글을 '만드는' 게 아니라 '보는' 거예요. 보는 건 어떤 방식일까요?",
+      "why_explain": "GET = 가져오기. 글을 '보는' 거니까 GET이에요. 만들 때만 POST.",
+      "xp": 10,
+      "time_limit_sec": 20,
+      "apply": [
+        {
+          "file": "src/main/java/com/example/board/post/PostController.java",
+          "create": "package com.example.board.post;\n\nimport org.springframework.stereotype.Controller;\nimport org.springframework.ui.Model;\nimport org.springframework.web.bind.annotation.GetMapping;\n// @@imports\n\n@Controller\npublic class PostController {\n\n    private final PostService postService;\n\n    public PostController(PostService postService) {\n        this.postService = postService;\n    }\n\n    // @@methods\n    @GetMapping(\"/posts\")\n    public String list(Model model) {\n        // @@list-body\n    }\n}\n",
+          "note": "PostController.java가 만들어졌어요! /posts 주소를 받을 준비가 됐습니다."
+        }
+      ]
+    },
+
+    {
+      "id": "c3-l1-p4",
+      "type": "CONNECT",
+      "prompt": "왼쪽 코드 조각과 오른쪽 '하는 일'을 연결하세요.",
+      "payload": {
+        "left": [
+          { "id": "mapping", "text": "@GetMapping(\"/posts\")" },
+          { "id": "findall", "text": "postService.findAll()" },
+          { "id": "addattr", "text": "model.addAttribute(\"posts\", …)" },
+          { "id": "return", "text": "return \"posts/list\"" }
+        ],
+        "right": [
+          { "id": "r1", "text": "\"/posts 주소로 들어오면 받기\"" },
+          { "id": "r2", "text": "\"글을 전부 가져오기\"" },
+          { "id": "r3", "text": "\"화면에 넘겨줄 데이터 담기\"" },
+          { "id": "r4", "text": "\"list.html 화면을 보여주기\"" }
+        ]
+      },
+      "answer_key": {
+        "value": {
+          "mapping": "r1",
+          "findall": "r2",
+          "addattr": "r3",
+          "return": "r4"
+        }
+      },
+      "hint": "`return \"posts/list\"`는 templates 폴더의 list.html을 찾아 보여줘요.",
+      "why_explain": "이 4줄이 Controller 함수 하나의 전부예요. 받고 → 가져오고 → 담고 → 보여준다.",
+      "xp": 10,
+      "time_limit_sec": 25
+    },
+
+    {
+      "id": "c3-l1-p5",
+      "type": "ORDER",
+      "prompt": "\"글 목록 보기\"가 작동하는 순서대로 카드를 정렬하세요.",
+      "payload": {
+        "cards": [
+          { "id": "repo", "text": "Repository가 DB에서 조회" },
+          { "id": "browser", "text": "브라우저가 /posts 요청" },
+          { "id": "controller", "text": "Controller가 받음" },
+          { "id": "view", "text": "화면 list.html 표시" },
+          { "id": "service", "text": "Service에게 목록 요청" }
+        ]
+      },
+      "answer_key": {
+        "value": ["browser", "controller", "service", "repo", "view"]
+      },
+      "hint": "요청은 항상 바깥(브라우저)에서 시작해서 안쪽(DB)으로 들어갔다 나와요.",
+      "why_explain": "이게 백엔드의 한 바퀴예요. 앞으로 모든 기능이 이 순서로 돌아가요.",
+      "xp": 10,
+      "time_limit_sec": 25
+    },
+
+    {
+      "id": "c3-l1-p6",
+      "type": "FILL",
+      "prompt": "화면에 글 목록을 넘겨주는 줄을 완성하세요. (화면 파일은 `posts`라는 이름을 기대해요)",
+      "code": {
+        "lang": "java",
+        "body": "List<Post> posts = postService.findAll();\nmodel.addAttribute(\"______\", posts);\nreturn \"posts/list\";"
+      },
+      "payload": { "input": "text" },
+      "answer_key": {
+        "value": "posts",
+        "match": "normalized"
+      },
+      "hint": "list.html이 어떤 이름을 부르고 있는지 질문을 다시 읽어보세요.",
+      "why_explain": "화면과 Controller는 '이름표'로 데이터를 주고받아요. 이름이 다르면 화면이 못 찾아요.",
+      "xp": 10,
+      "time_limit_sec": 20,
+      "apply": [
+        {
+          "file": "src/main/java/com/example/board/post/PostController.java",
+          "replace": "        // @@list-body",
+          "code": "        model.addAttribute(\"posts\", postService.findAll());\n        return \"posts/list\";",
+          "note": "list() 함수가 완성됐어요!"
+        },
+        {
+          "file": "src/main/resources/templates/posts/list.html",
+          "create": "<!DOCTYPE html>\n<html xmlns:th=\"http://www.thymeleaf.org\">\n<body>\n<h1>글 목록</h1>\n<table>\n  <tr><th>제목</th><th>작성자</th></tr>\n  <!-- @@rows -->\n  <tr th:each=\"post : ${posts}\">\n    <td th:text=\"${post.title}\">제목</td>\n    <td th:text=\"${post.author}\">작성자</td>\n  </tr>\n</table>\n</body>\n</html>\n",
+          "note": "list.html 화면이 만들어졌어요. 이제 /posts에 들어가면 목록이 보여요!"
+        }
+      ]
+    },
+
+    {
+      "id": "c3-l1-p7",
+      "type": "DEBUG",
+      "prompt": "`/posts`에 들어갔더니 흰 화면에 404가 떴어요. 사용자는 `/posts`로 들어갔는데 왜 404일까요?",
+      "code": {
+        "lang": "java",
+        "body": "@GetMapping(\"/post\")          // ← 주소\npublic String list(Model model) { ... }"
+      },
+      "payload": {
+        "error": "Whitelabel Error Page (404)",
+        "cause_choices": [
+          { "id": "a", "text": "DB가 비어서" },
+          { "id": "b", "text": "주소가 /post라서 /posts를 못 받음" },
+          { "id": "c", "text": "함수 이름이 틀려서" }
+        ],
+        "fix": { "lang": "java", "code": "@GetMapping(\"______\")" }
+      },
+      "answer_key": {
+        "value": { "cause": "b", "fix": "/posts" },
+        "match": "normalized"
+      },
+      "hint": "코드에 적힌 주소와 브라우저에 친 주소를 한 글자씩 비교해보세요.",
+      "why_explain": "404 = 그 주소를 받아줄 Controller가 없다는 뜻. 한 글자라도 다르면 못 받아요.",
+      "xp": 20,
+      "time_limit_sec": 30
+    }
+  ],
+
+  "_note": "아래는 레슨1에 없는 유형(WRITE)과 다른 채점 방식을 검증하기 위한 다른 챕터 샘플. 실제 콘텐츠 파일에서는 각 레슨 파일에 들어간다.",
+
+  "other_chapters": [
+    {
+      "id": "c4-l3-p2",
+      "type": "WRITE",
+      "prompt": "폼이 보낸 데이터로 글을 저장하고, 목록으로 돌려보내는 함수 본문을 작성하세요.",
+      "code": {
+        "lang": "java",
+        "body": "@PostMapping(\"/posts\")\npublic String create(PostForm form) {\n    // 여기를 채우세요\n}"
+      },
+      "payload": {
+        "input": "text",
+        "lang": "java",
+        "starter": "postService."
+      },
+      "answer_key": {
+        "match": "tokens",
+        "value": "postService.save(form);\nreturn \"redirect:/posts\";",
+        "require": [
+          {
+            "token": "postService.save",
+            "miss_hint": "Service에게 저장을 시키는 줄이 없어요. Controller는 직접 저장하지 않아요."
+          },
+          {
+            "token": "redirect:/posts",
+            "miss_hint": "저장한 뒤에 목록 화면으로 돌려보내야 해요."
+          }
+        ]
+      },
+      "hint": "두 가지를 해야 해요 — 저장을 '시키고', 그다음 어디론가 '보내기'.",
+      "why_explain": "`redirect:`는 '화면을 그리지 말고 저 주소로 다시 들어가'라는 뜻이에요.",
+      "xp": 25,
+      "time_limit_sec": 60,
+      "apply": [
+        {
+          "file": "src/main/java/com/example/board/post/PostController.java",
+          "insert_after": "// @@imports",
+          "code": "import org.springframework.web.bind.annotation.PostMapping;"
+        },
+        {
+          "file": "src/main/java/com/example/board/post/PostController.java",
+          "insert_after": "    // @@methods",
+          "code": "    @PostMapping(\"/posts\")\n    public String create(PostForm form) {\n        postService.save(form);\n        return \"redirect:/posts\";\n    }\n",
+          "note": "글쓰기 저장 기능이 붙었어요!"
+        }
+      ]
+    },
+
+    {
+      "id": "c2-l2-p1",
+      "type": "CONNECT",
+      "prompt": "왼쪽 Entity 필드와 오른쪽 DB 컬럼을 이어보세요.",
+      "payload": {
+        "left": [
+          { "id": "f-title", "text": "String title" },
+          { "id": "f-content", "text": "String content" },
+          { "id": "f-created", "text": "LocalDateTime createdAt" }
+        ],
+        "right": [
+          { "id": "c-created", "text": "created_at (TIMESTAMP)" },
+          { "id": "c-title", "text": "title (VARCHAR)" },
+          { "id": "c-content", "text": "content (TEXT)" }
+        ]
+      },
+      "answer_key": {
+        "value": {
+          "f-title": "c-title",
+          "f-content": "c-content",
+          "f-created": "c-created"
+        }
+      },
+      "hint": "자바는 단어를 붙여 쓰고(createdAt), DB는 밑줄로 나눠 써요.",
+      "why_explain": "자바의 createdAt은 DB에서 created_at으로 변신해요. JPA가 자동으로 바꿔줘요.",
+      "xp": 10,
+      "time_limit_sec": 25
+    },
+
+    {
+      "id": "c5-l1-p1",
+      "type": "FILL",
+      "prompt": "id로 글 하나를 받는 주소를 완성하세요.",
+      "code": {
+        "lang": "java",
+        "body": "@GetMapping(\"/posts/______\")\npublic String detail(@PathVariable Long id, Model model) { ... }"
+      },
+      "payload": { "input": "text" },
+      "answer_key": {
+        "value": "{id}",
+        "match": "normalized",
+        "accept": ["{postId}"]
+      },
+      "hint": "주소 안에서 '여긴 값이 바뀌는 자리야'라고 표시하는 괄호가 있어요.",
+      "why_explain": "주소 속 `{id}`가 어떤 글인지 알려줘요. /posts/3 이면 id는 3.",
+      "xp": 15,
+      "time_limit_sec": 20
+    },
+
+    {
+      "id": "c1-l2-p1",
+      "type": "PLACE",
+      "prompt": "새 글을 보여주는 화면 파일 `list.html`은 어느 폴더에 둘까요?",
+      "payload": {
+        "item": "list.html",
+        "zones": [
+          { "id": "templates", "label": "src/main/resources/templates" },
+          { "id": "static", "label": "src/main/resources/static" },
+          { "id": "java", "label": "src/main/java" }
+        ]
+      },
+      "answer_key": { "value": "templates" },
+      "hint": "서버가 데이터를 채워서 만들어주는 화면과, 그냥 그대로 내려주는 파일은 사는 곳이 달라요.",
+      "why_explain": "서버가 그려서 내려주는 화면(Thymeleaf)은 templates에 살아요. static은 이미지·CSS 자리.",
+      "xp": 10,
+      "time_limit_sec": 15
+    },
+
+    {
+      "id": "c7-l1-p1",
+      "type": "ORDER",
+      "prompt": "배포 순서를 맞추세요.",
+      "payload": {
+        "cards": [
+          { "id": "build", "text": "빌드" },
+          { "id": "commit", "text": "코드 커밋" },
+          { "id": "run", "text": "실행 / 공개 주소 생김" },
+          { "id": "push", "text": "GitHub에 push" },
+          { "id": "pull", "text": "클라우드가 코드 가져감" }
+        ]
+      },
+      "answer_key": {
+        "value": ["commit", "push", "pull", "build", "run"]
+      },
+      "hint": "내 컴퓨터에서 할 일 두 개가 먼저예요.",
+      "why_explain": "내 코드가 내 컴퓨터 밖으로 나가는 여정이에요. 저장 → 올리기 → 가져가기 → 만들기 → 켜기.",
+      "xp": 15,
+      "time_limit_sec": 25
+    },
+
+    {
+      "id": "c7-l3-p2",
+      "type": "DEBUG",
+      "prompt": "배포한 서버가 켜지자마자 죽었어요. 로그의 마지막 줄이 이겁니다. 원인은?",
+      "code": {
+        "lang": "yaml",
+        "body": "spring:\n  datasource:\n    url: jdbc:h2:mem:testdb"
+      },
+      "payload": {
+        "error": "Table \"POSTS\" not found; SQL statement: select * from posts",
+        "cause_choices": [
+          { "id": "a", "text": "인터넷이 끊겼다" },
+          { "id": "b", "text": "테이블을 만들라는 설정이 없어서 posts 테이블이 안 생겼다" },
+          { "id": "c", "text": "Controller 주소가 틀렸다" }
+        ]
+      },
+      "answer_key": { "value": { "cause": "b" } },
+      "hint": "에러가 찾는 건 '주소'가 아니라 '표'예요. 그 표는 누가 만들죠?",
+      "why_explain": "테이블이 아직 안 만들어졌어요. Entity가 표를 만들도록 설정(ddl-auto)이 필요해요.",
+      "xp": 20,
+      "time_limit_sec": 30,
+      "apply": [
+        {
+          "file": "src/main/resources/application.yml",
+          "insert_after": "  datasource:",
+          "code": "  jpa:\n    hibernate:\n      ddl-auto: update",
+          "note": "이제 앱이 켜질 때 posts 테이블이 자동으로 만들어져요."
+        }
+      ]
+    }
+  ]
+}

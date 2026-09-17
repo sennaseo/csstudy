@@ -21,6 +21,7 @@ import type {
   Category,
   CategoryGroup,
   Exercise,
+  Level,
   PersistedState,
   Question,
   QuestionRecord,
@@ -29,6 +30,7 @@ import type {
 import { CATEGORY_GROUPS, QUESTIONS } from "../data/questions";
 import { buildExercise, shuffle } from "../utils/exercise";
 import { nodesFor, NODE_BY_ID } from "../data/lessonPath";
+import { filterByLevel } from "../data/levels";
 import type { TrackId } from "../data/tracks";
 import { CHARACTERS, RARITY_INFO, stageOf } from "../data/characters";
 import type { BuddyCharacter } from "../data/characters";
@@ -92,6 +94,7 @@ const initialPersisted: PersistedState = {
   activeCategory: null,
   activeGroup: null,
   activeTrack: null,
+  activeLevel: null,
   buddies: {},
   activeBuddyId: null,
   lastGoalRewardDay: null,
@@ -114,6 +117,7 @@ function loadPersisted(): PersistedState {
       activeCategory: parsed.activeCategory ?? null,
       activeGroup: parsed.activeGroup ?? null,
       activeTrack: parsed.activeTrack ?? null,
+      activeLevel: parsed.activeLevel ?? null,
       buddies: parsed.buddies ?? {},
       activeBuddyId: parsed.activeBuddyId ?? null,
       lastGoalRewardDay: parsed.lastGoalRewardDay ?? null,
@@ -184,7 +188,7 @@ export type AppView = "path" | "quiz" | "lessonComplete";
 
 /** 탭 화면(view:"path") 안에서 지금 어느 탭인지. 건물 층수 같은 것 —
  *  건물(view)은 그대로고 엘리베이터로 층만 옮겨 다닌다. */
-export type AppTab = "home" | "quiz" | "collection" | "my";
+export type AppTab = "home" | "quiz" | "practice" | "collection" | "my";
 
 /**
  * 퀴즈 동작 방식.
@@ -305,6 +309,8 @@ interface StudyState extends PersistedState {
   isNodeUnlocked: (lessonId: string) => boolean;
   /** 트랙(역할별 로드맵) 선택. null 이면 전체 보기. */
   setTrack: (t: TrackId | null) => void;
+  /** 난이도(출제 형태) 선택. null 이면 믹스. */
+  setLevel: (l: Level | null) => void;
   setActiveBuddy: (id: string) => void;
   clearReward: () => void;
   getTodayCount: () => number;
@@ -362,6 +368,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       activeCategory,
       activeGroup,
       activeTrack,
+      activeLevel,
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
@@ -376,6 +383,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       activeCategory,
       activeGroup,
       activeTrack,
+      activeLevel,
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
@@ -425,6 +433,11 @@ export const useStudyStore = create<StudyState>((set, get) => {
       persist();
     },
 
+    setLevel: (l) => {
+      set({ activeLevel: l });
+      persist();
+    },
+
     setGroup: (g) => {
       set({ activeGroup: g, activeCategory: null });
       get().pickRandom();
@@ -438,7 +451,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     pickRandom: () => {
-      const { activeCategory, activeGroup, currentQuestion } = get();
+      const { activeCategory, activeGroup, activeLevel, currentQuestion } = get();
       let pool = QUESTIONS;
       if (activeCategory) {
         pool = QUESTIONS.filter((q) => q.category === activeCategory);
@@ -446,12 +459,13 @@ export const useStudyStore = create<StudyState>((set, get) => {
         const cats = CATEGORY_GROUPS[activeGroup];
         pool = QUESTIONS.filter((q) => cats.includes(q.category));
       }
+      pool = filterByLevel(pool, activeLevel);
       const next = pickFromPool(pool, currentQuestion?.id ?? null);
       // 새 문제 → 새 출제 형태 + 채점 상태 초기화.
       set({
         currentQuestion: next,
         isAnswerVisible: false,
-        exercise: next ? buildExercise(next) : null,
+        exercise: next ? buildExercise(next, get().activeLevel) : null,
         selectedQid: null,
         graded: false,
         lastCorrect: null,
@@ -644,7 +658,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
           lessonIndex: nextIndex,
           lessonCorrect: newCorrect,
           currentQuestion: nextQ ?? null,
-          exercise: nextQ ? buildExercise(nextQ) : null,
+          exercise: nextQ ? buildExercise(nextQ, get().activeLevel) : null,
           selectedQid: null,
           graded: false,
           lastCorrect: null,
@@ -692,7 +706,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
           lessonXp: 0,
           lessonAnswers: [],
           currentQuestion: firstQ,
-          exercise: firstQ ? buildExercise(firstQ) : null,
+          exercise: firstQ ? buildExercise(firstQ, get().activeLevel) : null,
           selectedQid: null,
           graded: false,
           lastCorrect: null,
@@ -726,8 +740,8 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     isNodeUnlocked: (lessonId) => {
-      // 언락 기준은 "지금 고른 트랙의 순서". 트랙을 바꾸면 순서도 같이 바뀐다.
-      const nodes = nodesFor(get().activeTrack);
+      // 언락 기준은 "지금 고른 트랙×레벨 뷰에서의 순서". 트랙/레벨을 바꾸면 순서도 같이 바뀐다.
+      const nodes = nodesFor(get().activeTrack, get().activeLevel);
       const idx = nodes.findIndex((n) => n.id === lessonId);
       if (idx <= 0) return true; // 첫 노드(또는 이 트랙에 없는 id)는 열림
       const prevId = nodes[idx - 1].id;
@@ -752,7 +766,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
-        exercise: first ? buildExercise(first) : null,
+        exercise: first ? buildExercise(first, get().activeLevel) : null,
         selectedQid: null,
         graded: false,
         lastCorrect: null,
@@ -786,7 +800,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
-        exercise: buildExercise(first),
+        exercise: buildExercise(first, get().activeLevel),
         selectedQid: null,
         graded: false,
         lastCorrect: null,
@@ -796,12 +810,20 @@ export const useStudyStore = create<StudyState>((set, get) => {
 
     startToday: () => {
       // 오늘의 5문제 = ① 복습 급한 순 → ② 아직 안 푼 새 문제 → ③ 오래된 아는 문제.
-      const { records } = get();
+      // 레벨 필터는 unseen·known 에만 건다 — review(망각곡선 만기)는 잊기 직전이라
+      // 레벨로 숨기면 안 된다 (망각곡선이 깨진다).
+      const { records, activeLevel } = get();
       const review = reviewPoolOf(records);
-      const unseen = shuffle(QUESTIONS.filter((q) => !records[q.id]));
-      const known = QUESTIONS.filter(
-        (q) => records[q.id]?.status === "understood"
-      ).sort((a, b) => records[a.id].lastReviewedAt - records[b.id].lastReviewedAt);
+      const unseen = filterByLevel(
+        shuffle(QUESTIONS.filter((q) => !records[q.id])),
+        activeLevel
+      );
+      const known = filterByLevel(
+        QUESTIONS.filter((q) => records[q.id]?.status === "understood").sort(
+          (a, b) => records[a.id].lastReviewedAt - records[b.id].lastReviewedAt
+        ),
+        activeLevel
+      );
 
       const queue = [...review, ...unseen, ...known].slice(0, DAILY_GOAL);
       if (queue.length === 0) return;
@@ -817,7 +839,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
         lessonAnswers: [],
         lessonResult: null,
         currentQuestion: first,
-        exercise: buildExercise(first),
+        exercise: buildExercise(first, get().activeLevel),
         selectedQid: null,
         graded: false,
         lastCorrect: null,

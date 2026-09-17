@@ -12,6 +12,7 @@
 // =============================================================
 
 import assert from "node:assert/strict";
+import type { ExerciseType, Level } from "../types";
 import { QUESTIONS, SUMMARIES } from "../data/questions";
 import { OX_FALSE } from "../data/oxFalse";
 import {
@@ -20,6 +21,7 @@ import {
   buildBlankExercise,
   buildTypingExercise,
   buildOxExercise,
+  buildExercise,
 } from "./exercise";
 
 const CATEGORY_OF = new Map(QUESTIONS.map((q) => [q.id, q.category]));
@@ -172,6 +174,34 @@ for (const q of QUESTIONS) {
       `거짓 문장 길이가 원문과 ±6자를 넘게 다르다: ${id} → ${orig.length}자 vs ${s.length}자`
     );
   }
+}
+
+// 6) 레벨별 출제 형태 검사 — 각 레벨의 룰렛이 허용된 유형만 뽑는지.
+//    (무작위라 문제마다 여러 번 굴려서 확인. hard 는 폴백이 choice 까지 새지 않아야 한다 —
+//    빈칸이 139개 전부 성립하므로 typing/blank/speak 안에서 항상 해결돼야 한다.)
+{
+  const ALLOWED: Record<Level | "mix", Set<ExerciseType>> = {
+    easy: new Set(["choice", "ox"]),
+    normal: new Set(["blank", "match", "choice"]),
+    hard: new Set(["typing", "blank", "speak"]),
+    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match"]),
+  };
+
+  let hardSawChoice = false;
+  for (const q of QUESTIONS) {
+    for (const level of ["easy", "normal", "hard", null] as const) {
+      const key = level ?? "mix";
+      for (let i = 0; i < 20; i++) {
+        const ex = buildExercise(q, level);
+        assert.ok(
+          ALLOWED[key].has(ex.type),
+          `${key} 레벨에서 허용 안 된 유형이 나왔다: ${q.id} → "${ex.type}"`
+        );
+        if (level === "hard" && ex.type === "choice") hardSawChoice = true;
+      }
+    }
+  }
+  assert.ok(!hardSawChoice, "hard 레벨에서 choice 가 나오면 안 된다 (빈칸이 항상 성립해야 함)");
 }
 
 console.log("✅ exercise 자체 점검 통과");

@@ -1,12 +1,13 @@
 // =============================================================
 // App
 // - 화면(view)을 3가지로 분기한다:
-//     · path           : 탭 화면 — 하단 탭바로 홈/퀴즈/도감/마이를 오간다
+//     · path           : 탭 화면 — 하단 탭바로 홈/이론/실무/도감/마이를 오간다
 //     · quiz           : 문제 풀이 — 상단바(닫기/진행도/하트) + 퀴즈 카드
 //     · lessonComplete : 레슨 완료(또는 실패) 화면
-// - 탭 화면(TabsScreen) 안의 4개 탭 (store 의 tab):
+// - 탭 화면(TabsScreen) 안의 5개 탭 (store 의 tab):
 //     · home       : 목표 게이지 · 트랙 고르기 · 원탭 시작 · 버디
 //     · quiz       : 트랙 진행도 + 감긴 길(스킬 패스)
+//     · practice   : 실무 — BackendQuest 프로토타입 iframe
 //     · collection : 캐릭터 도감
 //     · my         : 연속 학습 · 하트 · 단어장 · 클라우드 동기화
 //   예전엔 이 전부가 홈 한 장에 세로로 쌓여 있어서 첫 화면이 8000px 짜리
@@ -240,6 +241,20 @@ function TabsScreen() {
           <LessonPath />
         </>
       )}
+
+      {/* 실무 탭 — BackendQuest 프로토타입(public/practice/index.html)을 iframe 으로 연다.
+          항상 마운트 + hidden: 프로토타입은 저장 기능이 없어서 언마운트하면 진도가 날아간다.
+          iframe 이라 이론 쪽 하트·히스토리 장부와 완전히 분리된다 (프로토타입은 location/history 를 안 쓴다). */}
+      <div hidden={tab !== "practice"} className="flex flex-col gap-2">
+        <p className="text-xs text-ink-500">
+          🛠️ 실무 — 백엔드를 조립하는 실험판 (챕터 3 · 7문제). 진도는 저장되지 않아요.
+        </p>
+        <iframe
+          title="실무 — BackendQuest 프로토타입"
+          src={`${import.meta.env.BASE_URL}practice/index.html`}
+          className="h-[calc(100dvh-13rem)] w-full rounded-2xl border-2 border-ink-200 bg-white"
+        />
+      </div>
 
       {tab === "collection" && <CollectionBook />}
 

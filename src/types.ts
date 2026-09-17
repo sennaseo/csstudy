@@ -23,6 +23,13 @@ export type Category =
 /** 큰 분류 — 카테고리들을 묶는 상위 그룹. */
 export type CategoryGroup = "프론트엔드" | "백엔드&프로그래밍";
 
+/**
+ * 난이도 — 칩 하나가 두 축을 움직인다: **어떤 문제가 나오나**(data/levels.ts 의 LEVEL_OF)
+ * + **얼마나 어렵게 묻나**(utils/exercise.ts 의 WEIGHTS_BY_LEVEL).
+ * null 이면 믹스(예전 방식 = 전체 문제 + 기존 가중치). 저장 키라 문자열을 바꾸지 말 것.
+ */
+export type Level = "easy" | "normal" | "hard";
+
 // 트랙 id 는 데이터 파일에서 정의한다 (역할별 로드맵 — tracks.ts).
 import type { TrackId } from "./data/tracks";
 export type { TrackId };
@@ -192,6 +199,12 @@ export interface PersistedState {
    * 길의 유닛 순서와 언락 순서가 이 값에 따라 달라진다.
    */
   activeTrack: TrackId | null;
+  /**
+   * 선택된 난이도 — null 이면 믹스(전체).
+   * 초급=쉬운 문제 + 고르기 / 중급=중급 문제 + 빈칸 / 고급=어려운 문제 + 직접 쓰기·말하기.
+   * 레슨 노드 id 는 레벨과 무관하므로 난이도를 바꿔도 진행도는 유지된다.
+   */
+  activeLevel: Level | null;
   /** 보유 캐릭터들 — key 는 캐릭터 id. */
   buddies: Record<string, BuddyRecord>;
   /** 화면에 데리고 다니는 대표 캐릭터 id. */

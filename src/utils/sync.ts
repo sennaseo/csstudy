@@ -129,6 +129,7 @@ export function mergeStates(a: PersistedState, b: PersistedState): PersistedStat
     activeCategory: a.activeCategory ?? b.activeCategory,
     activeGroup: a.activeGroup ?? b.activeGroup,
     activeTrack: a.activeTrack ?? b.activeTrack,
+    activeLevel: a.activeLevel ?? b.activeLevel,
     activeBuddyId: a.activeBuddyId ?? b.activeBuddyId,
     // 보상 중복 방지 — 더 최신 날짜가 이긴다 ('YYYY-MM-DD' 는 문자열 비교 OK).
     lastGoalRewardDay:
