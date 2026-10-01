@@ -445,6 +445,162 @@ const name = document.getElementById("name").value; // 수동으로 꺼내야 �
 const [name, setName] = useState("");
 <input value={name} onChange={(e) => setName(e.target.value)} />`,
   },
+  // 설계 메모: q-react-11~19 는 요즘IT "2025년 리액트 기술 스택 가이드"(Robin Wieruch)를
+  // 바탕으로 만든 '최신 스택' 문제다. 라이브러리 이름 암기가 아니라 "왜 그걸 고르나"를 묻는다.
+  {
+    id: "q-react-11",
+    category: "React",
+    question: "서버 함수(Server Function)와 서버 액션(Server Action)은 어떤 관계인가?",
+    answer:
+      "서버 함수는 '버튼만 누르면 주방에 주문이 들어가는 키오스크'다. 컴포넌트 안에서 평범한 함수 부르듯 호출하지만 실제 코드는 서버에서 돈다 — 타입까지 맞춰진 원격 호출(RPC, Remote Procedure Call)인 셈. 파일이나 함수 맨 위에 'use server' 를 붙여 만든다. 서버 액션은 그중 폼 제출·데이터 변경처럼 '행동'에 쓰이는 서버 함수를 부르는 이름이다(서버 함수의 부분집합). form 의 action 에 바로 꽂을 수 있어서 API 라우트·fetch 코드 없이 폼을 처리할 수 있다.",
+    code: `// actions.ts — 'use server' 가 붙은 함수는 서버에서만 실행된다
+'use server';
+export async function addTodo(formData: FormData) {
+  const title = formData.get("title");
+  await db.todo.create({ data: { title } }); // DB 직접 접근 OK
+}
+
+// TodoForm.tsx — API 라우트도 fetch 도 없이 바로 연결 (서버 액션)
+import { addTodo } from "./actions";
+export function TodoForm() {
+  return (
+    <form action={addTodo}>
+      <input name="title" />
+      <button>추가</button>
+    </form>
+  );
+}`,
+  },
+  {
+    id: "q-react-12",
+    category: "React",
+    question: "React 만 쓰지 않고 Next.js 같은 '프레임워크' 위에서 만드는 이유는?",
+    answer:
+      "React 는 '엔진'이고 Next.js 는 엔진을 얹은 '완성차'다. React 혼자서는 화면 조각(컴포넌트)만 만들 줄 알아서, 주소별 페이지 나누기(라우팅)·서버에서 미리 그려 보내기(SSR)·캐싱·서버 컴포넌트 실행 환경을 직접 조립해야 한다. 프레임워크는 이걸 기본으로 깔아준다. 그래서 React 공식 문서도 새 앱은 프레임워크로 시작하라고 권한다. 반대로 마케팅용 랜딩 페이지처럼 거의 정적인 사이트라면 Astro 같은 가벼운 도구가 더 어울린다.",
+    code: `// Next.js App Router — 폴더 구조가 곧 주소(라우팅)다
+app/
+  page.tsx             →  /
+  posts/
+    page.tsx           →  /posts
+    [id]/page.tsx      →  /posts/123   (동적 주소)
+
+// React 만 쓴다면? → react-router 설치, SSR 서버 구성,
+//   서버 컴포넌트 번들러 설정... 전부 직접 조립해야 한다`,
+  },
+  {
+    id: "q-react-13",
+    category: "React",
+    question: "Tailwind CSS 같은 '유틸리티 우선' CSS 는 기존 CSS 와 뭐가 다른가?",
+    answer:
+      "기존 CSS 는 '맞춤 정장' — .card 같은 클래스 이름을 지어서 별도 파일에 스타일을 적는다. Tailwind 는 '레고 블록' — p-4(여백), bg-white(배경), rounded-lg(둥근 모서리) 같은 작은 기능 클래스를 HTML 에 바로 조립한다. 장점: 이름 짓기 고민이 없고, 파일을 왔다 갔다 안 해도 되고, 컴포넌트를 지우면 스타일도 같이 사라져서 '안 쓰는 CSS' 가 쌓이지 않는다. 단점: 클래스가 길어져 처음엔 지저분해 보인다. (이 앱 csStudy 도 Tailwind 로 만들어졌다.)",
+    code: `/* 기존 CSS — 이름을 짓고, 파일을 오가야 한다 */
+.card { padding: 16px; background: white; border-radius: 8px; }
+<div className="card">...</div>
+
+/* Tailwind — 블록을 그 자리에서 조립 */
+<div className="p-4 bg-white rounded-lg">...</div>`,
+  },
+  {
+    id: "q-react-14",
+    category: "React",
+    question: "shadcn/ui 가 '버전 없는 UI 라이브러리'라고 불리는 이유는?",
+    answer:
+      "보통 UI 라이브러리(MUI 등)는 '가구 렌탈'이다 — npm 으로 설치해서 빌려 쓰니까 모양을 바꾸기 어렵고, 업데이트(버전업) 때 깨질 수 있다. shadcn/ui 는 '가구 설계도 복사'다 — 명령어 한 줄이면 버튼·다이얼로그 같은 컴포넌트 소스 코드가 내 프로젝트 폴더에 그대로 복사된다. 이제 그 코드는 내 것이라 마음대로 고칠 수 있고, 따라갈 '라이브러리 버전'이 없다. 대신 원본이 개선돼도 자동으로 받지 못하니 필요하면 직접 다시 가져와야 한다. Tailwind 로 스타일링되고 아이콘은 Lucide 를 쓴다.",
+    code: `# 설치가 아니라 '복사' — 소스가 내 폴더에 생긴다
+npx shadcn@latest add button
+
+# 결과
+components/ui/button.tsx   ← 내 코드! 직접 수정 가능
+
+// 사용
+import { Button } from "@/components/ui/button";
+<Button variant="outline">저장</Button>`,
+  },
+  {
+    id: "q-react-15",
+    category: "React",
+    question: "TypeScript 를 쓰는데도 Zod 같은 검증 라이브러리가 필요한 이유는?",
+    answer:
+      "TypeScript 타입은 '설계도 검사'라서 빌드할 때만 존재하고, 실행되는 JS 에서는 싹 지워진다. 그런데 폼 입력·API 응답·URL 값은 실행 중에 바깥에서 들어오는 '택배'다 — 설계도가 아무리 완벽해도 택배 안에 뭐가 들었는지는 열어봐야 안다. Zod 는 실행 시점(런타임)에 택배를 열어 검사하는 검수원이다. 게다가 스키마 하나에서 타입을 뽑아낼 수 있어(z.infer) '검사 규칙'과 '타입'이 따로 놀지 않는다. 브라우저 쪽 검사는 사용자가 우회할 수 있으므로, 진짜 방어선은 서버(서버 액션 등)에서 Zod 로 검증하는 것이다.",
+    code: `import { z } from "zod";
+
+// 스키마 하나 = 런타임 검사 규칙 + 타입
+const SignUp = z.object({
+  email: z.string().email(),
+  age: z.number().int().min(14),
+});
+type SignUp = z.infer<typeof SignUp>; // 타입은 자동으로 따라온다
+
+// 서버 액션에서 검증 — 브라우저 검사는 우회 가능하니까 여기가 최종 방어선
+const result = SignUp.safeParse(input);
+if (!result.success) return { error: result.error.flatten() };`,
+  },
+  {
+    id: "q-react-16",
+    category: "React",
+    question: "검색어·정렬·페이지 번호를 useState 대신 URL 에 두는 이유는?",
+    answer:
+      "useState 는 '머릿속 메모'라 새로고침하면 날아가고 남에게 줄 수도 없다. URL 은 '책갈피'다 — ?q=react&sort=new&page=2 처럼 주소에 적어두면 새로고침해도 그대로고, 링크를 복사해 보내면 상대도 똑같은 화면을 보며, 뒤로가기도 자연스럽게 동작한다. 게다가 서버 컴포넌트가 URL 을 읽어 처음부터 그 상태로 그려줄 수 있다. 다만 URL 값은 전부 문자열이라 숫자 변환·기본값 처리가 귀찮은데, nuqs 같은 라이브러리가 이를 타입 있는 useState 처럼 쓰게 해준다.",
+    code: `// ❌ 새로고침·공유 시 사라짐
+const [page, setPage] = useState(1);
+
+// ✅ nuqs — useState 처럼 쓰지만 값은 URL(?page=2)에 산다
+import { useQueryState, parseAsInteger } from "nuqs";
+const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
+// setPage(2) → 주소가 /posts?page=2 로 바뀐다`,
+  },
+  {
+    id: "q-react-17",
+    category: "React",
+    question: "서버 컴포넌트·URL 상태·React Query 가 자리 잡으면서 전역 상태 라이브러리(Zustand 등)의 비중이 줄어든 이유는?",
+    answer:
+      "예전엔 '집 안의 모든 물건을 창고 하나(전역 스토어)'에 넣었다. 그런데 물건을 종류별로 나눠보니 각자 더 잘 맞는 자리가 생겼다. ① 서버 데이터(게시글 목록 등) → 서버 컴포넌트가 바로 가져오거나, 클라이언트에선 React Query 가 캐시로 관리. ② 검색·필터·페이지 → URL. ③ 폼 입력 → 폼 자신(서버 액션). 이렇게 빼고 나면 진짜 '클라이언트 전용 전역 상태'(테마, 열린 사이드바 등)는 얼마 안 남는다. 그래서 Zustand 는 '필수'에서 '남은 것만 담는 선택'이 됐다. 판단 기준: 이 값의 진짜 주인이 누구인가(서버? URL? 이 화면?)를 먼저 묻고, 주인이 브라우저 전역일 때만 스토어에 넣는다.",
+    code: `// 상태의 '주인'별로 자리 배정
+// 서버 데이터      → 서버 컴포넌트 / React Query
+const posts = await db.post.findMany();             // RSC
+const { data } = useQuery({ queryKey: ["posts"], queryFn: fetchPosts });
+
+// 공유되는 화면 조건 → URL
+const [q, setQ] = useQueryState("q");
+
+// 화면 하나만 쓰는 값 → useState
+const [open, setOpen] = useState(false);
+
+// 진짜 클라이언트 전역 → 그때만 Zustand
+const theme = useAppStore((s) => s.theme);`,
+  },
+  {
+    id: "q-react-18",
+    category: "React",
+    question: "React Testing Library 와 Playwright(또는 Cypress)는 무엇을 테스트하나?",
+    answer:
+      "React Testing Library 는 '부품 검사' — 컴포넌트 하나를 가짜 브라우저(jsdom)에 띄워, 사용자처럼 버튼을 찾고 눌러서 결과를 확인한다(통합·단위 테스트). Playwright·Cypress 는 '완성차 시승' — 진짜 브라우저로 실제 앱을 열어 로그인부터 결제까지 처음부터 끝까지 돌려본다(E2E 테스트). 부품 검사는 빠르고 많이, 시승은 느리지만 핵심 흐름 위주로 — 둘을 섞어 쓰는 게 일반적이다.",
+    code: `// React Testing Library — 컴포넌트 단위 (빠름)
+render(<Counter />);
+await userEvent.click(screen.getByRole("button", { name: "+" }));
+expect(screen.getByText("1")).toBeInTheDocument();
+
+// Playwright — 실제 브라우저로 전체 흐름 (느리지만 현실적)
+await page.goto("/login");
+await page.fill("#email", "me@test.com");
+await page.click("text=로그인");
+await expect(page).toHaveURL("/dashboard");`,
+  },
+  {
+    id: "q-react-19",
+    category: "React",
+    question: "Supabase 같은 올인원 서비스를 쓰면서도 'DB 기능만' 쓰고 ORM(Prisma)으로 접근하는 전략의 이유는?",
+    answer:
+      "올인원 서비스는 '풀옵션 원룸'이다 — DB·인증·파일 저장·실시간 기능이 다 붙어 있어 편하지만, 전부 쓰기 시작하면 이사(다른 서비스로 교체)가 거의 불가능해진다(벤더 종속, vendor lock-in). 그래서 Supabase 는 그냥 'PostgreSQL 을 빌려주는 곳'으로만 쓰고, 코드는 Prisma 같은 ORM 을 통해 표준 SQL DB 에 말하게 한다. 그러면 나중에 Neon·RDS 등 다른 Postgres 로 옮겨도 연결 주소만 바꾸면 된다. 인증도 같은 이유로 외부 서비스 대신 Lucia 의 안내를 따라 직접 구현하기도 한다. 트레이드오프: 편의 기능을 포기하고 직접 짜는 비용을 내는 대신, 교체 가능성(유연성)을 산다.",
+    code: `// schema.prisma — 코드는 'Postgres' 하고만 대화한다
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // ← Supabase 든 RDS 든 이 주소만 바꾸면 끝
+}
+
+// 앱 코드는 어떤 호스팅인지 모른다
+const user = await prisma.user.findUnique({ where: { email } });`,
+  },
   {
     id: "q-ts-1",
     category: "TypeScript",
@@ -2587,6 +2743,15 @@ export const SUMMARIES: Record<string, string> = {
   "q-react-8": "재조합은 두 트리를 비교해 최소한의 변경만 DOM 에 적용한다",
   "q-react-9": "프롭 드릴링은 중간이 쓰지도 않는 값을 계속 전달하는 것",
   "q-react-10": "값을 상태 하나에 모아 진실의 원천을 하나로 만든다",
+  "q-react-11": "서버 액션은 폼·데이터 변경에 쓰는 서버 함수의 한 종류다",
+  "q-react-12": "프레임워크가 라우팅·SSR·캐싱 같은 뼈대를 기본으로 깔아준다",
+  "q-react-13": "작은 기능 클래스를 마크업에 바로 조립해 스타일을 입힌다",
+  "q-react-14": "설치가 아니라 소스를 내 프로젝트로 복사해 직접 소유한다",
+  "q-react-15": "타입은 실행 시 사라지니 바깥 입력은 런타임에 검증해야 한다",
+  "q-react-16": "URL 에 두면 새로고침·링크 공유·뒤로가기에도 상태가 유지된다",
+  "q-react-17": "상태를 주인별로 나누면 클라이언트 전역 상태는 조금만 남는다",
+  "q-react-18": "RTL 은 컴포넌트를, Playwright 는 실제 브라우저로 전체 흐름을 본다",
+  "q-react-19": "표준 DB 로만 쓰고 ORM 으로 접근해 벤더 교체 가능성을 지킨다",
   "q-ts-1": "인터페이스는 같은 이름이 병합되고 타입은 표현이 자유롭다",
   "q-ts-2": "애니는 검사를 면제하고 언노운은 확인부터 하라고 강제한다",
   "q-ts-3": "애즈 콘스트는 값을 리터럴로 좁히고 읽기 전용으로 얼린다",

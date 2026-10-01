@@ -50,6 +50,15 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-react-8": "normal", // 재조합: 두 트리 비교 후 최소 변경 적용 과정 ★앵커
   "q-react-9": "easy", // props drilling: 중간이 전달만 한다는 현상 정의 하나
   "q-react-10": "easy", // controlled 이유: 단일 진실의 원천 한 줄
+  "q-react-11": "normal", // 서버 함수 ⊃ 서버 액션 관계 + 'use server'·form action 동작
+  "q-react-12": "easy", // 프레임워크 = 라우팅·SSR 뼈대 기본 제공, 엔진/완성차 한 줄
+  "q-react-13": "easy", // 유틸리티 CSS: 클래스 조립 vs 이름 짓기 한 줄 대비
+  "q-react-14": "normal", // 복사해서 소유 → 버전 없음 + 업데이트 못 받는 대가
+  "q-react-15": "hard", // 타입 소거·런타임 검증·서버가 최종 방어선 판단
+  "q-react-16": "normal", // URL 상태 이점 나열(새로고침·공유·뒤로가기·RSC)
+  "q-react-17": "hard", // 상태의 '주인' 기준으로 자리 배정하는 설계 판단
+  "q-react-18": "easy", // 부품 검사 vs 완성차 시승 한 줄 대비
+  "q-react-19": "hard", // 벤더 종속 vs 편의 트레이드오프 판단
 
   // ─── TypeScript ───
   "q-ts-1": "easy", // interface vs type: 선언 병합 vs 표현 자유 한 줄 대비
