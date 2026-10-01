@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* hidden 속성은 "무조건 안 보이기"여야 한다.
+   Tailwind preflight 의 [hidden]{display:none} 은 .flex 같은 유틸리티와 우선순위가 같고
+   뒤에 오는 유틸리티가 이겨서, <div hidden className="flex"> 가 그대로 보이는 사고가 났다
+   (홈 탭 아래에 실무 iframe 이 깔려 있었다). !important 로 속성이 항상 이기게 못 박는다. */
+[hidden] {
+  display: none !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    폰트 내장 (@font-face) — 외부 CDN 요청 0
    ───────────────────────────────────────────────────────────────

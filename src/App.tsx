@@ -27,6 +27,7 @@ import { DailyStats } from "./components/DailyStats";
 import { GoalGauge } from "./components/GoalGauge";
 import { LessonComplete } from "./components/LessonComplete";
 import { LessonPath } from "./components/LessonPath";
+import { NormalizationLab } from "./components/NormalizationLab";
 import { QuestionCard } from "./components/QuestionCard";
 import { QuickActions } from "./components/QuickActions";
 import { RewardOverlay } from "./components/RewardOverlay";
@@ -176,6 +177,9 @@ function TabsScreen() {
     () => new URLSearchParams(window.location.search).get("open") === "deck",
   );
   const startToday = useStudyStore((s) => s.startToday);
+  // 실무 탭 안의 두 판(백엔드 조립 / 정규화 실습) 중 어느 쪽을 보고 있나.
+  // 앱을 껐다 켜면 기본(백엔드)으로 돌아가도 상관없어서 스토어가 아닌 로컬 상태로 충분하다.
+  const [practiceMode, setPracticeMode] = useState<"backend" | "normalize">("backend");
 
   useEffect(() => {
     const open = new URLSearchParams(window.location.search).get("open");
@@ -246,14 +250,41 @@ function TabsScreen() {
           항상 마운트 + hidden: 프로토타입은 저장 기능이 없어서 언마운트하면 진도가 날아간다.
           iframe 이라 이론 쪽 하트·히스토리 장부와 완전히 분리된다 (프로토타입은 location/history 를 안 쓴다). */}
       <div hidden={tab !== "practice"} className="flex flex-col gap-2">
-        <p className="text-xs text-ink-500">
-          🛠️ 실무 — 백엔드를 조립하는 실험판 (챕터 3 · 7문제). 진도는 저장되지 않아요.
-        </p>
-        <iframe
-          title="실무 — BackendQuest 프로토타입"
-          src={`${import.meta.env.BASE_URL}practice/index.html`}
-          className="h-[calc(100dvh-13rem)] w-full rounded-2xl border-2 border-ink-200 bg-white"
-        />
+        {/* 두 판 전환 토글. 두 판 모두 항상 마운트해 두고 hidden 으로만 가린다 —
+            iframe 은 언마운트하면 진도가 날아가고, 정규화 실습도 박스 친 게 남아 있는 편이 낫다. */}
+        <div role="tablist" className="flex gap-1 rounded-2xl border-2 border-ink-200 bg-white p-1">
+          {([
+            ["backend", "🛠️ 백엔드 조립"],
+            ["normalize", "🧩 정규화 실습"],
+          ] as const).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={practiceMode === id}
+              onClick={() => setPracticeMode(id)}
+              className={
+                "flex-1 rounded-xl px-2 py-2 text-sm font-extrabold transition-colors " +
+                (practiceMode === id ? "bg-accent-soft text-accent-dim" : "text-ink-500 hover:text-ink-700")
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div hidden={practiceMode !== "backend"} className="flex flex-col gap-2">
+          <p className="text-xs text-ink-500">
+            🛠️ 실무 — 백엔드를 조립하는 실험판 (챕터 3 · 7문제). 진도는 저장되지 않아요.
+          </p>
+          <iframe
+            title="실무 — BackendQuest 프로토타입"
+            src={`${import.meta.env.BASE_URL}practice/index.html`}
+            className="h-[calc(100dvh-16rem)] w-full rounded-2xl border-2 border-ink-200 bg-white"
+          />
+        </div>
+        <div hidden={practiceMode !== "normalize"}>
+          <NormalizationLab />
+        </div>
       </div>
 
       {tab === "collection" && <CollectionBook />}
