@@ -18,8 +18,9 @@
 // =============================================================
 
 import { useEffect, useState } from "react";
-import { findCharacter, stageOf } from "../data/characters";
+import { STAGE_XP, findCharacter, stageOf, stageProgress } from "../data/characters";
 import { NODE_BY_ID } from "../data/lessonPath";
+import { MISSION_XP, dateKeyOf } from "../data/missions";
 import { CATEGORY_EMOJI, QUESTIONS } from "../data/questions";
 import { DAILY_GOAL, useStudyStore } from "../store/useStudyStore";
 import { byCategory, scoreOf, tierOf } from "../utils/score";
@@ -105,6 +106,10 @@ export function LessonComplete() {
   const bestCombo = useStudyStore((s) => s.bestCombo);
   const activeBuddyId = useStudyStore((s) => s.activeBuddyId);
   const buddies = useStudyStore((s) => s.buddies);
+  const streak = useStudyStore((s) => s.getStreak());
+  const todayCount = useStudyStore((s) => s.getTodayCount());
+  // 오늘의 미션 보상이 오늘 지급됐는지 — 스트릭 줄 아래 한 줄로 알려준다.
+  const lastMissionRewardDay = useStudyStore((s) => s.lastMissionRewardDay);
 
   // 마운트 시 컨페티 한 번 터뜨린다.
   const [burstId, setBurstId] = useState(0);
@@ -116,7 +121,7 @@ export function LessonComplete() {
       <div className="flex flex-col items-center gap-4 py-16">
         <button
           onClick={goHome}
-          className="btn-3d rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green px-6 py-3 text-sm font-extrabold text-white"
+          className="btn-3d min-h-12 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white"
         >
           돌아가기
         </button>
@@ -134,12 +139,14 @@ export function LessonComplete() {
   const title = failed
     ? "하트가 다 떨어졌어요"
     : isReview
-    ? "복습 결과"
+    ? "복습 완료"
     : isToday
-    ? "오늘의 5문제 결과"
+    ? allCorrect
+      ? "오늘 몫 끝! 🎉"
+      : "오늘의 5문제 완료"
     : node
-    ? `${CATEGORY_EMOJI[node.category]} ${node.category} ${node.label} 결과`
-    : "레슨 결과";
+    ? `${CATEGORY_EMOJI[node.category]} ${node.category} ${node.label} 완료`
+    : "레슨 완료";
 
   const subtitle = failed
     ? "🔁 복습을 끝내면 하트 1개 회복! (30분마다 자동 회복돼요)"
@@ -171,49 +178,31 @@ export function LessonComplete() {
   // 도넛 한가운데 앉힐 버디. 없으면 이모지 하나로 대신한다.
   const buddy = activeBuddyId ? findCharacter(activeBuddyId) : undefined;
   const buddyRecord = activeBuddyId ? buddies[activeBuddyId] : undefined;
+  const buddyXp = buddyRecord?.xp ?? 0;
+  const buddyStage = stageOf(buddyXp);
+  const xpToNext = buddyStage === 3 ? 0 : STAGE_XP[buddyStage] - buddyXp;
+  const goalDone =
+    (isToday || isReview) && !failed && todayCount >= DAILY_GOAL;
   const buddyArt =
     buddy && buddyRecord
       ? buddy.stages[stageOf(buddyRecord.xp) - 1]?.art
       : undefined;
 
   return (
-    <div className="relative flex flex-col gap-5 py-6">
+    <div className="relative flex flex-col gap-5 pt-6">
       {/* 실패했을 땐 컨페티 없음 — 차분하게 위로하는 화면이라 축포는 안 어울린다 */}
       {!failed && <Confetti burstId={burstId} />}
 
       {/* 1. 제목 — 결과지 맨 위 제목처럼 왼쪽 정렬 */}
-      <h2 className="font-display text-2xl leading-tight text-ink-900">{title}</h2>
-
-      {/* 2. 푼 문제 줄 — <details> 라서 JS 없이 접었다 폈다 된다 */}
-      <details>
-        <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-ink-500 [&::-webkit-details-marker]:hidden">
-          {/* -space-x-2 = 옆 칸을 2씩 파고들게 → 동전 겹쳐 놓은 모양 */}
-          <span className="flex -space-x-2">
-            {catEmojis.map((emoji, i) => (
-              <span
-                key={i}
-                className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-ink-200 bg-white text-xs"
-              >
-                {emoji}
-              </span>
-            ))}
-          </span>
-          푼 문제 {result.answers.length}개 ›
-        </summary>
-        <ul className="mt-2 flex flex-col gap-1">
-          {result.answers.map((a, i) => (
-            <li key={i} className="flex gap-2 text-sm text-ink-700">
-              <span>{a.correct ? "✅" : "❌"}</span>
-              {/* 긴 지문(50자+)은 한 줄로 자르되 "..."를 남긴다.
-                  line-clamp 만 쓰면 text-overflow 가 clip 이라 글자가 소리 없이
-                  잘려서, 뒤에 내용이 더 있다는 걸 알 수가 없다. */}
-              <span className="line-clamp-1 text-ellipsis">
-                {Q_BY_ID.get(a.qid)?.question ?? a.qid}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </details>
+      <h2
+        className={
+          failed
+            ? "text-2xl font-extrabold leading-tight text-ink-900"
+            : "font-display text-3xl leading-tight text-ink-900"
+        }
+      >
+        {title}
+      </h2>
 
       {/* 3. 큰 도넛 — 이 화면의 주인공 */}
       <div className={"self-center " + (failed ? "" : "animate-bounce-in")}>
@@ -248,7 +237,7 @@ export function LessonComplete() {
       {/* 4. 등급 배지 */}
       <span
         className={
-          "self-center rounded-full border-2 border-ink-200 px-4 py-1.5 text-sm font-extrabold " +
+          "self-center rounded-full border border-ink-200 px-4 py-1.5 text-sm font-extrabold " +
           tier.badge
         }
       >
@@ -266,10 +255,9 @@ export function LessonComplete() {
           {unanswered > 0 && <span>안 푼 {unanswered}개</span>}
         </p>
         <p>{subtitle}</p>
-        <p className="flex flex-wrap justify-center gap-x-3 text-xs font-extrabold">
-          <span className="text-duo-bee-ink">+{result.xpGained} XP</span>
-          {showCombo && <span className="text-duo-fox-ink">🔥 콤보 {combo}</span>}
-        </p>
+        {showCombo && (
+          <p className="text-xs font-extrabold text-duo-fox-ink">🔥 콤보 {combo}</p>
+        )}
         {showCombo && combo === bestCombo && bestCombo >= 3 && (
           <p className="text-xs font-extrabold text-duo-fox-ink">🏅 콤보 신기록!</p>
         )}
@@ -277,6 +265,42 @@ export function LessonComplete() {
           <p className="text-xs font-extrabold text-duo-red-ink">❤️ 하트 1개 회복!</p>
         )}
       </div>
+
+      {/* 5-2. XP 카드 — 버디가 있으면 "다음 진화까지" 진행바를 붙인다(없으면 XP 한 줄만) */}
+      {buddy && buddyRecord ? (
+        <div className="flex flex-col gap-2 rounded-2xl border border-ink-200 bg-white p-4">
+          <p className="font-round text-lg font-extrabold text-duo-bee-ink">
+            +{result.xpGained} XP
+          </p>
+          <p className="text-sm text-ink-500">
+            {xpToNext > 0
+              ? `${buddy.name} 다음 진화까지 ${xpToNext} XP`
+              : `${buddy.name} 최종 진화 완료`}
+          </p>
+          <div className="progress-track !h-2.5">
+            <div
+              className="progress-fill"
+              style={{ width: `${stageProgress(buddyXp)}%` }}
+            />
+          </div>
+        </div>
+      ) : (
+        <p className="text-center font-round text-lg font-extrabold text-duo-bee-ink">
+          +{result.xpGained} XP
+        </p>
+      )}
+
+      {/* 5-3. 스트릭 줄 — 오늘 목표를 채운 today/review 세션에서만. 끊김 얘기는 하지 않는다 */}
+      {goalDone && (
+        <p className="text-center text-sm font-bold text-duo-fox-ink">
+          🔥 {streak}일째 — 내일도 5문제면 {streak + 1}일
+        </p>
+      )}
+      {!failed && lastMissionRewardDay === dateKeyOf(new Date()) && (
+        <p className="text-center text-sm font-bold text-duo-green-ink">
+          🎯 오늘의 미션도 완료 · 버디 XP +{MISSION_XP}
+        </p>
+      )}
 
       {/* 6. 카테고리별 미니 도넛 — 과목이 하나뿐이면 카드도 하나.
              열 수를 개수에 맞추되, 3열을 강제하면 320px 폰에서 카드가 ~90px 로 눌려
@@ -296,7 +320,7 @@ export function LessonComplete() {
             return (
               <div
                 key={c.category}
-                className="animate-slide-up flex flex-col items-center gap-1.5 rounded-2xl border-2 border-ink-200 bg-white p-3"
+                className="animate-slide-up flex flex-col items-center gap-1.5 rounded-2xl border border-ink-200 bg-white p-3"
                 style={{ animationDelay: `${100 + i * 80}ms` }}
               >
                 <p className="line-clamp-1 text-xs font-bold text-ink-900">
@@ -313,31 +337,71 @@ export function LessonComplete() {
                     {c.correct}/{c.total}
                   </span>
                 </Ring>
-                <p className={"text-[11px] font-bold " + t.text}>{t.label}</p>
+                <p className={"text-xs font-bold " + t.text}>{t.label}</p>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* 7. CTA — 홈은 작게, 다음 행동(복습/계속)은 크게 */}
-      <div className="flex gap-2">
-        <button
-          onClick={goHome}
-          className="btn-3d rounded-2xl border-2 border-ink-200 bg-white px-5 py-4 text-sm font-extrabold text-accent"
-        >
-          홈
-        </button>
-        <button
-          onClick={reviewCount > 0 ? startReview : goHome}
-          className="btn-3d flex-1 rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green px-6 py-4 text-base font-extrabold tracking-wide text-white hover:brightness-105"
-        >
-          {reviewCount > 0
-            ? failed
-              ? "❤️ 복습하고 하트 회복"
-              : `🔁 복습하기 (${Math.min(reviewCount, DAILY_GOAL)})`
-            : "홈으로"}
-        </button>
+      {/* 7. 푼 문제 줄 (카테고리 카드 아래) — <details> 라서 JS 없이 접었다 폈다 된다 */}
+      <details>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold text-ink-500 [&::-webkit-details-marker]:hidden">
+          {/* -space-x-2 = 옆 칸을 2씩 파고들게 → 동전 겹쳐 놓은 모양 */}
+          <span className="flex -space-x-2">
+            {catEmojis.map((emoji, i) => (
+              <span
+                key={i}
+                className="flex h-6 w-6 items-center justify-center rounded-full border border-ink-200 bg-white text-xs"
+              >
+                {emoji}
+              </span>
+            ))}
+          </span>
+          푼 문제 {result.answers.length}개 ›
+        </summary>
+        <ul className="mt-2 flex flex-col gap-1">
+          {result.answers.map((a, i) => (
+            <li key={i} className="flex gap-2 text-sm text-ink-700">
+              <span>{a.correct ? "✅" : "❌"}</span>
+              {/* 긴 지문(50자+)은 한 줄로 자르되 "..."를 남긴다.
+                  line-clamp 만 쓰면 text-overflow 가 clip 이라 글자가 소리 없이
+                  잘려서, 뒤에 내용이 더 있다는 걸 알 수가 없다. */}
+              <span className="line-clamp-1 text-ellipsis">
+                {Q_BY_ID.get(a.qid)?.question ?? a.qid}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
+
+      {/* 8. CTA — 복습할 게 있으면 [홈][복습하기], 없으면 [홈으로] 하나 */}
+      <div className="sticky bottom-0 -mx-4 flex gap-2 border-t border-ink-200 bg-paper px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        {reviewCount > 0 ? (
+          <>
+            <button
+              onClick={goHome}
+              className="btn-3d min-h-14 rounded-xl border-2 border-b-4 border-ink-200 bg-white px-5 text-sm font-bold text-accent hover:bg-ink-100"
+            >
+              홈
+            </button>
+            <button
+              onClick={startReview}
+              className="btn-3d min-h-14 flex-1 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white hover:brightness-105"
+            >
+              {failed
+                ? "❤️ 복습하고 하트 회복"
+                : `🔁 복습하기 (${Math.min(reviewCount, DAILY_GOAL)})`}
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={goHome}
+            className="btn-3d min-h-14 w-full rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white hover:brightness-105"
+          >
+            홈으로
+          </button>
+        )}
       </div>
     </div>
   );

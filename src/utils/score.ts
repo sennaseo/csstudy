@@ -41,7 +41,7 @@ export function tierOf(pct: number): Tier {
     return { label: "좋아요", text: "text-accent", badge: "bg-accent-soft text-accent-dim" };
   }
   if (pct >= 50) {
-    return { label: "조금만 더", text: "text-duo-bee-dim", badge: "bg-ink-100 text-duo-bee-dim" };
+    return { label: "조금만 더", text: "text-duo-bee-ink", badge: "bg-ink-100 text-duo-bee-ink" };
   }
   return { label: "다시 볼까요?", text: "text-duo-red-ink", badge: "bg-duo-red-soft text-duo-red-ink" };
 }

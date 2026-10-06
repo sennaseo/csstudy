@@ -38,10 +38,10 @@ import {
 } from "../utils/normalize";
 import { Confetti } from "./Confetti";
 
-const CARD = "rounded-2xl border-2 border-ink-200 bg-white p-4";
+const CARD = "rounded-2xl border border-ink-200 bg-white p-4";
 const BTN = "btn-3d rounded-2xl border-2 border-b-4 px-4 py-2.5 text-sm font-extrabold";
 const BTN_PRIMARY = BTN + " border-duo-green-dim bg-duo-green text-white hover:brightness-105";
-const BTN_PLAIN = BTN + " border-ink-900 bg-white text-ink-700";
+const BTN_PLAIN = BTN + " border-ink-200 bg-white text-ink-700";
 
 /** 조인 결과가 카티션 곱이면 수백 행이 될 수 있어 화면엔 앞부분만 그린다. */
 const MAX_ROWS = 40;
@@ -118,7 +118,7 @@ function MiniTable({
   keyCols?: string[];
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border-2 border-ink-200">
+    <div className="overflow-x-auto rounded-xl border border-ink-200">
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr className="bg-ink-100">
@@ -147,7 +147,7 @@ function MiniTable({
         </tbody>
       </table>
       {rows.length > MAX_ROWS && (
-        <p className="px-2 py-1 text-[11px] text-ink-400">…외 {rows.length - MAX_ROWS}행 더</p>
+        <p className="px-2 py-1 text-xs text-ink-400">…외 {rows.length - MAX_ROWS}행 더</p>
       )}
     </div>
   );

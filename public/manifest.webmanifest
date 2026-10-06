@@ -7,8 +7,8 @@
   "display": "standalone",
   "orientation": "portrait",
   "lang": "ko",
-  "background_color": "#FBFAF7",
-  "theme_color": "#FBFAF7",
+  "background_color": "#F7F8FA",
+  "theme_color": "#F7F8FA",
   "icons": [
     {
       "src": "./icon-192.png",

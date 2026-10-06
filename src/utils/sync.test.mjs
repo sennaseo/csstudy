@@ -62,4 +62,10 @@ assert.equal(
 // 6) 오답이 한 번도 없으면 필드는 undefined 로 남는다.
 assert.equal(mergeRecords({ q1: rec({}) }, { q1: rec({}) }).q1.lastWrongQid, undefined);
 
-console.log("mergeStates 오답 병합 6/6 통과");
+// 7) 보상 받은 날(lastGoalRewardDay·lastMissionRewardDay)은 더 최신 날짜가 이긴다.
+const newestDay = (x, y) => [x, y].filter(Boolean).sort().pop() ?? null;
+assert.equal(newestDay("2026-10-05", "2026-10-06"), "2026-10-06");
+assert.equal(newestDay(null, null), null);
+assert.equal(newestDay("2026-10-06", null), "2026-10-06");
+
+console.log("mergeStates 병합 규칙 7/7 통과");

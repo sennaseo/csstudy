@@ -74,7 +74,7 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
       >
         {/* 헤더 */}
         <div className="flex shrink-0 items-center justify-between p-5 pb-3">
-          <h2 id="carddeck-title" className="font-display text-lg font-extrabold text-ink-900">
+          <h2 id="carddeck-title" className="text-lg font-extrabold text-ink-900">
             📇 단어장{" "}
             <span className="font-round text-sm font-semibold text-ink-500">
               {cards.length ? safeIndex + 1 : 0} / {cards.length}
@@ -140,20 +140,20 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
               >
                 <div className={"flip-inner" + (flipped ? " is-flipped" : "")}>
                   {/* 앞면 — 용어만 */}
-                  <div className="flip-face flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-3xl border-2 border-ink-900 bg-paper-card p-6 shadow-card">
+                  <div className="flip-face flex min-h-[240px] flex-col items-center justify-center gap-3 rounded-3xl border border-ink-200 bg-paper-card p-6 shadow-card">
                     <span className="font-round text-xs font-bold text-ink-500">
                       {CARD_DOMAIN_EMOJI[card.domain]} {card.domain}
                     </span>
-                    <p className="text-center font-display text-3xl font-extrabold leading-tight text-ink-900">
+                    <p className="text-center text-3xl font-extrabold leading-tight text-ink-900">
                       {card.term}
                     </p>
-                    <span className="font-hand text-sm text-ink-400">
+                    <span className="text-sm text-ink-400">
                       톡 눌러서 뒤집기 👆
                     </span>
                   </div>
 
                   {/* 뒷면 — 한 줄 정의 + 비유 */}
-                  <div className="flip-face flip-back flex min-h-[240px] flex-col justify-center gap-3 rounded-3xl border-2 border-ink-900 bg-accent-soft p-6 shadow-card">
+                  <div className="flip-face flip-back flex min-h-[240px] flex-col justify-center gap-3 rounded-3xl border border-ink-200 bg-accent-soft p-6 shadow-card">
                     <p className="text-lg font-extrabold leading-snug text-ink-900">
                       {card.oneLiner}
                     </p>
@@ -177,14 +177,14 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
           <button
             onClick={() => go(-1)}
             disabled={!cards.length}
-            className="rounded-2xl border-2 border-ink-900 bg-white px-5 py-3 text-sm font-extrabold text-ink-900 shadow-chip transition-all active:scale-95 disabled:opacity-40"
+            className="rounded-2xl border border-ink-200 bg-white px-5 py-3 text-sm font-extrabold text-ink-900 shadow-chip transition-all active:scale-95 disabled:border-ink-300 disabled:bg-ink-200 disabled:text-ink-400"
           >
             ← 이전
           </button>
           <button
             onClick={() => go(1)}
             disabled={!cards.length}
-            className="flex-1 rounded-2xl border-2 border-ink-900 bg-duo-green px-5 py-3 text-sm font-extrabold text-white shadow-card transition-all active:scale-95 disabled:opacity-40"
+            className="flex-1 rounded-2xl border border-duo-green bg-duo-green px-5 py-3 text-sm font-extrabold text-white shadow-card transition-all active:scale-95 disabled:border-ink-300 disabled:bg-ink-200 disabled:text-ink-400"
           >
             다음 카드 →
           </button>

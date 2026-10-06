@@ -13,81 +13,27 @@
 /* ═══════════════════════════════════════════════════════════════
    폰트 내장 (@font-face) — 외부 CDN 요청 0
    ───────────────────────────────────────────────────────────────
-   예전엔 index.html 이 Google Fonts / jsDelivr 에서 폰트를 받아왔다.
-   그건 "글자를 쓸 때마다 남의 집에 가서 펜을 빌려오는" 구조라
-   지하철·비행기 모드에선 펜이 없어 글씨가 깨졌다. 오프라인이 이 앱의
-   핵심 가치인데 그게 무너진 것. 그래서 펜을 아예 가방에 넣고 다닌다.
+   본문은 시스템 폰트(용량 0)라서 파일이 필요 없다.
+   손글씨 Gaegu Bold 1종만 앱에 내장한다 — 브랜드 로고와 보상 제목 전용.
+   400~900 범위로 이 한 파일에 묶어, 어떤 굵기를 써도 가짜 볼드(억지로
+   두껍게 칠해 획이 뭉개지는 현상) 없이 이 파일이 쓰인다.
 
-   url() 은 Vite 가 빌드할 때 알아서 고쳐준다 —
-   웹은 /csstudy/assets/..., 앱은 ./assets/... 로. 그래서 경로를
-   빌드 종류별로 손댈 필요가 없다.
-
-   font-display: swap — 폰트가 준비되기 전에도 시스템 글꼴로 글자를
-   먼저 보여주고, 준비되면 슥 바꿔 낀다. 빈 화면을 안 보여주려는 것.
-
-   용량 줄이기(서브셋): 원본 한글 폰트는 11,172자를 다 담아 하나에
-   2~3MB 다. 실제로 쓰는 글자만 남겨 잘라냈다 —
-   상용한글 2350자(KS X 1001) + 앱 문제 데이터에 실제 등장하는 글자
-   + 라틴/숫자/구두점/화살표/수학기호/한글자모 블록 전체.
-   이모지(🔥 ✅ 등)는 원래도 이 폰트들에 없어서 시스템 이모지 폰트가
-   그리던 것 — 서브셋과 무관하게 그대로 나온다.
+   url() 은 Vite 가 빌드할 때 알아서 고쳐준다 (웹/앱 경로 차이 자동 처리).
+   font-display: swap — 폰트가 준비되기 전엔 시스템 글꼴로 먼저 보여준다.
    ═══════════════════════════════════════════════════════════════ */
-
-/* Gamja Flower — 본문. 또박또박한 손글씨라 긴 글도 읽힌다. */
-@font-face {
-  font-family: "Gamja Flower";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/GamjaFlower-Regular.woff2") format("woff2");
-}
-
-/* Gaegu — 제목·버튼. 굵게 쓸 수 있어서 "한 방" 자리에 쓴다.
-   Light(300) 는 앱 어디서도 안 써서 뺐다 (480KB 절약). */
 @font-face {
   font-family: "Gaegu";
   font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/Gaegu-Regular.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Gaegu";
-  font-style: normal;
-  /* 600~900 을 한 파일로 받는다. 앱은 semibold/bold/extrabold 를 쓰는데
-     Gaegu 에 있는 굵기는 Bold 하나뿐이라, 범위로 묶어 전부 이걸로 보낸다.
-     이렇게 안 하면 브라우저가 없는 굵기를 흉내내려 글자를 억지로 두껍게
-     칠해서(가짜 볼드) 손글씨 획이 뭉개진다. */
-  font-weight: 600 900;
+  font-weight: 400 900;
   font-display: swap;
   src: url("/fonts/Gaegu-Bold.woff2") format("woff2");
 }
 
-/* Nanum Pen Script — 말풍선/캡션. 더 흘려 쓴 낙서 느낌. */
-@font-face {
-  font-family: "Nanum Pen Script";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/NanumPenScript-Regular.woff2") format("woff2");
-}
-
-/* Patrick Hand — 숫자/영문 라벨. 라틴 글리프만 있어서 33KB 로 가볍다. */
-@font-face {
-  font-family: "Patrick Hand";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/PatrickHand-Regular.woff2") format("woff2");
-}
-
 /* ═══════════════════════════════════════════════════════════════
-   손그림(스케치) 테마
-   컨셉: "누가 공책에 연필로 그린 앱 화면".
-   규칙 세 가지만 기억하면 된다 —
-     1) 배경은 종이(크림색), 채우기는 최소. 색은 형광펜처럼 흐리게.
-     2) 모든 경계는 선이다. 그림자로 띄우지 말고 테두리로 그린다.
-     3) 반듯한 건 사람이 그린 게 아니다. 모서리와 선을 일부러 삐뚤게.
+   개발자용 학습 앱 테마
+   흰 카드 + 아주 옅은 회색 배경 + 얇은 경계선 + 한 가지 파랑.
+   색·글자 크기는 tailwind.config.js 토큰으로, 여기는 컴포넌트가
+   공통으로 쓰는 클래스(버튼 눌림, 진행바, 노드, 시트 애니메이션)만 둔다.
    ═══════════════════════════════════════════════════════════════ */
 
 html, body, #root {
@@ -96,26 +42,15 @@ html, body, #root {
 }
 
 body {
-  /* 종이 배경 + 아주 옅은 격자(모눈공책).
-     background-image 두 겹을 겹쳐서 세로줄/가로줄을 그린다.
-     투명도를 극단적으로 낮춰야 글자를 방해하지 않으면서 종이 느낌만 남는다. */
-  background-color: #FBFAF7;
-  background-image:
-    linear-gradient(rgba(27, 26, 23, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(27, 26, 23, 0.035) 1px, transparent 1px);
-  background-size: 26px 26px;
+  background: #F7F8FA;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-
-  /* 손글씨 폰트는 같은 px 에서 산세리프보다 작아 보인다(글자 몸통이 작다).
-     그래서 전체를 살짝 키우고 자간을 조금 벌려 읽기 편하게 만든다. */
-  font-size: 17px;
-  letter-spacing: 0.01em;
+  font-size: 16px;
 }
 
 ::selection {
-  background: rgba(59, 91, 219, 0.18);
-  color: #1B1A17;
+  background: rgba(37, 99, 235, 0.18);
+  color: #111827;
 }
 
 button {
@@ -133,42 +68,6 @@ button {
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;              /* Chrome/Safari */
-}
-
-/* ─── 삐뚤빼뚤한 모서리 ────────────────────────────────────────
-   손그림의 핵심. 사람이 그은 선은 절대 완벽한 직사각형이 안 된다.
-
-   방법: border-radius 에 값을 8개 준다.
-     border-radius: 가로4개 / 세로4개;
-   가로 곡률과 세로 곡률을 따로, 그리고 네 모서리를 전부 다르게 주면
-   "대충 그린 네모"가 된다.
-
-   아래에서 rounded-2xl 같은 Tailwind 클래스를 직접 덮어쓰기 때문에,
-   컴포넌트 코드는 한 줄도 안 고쳐도 앱 전체 모서리가 손그림이 된다.
-   (tailwind.config.js 에는 가로 4개만 지정 — 세로 곡률을 여기서 섞는다) */
-.rounded-2xl { border-radius: 22px 16px 20px 14px / 16px 22px 14px 20px; }
-.rounded-xl  { border-radius: 18px 12px 16px 11px / 12px 18px 11px 16px; }
-.rounded-3xl { border-radius: 30px 22px 26px 20px / 22px 30px 20px 26px; }
-.rounded-lg  { border-radius: 14px 10px 12px 9px  / 10px 14px 9px 12px; }
-/* 원(rounded-full)은 예외로 둔다 — 원을 삐뚤게 하면 찌그러진 알처럼 보인다.
-   대신 .path-node 처럼 필요한 곳만 개별적으로 살짝 일그러뜨린다. */
-
-/* 이웃한 카드가 전부 똑같이 삐뚤면 그것도 규칙적으로 보여 손맛이 죽는다.
-   짝수/3의 배수 번째 요소만 다른 삐뚤함을 줘서 자연스럽게 섞는다. */
-.rounded-2xl:nth-of-type(2n) { border-radius: 16px 24px 14px 20px / 22px 14px 20px 16px; }
-.rounded-2xl:nth-of-type(3n) { border-radius: 20px 14px 24px 16px / 14px 20px 16px 24px; }
-.rounded-xl:nth-of-type(2n)  { border-radius: 12px 19px 11px 16px / 18px 11px 16px 12px; }
-
-/* ─── 카드/패널: 그림자 대신 덧그린 선 ─────────────────────────
-   진짜 종이 스케치에는 부드러운 그림자가 없다.
-   대신 사람이 입체감을 내려고 오른쪽·아래에 선을 한 번 더 긋는다.
-   box-shadow 를 blur 0 으로 주면 딱 그 이중선이 된다.
-   (shadow-card / shadow-chip 은 tailwind.config.js 에서 같은 방식으로 바꿔 뒀다) */
-.sketch-card {
-  background: #FFFDF8;
-  border: 2px solid #1B1A17;
-  border-radius: 22px 16px 20px 14px / 16px 22px 14px 20px;
-  box-shadow: 3px 3px 0 rgba(27, 26, 23, 0.16);
 }
 
 /* ─── 3D 카드 플립 ─────────────────────────────────────────────
@@ -199,8 +98,7 @@ button {
 }
 
 /* ─── 컨페티 ──────────────────────────────────────────────────
-   스케치 테마에선 반짝이는 색종이가 아니라 펜으로 그은 짧은 획처럼 보이게
-   테두리를 두르고 모서리를 삐뚤게 만든다. */
+   작은 색종이 조각이 사방으로 튀었다가 사라진다. */
 @keyframes confetti-burst {
   0% {
     opacity: 1;
@@ -213,10 +111,9 @@ button {
 }
 .confetti-piece {
   position: absolute;
-  width: 9px;
-  height: 13px;
-  border: 1.5px solid #1B1A17;
-  border-radius: 4px 2px 5px 3px;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
   pointer-events: none; /* 클릭 방해 금지 */
   animation: confetti-burst 0.9s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
 }
@@ -234,38 +131,24 @@ button {
   }
 }
 .feedback-rise {
-  animation: feedback-rise 0.25s ease-out;
+  animation: feedback-rise 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-/* ─── 버튼: 종이에 그린 네모 ───────────────────────────────────
-   예전(듀오링고 톤)엔 버튼 밑에 두꺼운 색 테두리를 깔아 두께를 만들었다.
-   스케치 테마에선 두께 대신 오른쪽·아래로 덧그은 선(box-shadow, blur 0)이
-   입체감을 낸다. 종이에 네모 그리고 옆에 선 한 번 더 긋는 그 표현.
-
-   누르면? 그 덧그린 선 쪽으로 버튼이 미끄러져 들어가 선이 사라진다.
-   = 눌러서 종이에 딱 붙었다는 느낌.
-
-   예전 주석에 있던 경고(테두리 두께를 줄이면 버튼 키가 줄어 레이아웃이 튄다)는
-   여기선 신경 쓸 필요가 없다. box-shadow 는 요소 크기에 영향을 주지 않으므로
-   눌렀을 때 통째로 없애도 아무것도 안 움직인다.
-   대신 border-bottom-width 만 4px 이던 걸 사방 2px 로 맞춘다 —
-   손으로 그은 선은 아래만 유독 굵지 않으니까. */
+/* ─── 버튼: 눌리는 두께감 ──────────────────────────────────────
+   두께(border-b-4)와 색은 컴포넌트가 직접 지정한다(기존 컨벤션).
+   여기선 "누르면 2px 내려앉고 아래 선이 사라지는" 동작만 맡는다.
+   box-shadow 는 쓰지 않는다. */
 .btn-3d {
-  border-width: 2px;
-  border-color: #1B1A17;
-  box-shadow: 3px 3px 0 #1B1A17;
-  transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+  transition: transform 80ms ease-out, filter 80ms;
 }
 .btn-3d:active:not(:disabled) {
-  transform: translate(3px, 3px); /* 덧그린 선 위로 정확히 겹쳐 앉는다 */
-  box-shadow: 0 0 0 #1B1A17;
+  transform: translateY(2px);
+  border-bottom-color: transparent;
 }
-/* 비활성 버튼은 눌리지 않는다 — 선도 흐린 연필로 바뀐다. */
+/* 비활성 버튼은 눌리지 않는다. */
 .btn-3d:disabled {
-  cursor: not-allowed;
   transform: none;
-  border-color: #A9A296;
-  box-shadow: 2px 2px 0 rgba(27, 26, 23, 0.22);
+  cursor: not-allowed;
 }
 
 /* 오답일 때 살짝 좌우로 흔들기 */
@@ -278,10 +161,9 @@ button {
   animation: shake 0.3s ease-in-out;
 }
 
-/* ─── 말풍선 ──────────────────────────────────────────────────
-   손으로 그린 말풍선에는 테두리가 있다. 그래서 꼬리(삼각형)도 두 겹으로 만든다:
-   ::before = 조금 더 큰 검은 삼각형(= 선), ::after = 그 위를 덮는 종이색 삼각형.
-   검은 걸 살짝 바깥에 두고 종이색으로 덮으면 테두리 있는 꼬리가 된다. */
+/* ─── 말풍선 (레슨 길의 "시작") ────────────────────────────────
+   꼬리(삼각형)를 두 겹으로 만든다:
+   ::before = 조금 더 큰 초록 삼각형(= 테두리), ::after = 그 위를 덮는 흰색 삼각형. */
 .start-bubble {
   position: absolute;
   bottom: calc(100% + 12px);
@@ -289,9 +171,10 @@ button {
   transform: translateX(-50%);
   white-space: nowrap;
   z-index: 10;
-  border: 2px solid #1B1A17;
-  border-radius: 18px 12px 16px 11px / 12px 18px 11px 16px;
-  box-shadow: 3px 3px 0 rgba(27, 26, 23, 0.16);
+  border: 2px solid #15803D;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
 }
 .start-bubble::before,
 .start-bubble::after {
@@ -300,136 +183,113 @@ button {
   left: 50%;
   transform: translateX(-50%);
 }
-.start-bubble::before {            /* 바깥 = 선 */
+.start-bubble::before {            /* 바깥 = 테두리 */
   top: 100%;
   border: 9px solid transparent;
-  border-top-color: #1B1A17;
+  border-top-color: #15803D;
 }
-.start-bubble::after {             /* 안쪽 = 종이 */
+.start-bubble::after {             /* 안쪽 = 흰색 */
   top: calc(100% - 3px);
   border: 8px solid transparent;
-  border-top-color: #FFFDF8;
+  border-top-color: #fff;
 }
 
-/* 퀴즈 화면 버디 말풍선 — 꼬리가 왼쪽을 향하는 것 말고는 위와 같은 원리 */
-.buddy-bubble {
+/* ─── 퀘스트 카드 캐릭터 말풍선 ────────────────────────────────
+   꼬리가 위·오른쪽: 바로 위 캐릭터 존(오른쪽 끝 96px, 가운데 = 오른쪽에서 48px)을 가리킨다.
+   회전한 정사각형의 위·왼쪽 두 변만 테두리를 그리면 위를 향한 삼각형이 된다. */
+.meme-bubble {
   position: relative;
-  border: 2px solid #1B1A17;
-  border-radius: 18px 12px 16px 11px / 12px 18px 11px 16px;
-  box-shadow: 3px 3px 0 rgba(27, 26, 23, 0.16);
+  border: 2px solid #111827;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px 12px;
 }
-.buddy-bubble::before,
-.buddy-bubble::after {
+.meme-bubble::before {
   content: "";
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.buddy-bubble::before {
-  right: 100%;
-  border: 10px solid transparent;
-  border-right-color: #1B1A17;
-}
-.buddy-bubble::after {
-  right: calc(100% - 3px);
-  border: 9px solid transparent;
-  border-right-color: #FFFDF8;
+  top: -8px;
+  right: 40px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  transform: rotate(45deg);
+  border-left: 2px solid #111827;
+  border-top: 2px solid #111827;
 }
 
-/* ─── 진행바: 손으로 그린 게이지 ───────────────────────────────
-   사용법(HTML 두 겹)은 그대로다:
+/* ─── 캐릭터 존 집중선 ─────────────────────────────────────────
+   만화 효과선: 노랑(bee 35%) 쐐기를 10도마다 반복하고, 바깥을 둥글게 지워 "번쩍" 배경을 만든다.
+   정지 배경(애니메이션 없음) — 홈은 등장 모션 금지.
+   ::before 는 기본으로 형제보다 아래에 그려지지만, 고양이(absolute)가 뒤에 오므로 고양이가 위에 보인다. */
+.meme-stage::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(rgba(245, 158, 11, 0.35) 0 10deg, transparent 10deg 20deg);
+  -webkit-mask: radial-gradient(circle, #000 55%, transparent 72%);
+  mask: radial-gradient(circle, #000 55%, transparent 72%);
+}
+
+/* ─── 진행바 ───────────────────────────────────────────────────
+   사용법(HTML 두 겹):
      <div class="progress-track">
        <div class="progress-fill" style="width: 40%"></div>
-     </div>
-
-   - track = 펜으로 그린 빈 막대 → 테두리만 있고 속은 종이색.
-   - fill  = 색연필로 슥슥 칠한 부분 → 45도 사선 줄무늬를 겹쳐 칠한 자국을 낸다.
-     (repeating-linear-gradient 가 그 줄무늬다)
-   예전의 매끈한 젤리 하이라이트는 뺐다 — 광택은 손그림에 없는 표현이다. */
+     </div> */
 .progress-track {
-  height: 18px;
+  height: 12px;
   border-radius: 9999px;
-  background: #FFFDF8;
-  border: 2px solid #1B1A17;
+  background: #E5E7EB;
   overflow: hidden;    /* 채움 막대가 둥근 모서리 밖으로 삐져나오지 않게 */
 }
 .progress-fill {
-  position: relative;
   height: 100%;
   border-radius: 9999px;
-  background-color: #4C9A2A;
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.13) 0px,
-    rgba(255, 255, 255, 0.13) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-/* 채운 막대 오른쪽 끝에 세로선을 하나 그어 "여기까지 칠했다"는 경계를 만든다.
-   width 가 0 일 땐 왼쪽 끝에 선만 덩그러니 남으므로 숨긴다. */
-.progress-fill::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
-  width: 2px;
-  background: rgba(27, 26, 23, 0.5);
-}
-.progress-fill[style*="width: 0%"]::after,
-.progress-fill[style*="width:0%"]::after {
-  display: none;
+  background: #15803D;
+  transition: width 400ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ─── 스킬 패스 노드(원형 버튼) ────────────────────────────────
-   손으로 그린 동그라미는 정원이 아니다 — 살짝 찌그러져 있다.
-   그래서 border-radius 를 49%/51% 식으로 어긋나게 줘 계란처럼 만든다.
-
-   입체감은 상태별 색 그림자 대신, 여기서도 덧그린 검은 선으로 통일했다.
-   상태(완료/현재/잠금) 구분은 바닥 색이 아니라
-   "칠했는가 / 안 칠했는가"와 선의 진하기로 한다 — 그게 종이 위의 표현이다. */
+   상태(완료/현재/잠금)는 색으로 구분한다. 두께감은 아래쪽 4px 테두리. */
 .path-node {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
-  border: 2.5px solid #1B1A17;
-  border-radius: 49% 51% 52% 48% / 51% 48% 52% 49%;
+  width: 64px;
+  height: 64px;
+  border-radius: 9999px;
+  border: 2px solid;
+  border-bottom-width: 4px;
   font-weight: 700;
-  box-shadow: 4px 4px 0 rgba(27, 26, 23, 0.85);
-  transition: transform 0.06s ease-out, box-shadow 0.06s ease-out;
+  transition: transform 80ms;
 }
-/* 완료 — 노란 형광펜으로 칠해 둔 동그라미 */
+/* 완료 */
 .path-node-done {
-  background: #F5D9A8;
-  color: #1B1A17;
+  background: #FEF3C7;
+  border-color: #D97706;
+  color: #92400E;
 }
-/* 현재 — 초록 색연필로 진하게 칠하고 살짝 크게. "여기야!" */
+/* 현재 — 초록으로 채우고 살짝 크게. "여기야!" */
 .path-node-current {
-  background: #4C9A2A;
-  color: #FFFDF8;
-  transform: scale(1.08);
+  background: #15803D;
+  border-color: #166534;
+  color: #fff;
+  transform: scale(1.06);
 }
-/* 잠금 — 아직 안 칠한 빈 동그라미 + 흐린 연필선 */
+/* 잠금 */
 .path-node-locked {
-  background: #FBFAF7;
-  border-color: #A9A296;
-  color: #A9A296;
-  box-shadow: 3px 3px 0 rgba(169, 162, 150, 0.5);
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+  color: #6B7280;
   cursor: not-allowed;
 }
-/* 누르면 덧그린 선 위로 미끄러져 앉는다 (버튼과 같은 원리) */
 .path-node:active:not(.path-node-locked) {
-  transform: translate(4px, 4px);
-  box-shadow: 0 0 0 rgba(27, 26, 23, 0.85);
+  transform: translateY(2px);
 }
 /* 현재 노드는 scale 이 걸려 있으니, 눌릴 때도 그 크기를 유지해야 안 튄다 */
 .path-node-current:active {
-  transform: translate(4px, 4px) scale(1.08);
+  transform: translateY(2px) scale(1.06);
 }
 
 /* ─── 도넛 링 채우기 ───────────────────────────────────────────
@@ -463,68 +323,6 @@ button {
   animation: float-up 1.1s ease-out forwards;
 }
 
-/* ─── 마감: 구분선을 잉크 쪽으로 ───────────────────────────────
-   컴포넌트들이 쓰는 border-ink-200(옅은 회색 선)은 스케치에선 너무 약하다.
-   종이 위에선 선이 보여야 물건이 있는 것처럼 보이므로 톤을 한 칸 당겨준다.
-   ponytail: 전역 덮어쓰기. 예외가 필요한 곳은 컴포넌트에서 border-ink-300 등으로 낮추면 된다. */
-.border-ink-200 {
-  border-color: rgba(27, 26, 23, 0.5);
-}
-
-/* ─── 코드 블록: 공책에 붙여둔 프린트 조각 ─────────────────────
-   검은 배경 코드창은 이 테마에서 혼자 튄다 — 종이 위에 시커먼 사각형 하나.
-   대신 "출력해서 오려 붙인 종이"처럼 만든다: 밝은 회색 종이 + 잉크 테두리.
-   코드만은 손글씨가 아니라 고정폭 글꼴 그대로 둔다 (읽기 정확도가 우선). */
-pre.bg-ink-900 {
-  background-color: #F4F1E9;
-  color: #1B1A17;
-  border: 2px solid #1B1A17;
-  box-shadow: 3px 3px 0 rgba(27, 26, 23, 0.14);
-}
-/* 안쪽 글자색 클래스(text-ink-100)가 밝은 회색이라 새 배경에서 안 보인다 — 잉크색으로 되돌린다. */
-pre.bg-ink-900.text-ink-100 {
-  color: #2E2B26;
-}
-
-/* 카드에 펜 테두리를 둘러준다.
-   앱 안의 모든 카드는 shadow-card 를 달고 있어서(그림자로 떠 보이게 하려던 것),
-   이 클래스 하나에 border 를 붙이면 카드 전부가 손으로 그린 네모가 된다.
-   컴포넌트 10군데를 안 고쳐도 되는 이유. */
-.shadow-card {
-  border: 2px solid #1B1A17;
-}
-
-/* ─── 크레용 채색 ─────────────────────────────────────────────
-   진한 색으로 넓게 칠한 면(CTA 버튼, 유닛 헤더)은 디지털 페인트처럼 평평해서
-   손그림 톤을 혼자 깬다. 레퍼런스에서도 큰 면은 종이색이고 색은 얇게 쓴다.
-
-   컴포넌트 20군데를 고치는 대신, 색 그 자체에 "칠한 결"을 입힌다:
-   45도 사선 줄무늬(repeating-linear-gradient)를 반투명 흰색으로 겹치면
-   색연필이 지나간 자국처럼 보인다. 진행바 채움과 같은 수법.
-   background-image 만 얹으므로 배경색(bg-duo-green 등)은 그대로 살아 있다. */
-.bg-duo-green,
-.bg-accent,
-.bg-duo-red,
-.bg-duo-bee,
-.bg-duo-fox,
-.bg-duo-beetle {
-  background-image: repeating-linear-gradient(
-    45deg,
-    rgba(255, 255, 255, 0.07) 0px,
-    rgba(255, 255, 255, 0.07) 2px,
-    transparent 2px,
-    transparent 5px
-  );
-}
-
-/* 순백(bg-white)은 크림색 종이 위에서 혼자 형광등처럼 튄다.
-   14개 컴포넌트를 하나씩 고치는 대신 흰색 자체를 종이색으로 재정의한다.
-   ponytail: 전역 덮어쓰기. 진짜 순백이 필요한 곳이 생기면 그때 bg-[#fff] 로 예외를 준다. */
-.bg-white {
-  background-color: #FFFDF8;
-}
-/* 말풍선 꼬리(::after)도 같은 종이색이라 자동으로 맞는다 — 위쪽 규칙 참고. */
-
 /* ─── 모션 줄이기(prefers-reduced-motion) ──────────────────────
    OS 설정에서 "동작 줄이기"를 켠 사람에게는 무한 반복·큰 움직임이
    멀미를 일으킨다. 그런 것만 끈다 — 요소는 그대로 보이고, 움직임만 멈춘다.
@@ -536,7 +334,7 @@ pre.bg-ink-900.text-ink-100 {
   .animate-pop,
   .animate-bounce-in,
   .animate-slide-up,
-  .animate-float-up,
+  .animate-check,
   .ring-fill,
   .float-up,
   .feedback-rise,
@@ -562,8 +360,7 @@ pre.bg-ink-900.text-ink-100 {
    버튼에 -webkit-tap-highlight-color: transparent 를 걸어둔 탓에
    키보드(Tab)로 이동하는 사람은 지금 어디에 있는지 볼 방법이 없었다.
    :focus-visible 은 "키보드로 왔을 때만" 켜지므로 마우스/터치 사용자에게는
-   테두리가 뜨지 않는다 — 손그림 톤을 해치지 않는다.
-   outline 은 border-radius 를 브라우저가 알아서 따라가므로 삐뚤한 모서리도 그대로 감싼다. */
+   테두리가 뜨지 않는다. */
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -571,7 +368,6 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #3B5BDB; /* accent — 볼펜 파랑 */
+  outline: 2px solid #2563EB; /* accent */
   outline-offset: 2px;
-  border-radius: inherit;     /* 삐뚤한 모서리를 그대로 따라가게 */
 }

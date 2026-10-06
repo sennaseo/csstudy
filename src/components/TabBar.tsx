@@ -1,6 +1,10 @@
 // =============================================================
 // TabBar
-// - 화면 하단에 붙는 5개 탭(홈/이론/실무/도감/마이) 이동 바.
+// - 화면 하단에 붙는 4개 탭(홈/이론/실무/마이) 이동 바.
+// - 도감은 탭에서 뺐다 — 보상을 "가끔 구경하는" 곳이라 핵심 루프(오늘 5문제) 밖이다.
+//   홈 버디 카드·마이 탭 "도감" 행으로 들어가고, 도감에 있는 동안은 마이 탭이 켜져 보인다.
+// - 아이콘은 이모지 대신 인라인 SVG(라이브러리 없음) — 색이 활성/비활성 글자색(currentColor)을 따라간다.
+//   활성색은 Primary 와 같은 초록.
 // - 게임기 컨트롤러의 방향 버튼처럼, 어디서든 손 안 떼고 다른 화면으로 점프한다.
 //
 // 왜 fixed 인가
@@ -24,12 +28,16 @@
 
 import { useStudyStore, type AppTab } from "../store/useStudyStore";
 
-const TABS: { id: AppTab; emoji: string; label: string }[] = [
-  { id: "home", emoji: "🏠", label: "홈" },
-  { id: "quiz", emoji: "📝", label: "이론" },
-  { id: "practice", emoji: "🛠️", label: "실무" },
-  { id: "collection", emoji: "📖", label: "도감" },
-  { id: "my", emoji: "👤", label: "마이" },
+// 아이콘 = 24x24 칸에 그린 단순한 선(path). 집 / 책 / 렌치 / 사람.
+const TABS: { id: AppTab; icon: string; label: string }[] = [
+  { id: "home", icon: "M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10", label: "홈" },
+  { id: "quiz", icon: "M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5zM4 21a2 2 0 012-2h13", label: "이론" },
+  {
+    id: "practice",
+    icon: "M14.7 6.3a4 4 0 015 5L19 12l-7 7a2.1 2.1 0 01-3-3l7-7 .7-.7a4 4 0 01-2-2z",
+    label: "실무",
+  },
+  { id: "my", icon: "M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0", label: "마이" },
 ];
 
 export function TabBar() {
@@ -39,11 +47,12 @@ export function TabBar() {
   return (
     <nav
       aria-label="주요 메뉴"
-      className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-ink-200 bg-white pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-white pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex max-w-xl">
         {TABS.map((t) => {
-          const active = tab === t.id;
+          // 도감(collection)은 탭바에 없으니, 들어가는 문인 마이 탭을 켜 둔다.
+          const active = tab === t.id || (tab === "collection" && t.id === "my");
           return (
             <li key={t.id} className="flex-1">
               <button
@@ -54,13 +63,23 @@ export function TabBar() {
                 }}
                 aria-current={active ? "page" : undefined}
                 className={
-                  "flex w-full flex-col items-center gap-0.5 px-1 pb-1.5 pt-2 text-[11px] font-extrabold transition-colors "
-                  + (active ? "text-accent" : "text-ink-400 hover:text-ink-700")
+                  "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-xs font-bold transition-colors "
+                  + (active ? "text-duo-green-ink" : "text-ink-400 hover:text-ink-700")
                 }
               >
-                <span className="text-xl leading-none" aria-hidden>
-                  {t.emoji}
-                </span>
+                <svg
+                  aria-hidden
+                  width={24}
+                  height={24}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d={t.icon} />
+                </svg>
                 {t.label}
               </button>
             </li>

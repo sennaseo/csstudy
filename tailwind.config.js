@@ -1,127 +1,91 @@
 /** @type {import('tailwindcss').Config} */
+
+// 본문·보기·버튼·숫자에 쓰는 시스템 산세리프 스택.
+// 새 웹폰트를 받지 않으니 용량 0, 오프라인에서도 항상 같다.
+const SYSTEM_SANS = [
+  "system-ui",
+  "-apple-system",
+  "Segoe UI",
+  "Roboto",
+  "Noto Sans KR",
+  "Apple SD Gothic Neo",
+  "Malgun Gothic",
+  "Helvetica Neue",
+  "Arial",
+  "sans-serif",
+];
+
 export default {
-  // 라이트 테마로 전환 — dark 클래스는 더 이상 쓰지 않지만 설정은 남겨둔다 (나중에 다크모드 복귀 대비).
+  // 다크모드는 아직 없다 — 설정만 남겨둔다 (나중에 복귀 대비).
   darkMode: "class",
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        // ─── 손그림 테마: 모든 글자가 손글씨다 ───────────────────
-        // 기본 본문(font-sans)까지 손글씨로 바꾼다. 스케치 UI 는
-        // "종이에 사람이 직접 그린 화면"이 컨셉이라, 글자만 반듯한 산세리프면
-        // 그림과 글씨가 따로 논다.
-        //
-        // 예전엔 안전망으로 Pretendard 를 뒤에 세웠는데 뺐다. 이유:
-        // 앱이 쓰는 글자 중 손글씨 폰트 3종에 없는 건 전부 이모지·기호였고
-        // (🔥 ✅ 📚 …), Pretendard 에도 그건 없다 — 원래부터 시스템 이모지
-        // 폰트가 그리던 것이다. 즉 2MB 를 내고 실제로 메워지는 글자가
-        // 거의 없었다. 이제 마지막 안전망은 폰이 이미 갖고 있는 system-ui 다
-        // (공짜, 오프라인, 용량 0).
-        sans: [
-          "Gamja Flower",
-          "Gaegu",
-          "Patrick Hand",
-          "system-ui",
-          "sans-serif",
-        ],
-        // font-round — 숫자/영문 라벨용. Patrick Hand(라틴 손글씨)를 앞세우고
-        // 한글은 뒤의 Gaegu 로 자동으로 넘어간다.
-        round: [
-          "Patrick Hand",
-          "Gaegu",
-          "system-ui",
-          "sans-serif",
-        ],
-        // font-display — 큰 타이틀 "한 방" 자리. 굵게 쓸 수 있는 Gaegu.
-        display: [
-          "Gaegu",
-          "Patrick Hand",
-          "system-ui",
-          "sans-serif",
-        ],
-        // font-hand — 말풍선·낙서 캡션처럼 더 흘려쓴 느낌이 필요한 자리.
-        hand: [
-          "Nanum Pen Script",
-          "Gaegu",
-          "Patrick Hand",
-          "system-ui",
-          "sans-serif",
-        ],
+        // ─── 개발자용 학습 앱: 시스템 폰트·흰 카드·한 가지 파랑 ───
+        // 읽는 글자(본문·보기·해설)는 전부 시스템 산세리프.
+        // 손글씨(Gaegu Bold 1종)는 브랜드 로고와 보상 순간 제목에만 쓴다.
+        sans: SYSTEM_SANS,
+        // font-round — 숫자용. 컴포넌트에 남은 font-round 를 안 지워도 되게 이름만 남겼다.
+        round: SYSTEM_SANS,
+        // font-display — 브랜드·보상 제목 전용.
+        display: ["Gaegu", "system-ui", "sans-serif"],
+        // font-hand — 하위호환용 (지금은 쓰는 곳 없음).
+        hand: ["Gaegu", "system-ui", "sans-serif"],
         mono: [
           "ui-monospace",
           "SFMono-Regular",
           "Menlo",
-          "Monaco",
           "Consolas",
           "monospace",
         ],
       },
       colors: {
-        // ─── 손그림(스케치) 팔레트 ──────────────────────────────
         // 토큰 "이름"(ink-900, accent, duo-green ...)은 그대로라서
-        // 컴포넌트 코드는 한 글자도 안 고치고 앱 전체가 새 색으로 갈아입는다.
-        //
-        // 컨셉: 크림색 종이 + 연필/펜으로 그린 검은 선.
-        // 색은 "칠한 것"이 아니라 "형광펜으로 슥 그은 것"처럼 흐리게 쓴다.
-        // 그래서 채도 높은 원색 대신, 종이 위에 스며든 듯한 톤을 골랐다.
+        // 컴포넌트는 안 고쳐도 앱 전체가 새 색으로 갈아입는다.
+        // 규칙: 글자색은 ink-900/700/500/400, accent/accent-dim, *-ink 만.
+        //       bee, fox, ink-300 은 글자 금지. 흰 글자는 bg-duo-green / bg-accent /
+        //       bg-accent-dim / bg-ink-900 위에서만.
         ink: {
-          900: "#1B1A17", // 펜으로 꾹 눌러 쓴 제목
-          700: "#2E2B26", // 본문
-          500: "#6B655C", // 연필 보조 텍스트
-          300: "#A9A296", // 흐린 연필선 / 잠긴 것 — 배경/테두리 전용
-          // 400: ink.300 을 "글자"로 쓸 때만 바꿔 끼우는 짝. ink.300 은 흰 배경에서
-          // 대비 2.49:1 로 WCAG AA(4.5:1) 미달이라 캡션/보조문구가 잘 안 읽힌다.
-          // 같은 회갈색 계열을 유지하면서 4.85:1 까지 끌어올린 값 (카드 #FFFDF8 기준).
-          400: "#757065",
-          200: "#DED8CC", // 종이 위 옅은 선 — 테두리/구분선
-          100: "#F2EDE3", // 살짝 눌러 칠한 배경 (칩/섹션)
+          900: "#111827", // 제목
+          700: "#1F2937", // 본문
+          500: "#4B5563", // 보조 텍스트
+          400: "#6B7280", // 캡션 (12px 캡션의 대비 하한)
+          300: "#D1D5DB", // 비활성 테두리/아이콘 (장식 전용)
+          200: "#E5E7EB", // 구분선·카드 테두리
+          100: "#F3F4F6", // 칩/섹션 배경
         },
-        // 종이 자체의 색. bg-paper 로 쓸 수 있게 별도 토큰으로 뺐다.
         paper: {
-          DEFAULT: "#FBFAF7", // 크림 화이트 — body 배경
-          card: "#FFFDF8", // 카드는 종이보다 한 톤 밝게 (겹쳐 놓은 메모지 느낌)
+          DEFAULT: "#F7F8FA", // body 배경
+          card: "#FFFFFF", // 카드
         },
         accent: {
-          // 메인 포인트 컬러 — 잉크 블루(볼펜으로 그은 파란 밑줄)
-          DEFAULT: "#3B5BDB",
-          dim: "#2F49AE",
-          soft: "#E4E9FB", // 형광펜으로 슥 칠한 파란 틴트
+          DEFAULT: "#2563EB", // 선택·링크·보조 CTA
+          dim: "#1D4ED8",
+          soft: "#EFF4FF",
         },
         duo: {
-          green: "#4C9A2A", // 색연필 초록 — 정답/CTA
-          "green-dim": "#3A7620",
-          "green-soft": "#E8F3DE", // 형광펜 초록
-          "green-ink": "#2F5F18",
-          red: "#D6453C", // 빨간 펜 첨삭 — 오답
-          "red-dim": "#AE332C",
-          "red-soft": "#FBE5E3",
-          "red-ink": "#98241E",
-          bee: "#E8A33D", // 노란 형광펜 — XP/별/트로피
-          "bee-dim": "#C4831F",
-          // bee-ink: bee-dim 을 글자로 쓸 때의 짝 (bee-dim 3.12:1 → 5.04:1)
-          "bee-ink": "#96631A",
-          fox: "#D97C29", // 주황 색연필 — 스트릭 불꽃
-          // fox-ink: fox 를 글자로 쓸 때의 짝 (fox 3.01:1 → 5.12:1)
-          "fox-ink": "#A35A18",
-          beetle: "#8B6BC7", // 보라 색연필 — 젬/레어
+          green: "#15803D", // 정답·Primary CTA
+          "green-dim": "#166534",
+          "green-soft": "#DCFCE7",
+          "green-tint": "#F0FAF3", // 퀘스트 카드 배경 — 연두 아주 옅게 (green-soft 는 정답 보기용이라 큰 면엔 과함)
+          "green-ink": "#166534",
+          red: "#DC2626", // 오답 표면(배경·테두리·✕). CTA 배경으로는 쓰지 않는다
+          "red-dim": "#B91C1C",
+          "red-soft": "#FEE2E2",
+          "red-ink": "#991B1B",
+          bee: "#F59E0B", // XP·완료 노드 (글자는 bee-ink 만)
+          "bee-dim": "#D97706",
+          "bee-ink": "#92400E",
+          fox: "#F97316", // 스트릭 (글자는 fox-ink 만)
+          "fox-ink": "#C2410C",
+          beetle: "#7C3AED", // 레어
         },
       },
-      borderRadius: {
-        // ─── 손으로 그린 둥근 모서리 ────────────────────────────
-        // 사람이 사각형을 그리면 네 모서리 곡률이 절대 같지 않다.
-        // border-radius 에 값 4개를 서로 다르게 주면 그 "삐뚤함"이 흉내진다.
-        // (rounded-2xl 같은 기존 클래스 이름을 그대로 덮어쓰므로
-        //  컴포넌트는 안 고쳐도 전부 손그림 모서리가 된다.)
-        lg: "14px 10px 12px 9px",
-        xl: "18px 12px 16px 11px",
-        "2xl": "22px 16px 20px 14px",
-        "3xl": "30px 22px 26px 20px",
-      },
       boxShadow: {
-        // 종이에 그린 그림은 은은한 그림자가 아니라 "펜으로 덧그은 선"이 그림자다.
-        // 그래서 blur 없는 단단한 오프셋 그림자로 바꿨다 — 스케치 특유의 이중선 느낌.
-        card: "3px 3px 0 rgba(27, 26, 23, 0.14)",
-        chip: "2px 2px 0 rgba(27, 26, 23, 0.12)",
+        card: "0 0 0 1px rgba(17,24,39,0.06), 0 1px 2px rgba(17,24,39,0.06)", // 카드
+        chip: "0 1px 2px rgba(17,24,39,0.06)",
+        sheet: "0 -8px 24px rgba(17,24,39,0.10)", // 하단 피드백 시트
       },
       keyframes: {
         // 새 문제 카드가 등장할 때 살짝 튀어오르는 효과
@@ -137,7 +101,7 @@ export default {
         // 스킬 패스의 "지금 풀 차례" 노드/말풍선이 둥실둥실 뜨는 효과
         bob: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-6px)" },
+          "50%": { transform: "translateY(-4px)" },
         },
         // 완료 화면 트로피가 "통!" 하고 튀어나오는 효과.
         "bounce-in": {
@@ -145,24 +109,24 @@ export default {
           "60%": { opacity: "1", transform: "scale(1.1)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
-        // "+10 XP" 같은 숫자가 위로 떠오르며 사라지는 효과
-        "float-up": {
-          "0%": { opacity: "1", transform: "translateY(0)" },
-          "100%": { opacity: "0", transform: "translateY(-20px)" },
-        },
         // 완료 화면 스탯 카드들이 아래에서 하나씩 올라오는 효과
         "slide-up": {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        // 정답 보기가 살짝 커졌다 돌아오는 효과
+        check: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.06)" },
+        },
       },
       animation: {
-        pop: "pop 0.35s ease-out",
+        pop: "pop 0.25s ease-out",
         beat: "beat 0.8s ease-in-out 2",
         bob: "bob 1.4s ease-in-out infinite",
         "bounce-in": "bounce-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)",
-        "float-up": "float-up 1.1s ease-out forwards",
         "slide-up": "slide-up 0.35s ease-out both",
+        check: "check 0.3s ease-out",
       },
     },
   },

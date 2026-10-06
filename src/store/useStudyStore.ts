@@ -13,6 +13,7 @@
 //    - 뽑기는 "미보유 캐릭터 중에서" 희귀도 가중치로 (커먼70/레어25/레전드5)
 //    - XP: 평가할 때마다 대표 캐릭터가 경험치를 얻고 단계가 오른다 (진화)
 //    - 모든 캐릭터 보유 시 뽑기는 대표 캐릭터 보너스 XP 로 전환
+//    - 오늘의 미션: 카테고리 2문제 맞히면 대표 버디 +30 XP (하루 1회, lastMissionRewardDay)
 // =============================================================
 
 import { create } from "zustand";
@@ -43,18 +44,14 @@ import {
   schedulePush,
 } from "../utils/sync";
 import { isDue } from "../utils/srs";
+import { MISSION_XP, dateKeyOf, missionFor, missionProgress } from "../data/missions";
 import type { SyncConfig } from "../utils/sync";
 
 // ─── localStorage 헬퍼 ────────────────────────────────────
 const STORAGE_KEY = "csStudy:v1";
 
-/** Date → 'YYYY-MM-DD' (로컬 타임존). dailyCounts 의 키. */
-function dateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+/** Date → 'YYYY-MM-DD' (로컬 타임존). dailyCounts 의 키. missions.ts 의 함수를 같이 쓴다. */
+const dateKey = dateKeyOf;
 
 function todayKey(): string {
   return dateKey(new Date());
@@ -98,6 +95,7 @@ const initialPersisted: PersistedState = {
   buddies: {},
   activeBuddyId: null,
   lastGoalRewardDay: null,
+  lastMissionRewardDay: null,
   bestCombo: 0,
   hearts: MAX_HEARTS,
   heartsUpdatedAt: Date.now(),
@@ -121,6 +119,7 @@ function loadPersisted(): PersistedState {
       buddies: parsed.buddies ?? {},
       activeBuddyId: parsed.activeBuddyId ?? null,
       lastGoalRewardDay: parsed.lastGoalRewardDay ?? null,
+      lastMissionRewardDay: parsed.lastMissionRewardDay ?? null,
       bestCombo: parsed.bestCombo ?? 0,
       hearts: parsed.hearts ?? MAX_HEARTS,
       heartsUpdatedAt: parsed.heartsUpdatedAt ?? Date.now(),
@@ -148,7 +147,7 @@ const XP_BY_STATUS: Record<ReviewStatus, number> = {
   unknown: 4,
 };
 
-/** 일일 목표 문제 수 — GoalGauge 와 동일해야 한다. */
+/** 일일 목표 문제 수 — 홈의 QuestCard(오늘의 퀘스트 카드)와 동일해야 한다. */
 export const DAILY_GOAL = 5;
 
 /** '이해함' 드롭 확률 (0~1) */
@@ -230,6 +229,8 @@ interface StudyState extends PersistedState {
   lastCorrect: boolean | null;
   /** 새 캐릭터 획득/진화 알림 (transient — 저장 안 함). */
   pendingReward: PendingReward | null;
+  /** 오늘의 미션 보상을 방금 받은 시각 — 미션 토스트용 (transient — 저장 안 함). */
+  missionDoneAt: number | null;
 
   // ── 화면/모드 (transient) ──
   view: AppView;
@@ -313,6 +314,8 @@ interface StudyState extends PersistedState {
   setLevel: (l: Level | null) => void;
   setActiveBuddy: (id: string) => void;
   clearReward: () => void;
+  /** 미션 토스트를 닫는다 (missionDoneAt 을 비움). */
+  clearMissionToast: () => void;
   getTodayCount: () => number;
   getStreak: () => number;
 }
@@ -372,6 +375,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
+      lastMissionRewardDay,
       bestCombo,
       hearts,
       heartsUpdatedAt,
@@ -387,6 +391,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
       buddies,
       activeBuddyId,
       lastGoalRewardDay,
+      lastMissionRewardDay,
       bestCombo,
       hearts,
       heartsUpdatedAt,
@@ -410,6 +415,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
     graded: false,
     lastCorrect: null,
     pendingReward: null,
+    missionDoneAt: null,
     view: "path",
     // ...persisted 뒤에 하드코딩 — 저장값을 덮어써서 재시작하면 언제나 홈 탭.
     tab: "home",
@@ -590,8 +596,34 @@ export const useStudyStore = create<StudyState>((set, get) => {
         if (hitDailyGoal) nextGoalRewardDay = key;
       }
 
+      // ── 4) 오늘의 미션 체크 — 하루 1회, 대표 버디에게 XP 지급 ──
+      // 진행도는 "오늘 이해함으로 기록된 그 카테고리 문제 수" — 방금 기록까지 포함해 센다.
+      // 같은 날 두 번 못 받는 이유: 받는 순간 lastMissionRewardDay 에 오늘 날짜가 찍히고,
+      // 그 날짜가 오늘이면 아예 검사를 건너뛴다 (오답으로 진행도가 내려갔다 다시 올라도 마찬가지).
+      const nextRecords = { ...records, [currentQuestion.id]: nextRecord };
+      let nextMissionDay = get().lastMissionRewardDay;
+      let missionDoneAt: number | null = null;
+      // 대표 버디가 아직 없으면(첫 문제) 방금 받은 스타터에게 준다.
+      const buddyIdForXp = activeBuddyId ?? (reward?.type === "new" ? reward.buddyId : null);
+      if (nextMissionDay !== key && buddyIdForXp && nextBuddies[buddyIdForXp]) {
+        const mission = missionFor(key, get().activeTrack);
+        if (missionProgress(mission, nextRecords, key) >= mission.target) {
+          const b = nextBuddies[buddyIdForXp];
+          nextBuddies[buddyIdForXp] = { ...b, xp: b.xp + MISSION_XP };
+          nextMissionDay = key;
+          missionDoneAt = Date.now();
+        }
+      }
+      // 미션 XP 로 단계가 올랐을 수도 있다 — 획득(new) 알림이 없을 때만 진화 알림으로 바꾼다.
+      if (activeBuddyId && nextBuddies[activeBuddyId] && reward?.type !== "new") {
+        const afterStage = stageOf(nextBuddies[activeBuddyId].xp);
+        if (afterStage > stageOf(buddies[activeBuddyId].xp)) {
+          reward = { type: "evolve", buddyId: activeBuddyId, stage: afterStage as 2 | 3 };
+        }
+      }
+
       set((s) => ({
-        records: { ...records, [currentQuestion.id]: nextRecord },
+        records: nextRecords,
         dailyCounts: nextDaily,
         buddies: nextBuddies,
         // 첫 획득이면 자동으로 대표 지정
@@ -599,7 +631,9 @@ export const useStudyStore = create<StudyState>((set, get) => {
           s.activeBuddyId ??
           (reward?.type === "new" ? reward.buddyId : null),
         lastGoalRewardDay: nextGoalRewardDay,
+        lastMissionRewardDay: nextMissionDay,
         pendingReward: reward ?? s.pendingReward,
+        missionDoneAt: missionDoneAt ?? s.missionDoneAt,
       }));
       persist();
       // 주의: 여기서 다음 문제로 넘기지 않는다. 진행은 continueQuiz 가 모드별로 담당.
@@ -903,6 +937,7 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     clearReward: () => set({ pendingReward: null }),
+    clearMissionToast: () => set({ missionDoneAt: null }),
 
     getTodayCount: () => {
       const { dailyCounts } = get();

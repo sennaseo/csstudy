@@ -22,8 +22,8 @@ const GROUP_TABS: Array<{ label: string; value: CategoryGroup | null }> = [
  *
  *  규칙 세 가지:
  *  1) 팔레트 토큰만 쓴다. sky/cyan/blue 같은 테일윈드 기본 원색은 채도가 높아
- *     "크림 종이에 색연필" 톤에서 혼자 형광등처럼 튄다.
- *  2) 비활성 = 형광펜으로 슥 그은 옅은 틴트, 활성 = 그 색을 꽉 칠한다.
+ *     깨끗한 흰 카드 + 파랑 액센트 톤에서 혼자 형광등처럼 튄다.
+ *  2) 비활성 = 옅은 틴트, 활성 = 그 색을 꽉 칠한다.
  *  3) 글자 대비는 전부 4.5:1 이상. 그래서 활성 칩의 글자색이 두 종류다 —
  *     파랑·초록·빨강처럼 어두운 색은 흰 글자(그 대신 한 톤 진한 -dim 을 깐다),
  *     노랑·주황처럼 밝은 색은 흰 글자가 3점대라 미달이라서 잉크색 글자를 얹는다.
@@ -31,7 +31,7 @@ const GROUP_TABS: Array<{ label: string; value: CategoryGroup | null }> = [
  *     -ink 토큰은 "글자 전용"이라 배경으로는 쓰지 않는다.
  *
  *  색 계열은 6개인데 카테고리는 12개다. 한 계열을 둘이 나눠 쓰되 짝끼리
- *  모양을 다르게 한다 — 하나는 "칠한 틴트", 다른 하나는 "테두리만 두른 종이".
+ *  모양을 다르게 한다 — 하나는 "칠한 틴트", 다른 하나는 "테두리만 두른 흰 칩".
  *  덕분에 같은 계열 둘이 나란히 놓여도 구별된다.
  *  (테두리 유무로 칩 키가 달라지지 않게 border-2 는 공통 클래스에 깔고 색만 바꾼다) */
 const CHIP_COLORS: Record<string, [string, string]> = {
@@ -41,15 +41,15 @@ const CHIP_COLORS: Record<string, [string, string]> = {
   React: ["bg-accent-soft text-accent-dim hover:bg-accent-soft/70", "bg-accent text-white"],
   TypeScript: ["bg-white text-accent-dim border-accent/40 hover:bg-accent-soft/50", "bg-accent-dim text-white"],
 
-  // ─ 색연필 초록 ─ 데이터가 담기고 흐르는 것들
+  // ─ 초록 ─ 데이터가 담기고 흐르는 것들
   상태관리: ["bg-duo-green-soft text-duo-green-ink hover:bg-duo-green-soft/70", "bg-duo-green-dim text-white"],
   데이터베이스: ["bg-white text-duo-green-ink border-duo-green/40 hover:bg-duo-green-soft/50", "bg-duo-green-ink text-white"],
 
-  // ─ 연필 회갈색 ─ 컴퓨터 밑바닥(OS·자료구조)은 색을 안 쓴 "흑연" 느낌으로
+  // ─ 회색 ─ 컴퓨터 밑바닥(OS·자료구조)은 색을 안 쓴 무채색으로
   운영체제: ["bg-ink-100 text-ink-700 hover:bg-ink-200", "bg-ink-500 text-white"],
   자료구조: ["bg-white text-ink-700 border-ink-300 hover:bg-ink-100", "bg-ink-700 text-white"],
 
-  // ─ 주황 색연필 ─ 바깥과 이어지는 것들
+  // ─ 주황 ─ 바깥과 이어지는 것들
   네트워크: ["bg-duo-fox/10 text-duo-fox-ink hover:bg-duo-fox/20", "bg-duo-fox text-ink-900"],
   구조설계: ["bg-white text-duo-fox-ink border-duo-fox/40 hover:bg-duo-fox/10", "bg-duo-fox text-ink-900"],
 
@@ -82,6 +82,13 @@ export function CategoryFilter() {
   const fade = useEdgeFade<HTMLDivElement>();
   useEffect(fade.onScroll, [chips.length]);
 
+  // 활성 칩이 바뀌면(예: 미션 도전으로 들어옴) 그 칩이 화면 안에 오도록 가로로 스크롤한다.
+  // block:"nearest" = 세로 스크롤은 건드리지 않는다.
+  const activeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [activeCategory]);
+
   return (
     <div className="flex flex-col gap-2.5">
       {/* ─── ① 그룹 탭 ─── */}
@@ -99,7 +106,7 @@ export function CategoryFilter() {
               aria-selected={isActive}
               onClick={() => setGroup(g.value)}
               className={
-                "flex-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition-all " +
+                "flex-1 rounded-lg px-2 py-1.5 text-sm font-semibold transition-all min-h-11 break-keep " +
                 (isActive
                   ? "bg-accent text-white shadow-chip"
                   : "text-ink-500 hover:bg-ink-100")
@@ -127,11 +134,12 @@ export function CategoryFilter() {
           return (
             <button
               key={it.label}
+              ref={isActive ? activeRef : undefined}
               role="tab"
               aria-selected={isActive}
               onClick={() => setCategory(it.value)}
               className={
-                "shrink-0 rounded-full border-2 border-transparent px-4 py-1.5 text-sm font-semibold shadow-chip transition-all active:scale-95 " +
+                "shrink-0 rounded-full border-2 border-transparent px-4 py-1.5 text-sm font-semibold shadow-chip transition-all active:scale-95 min-h-11 " +
                 (isActive ? on : idle)
               }
             >

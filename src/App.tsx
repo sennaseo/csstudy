@@ -1,15 +1,15 @@
 // =============================================================
 // App
 // - 화면(view)을 3가지로 분기한다:
-//     · path           : 탭 화면 — 하단 탭바로 홈/이론/실무/도감/마이를 오간다
+//     · path           : 탭 화면 — 하단 탭바로 홈/이론/실무/마이를 오간다
 //     · quiz           : 문제 풀이 — 상단바(닫기/진행도/하트) + 퀴즈 카드
 //     · lessonComplete : 레슨 완료(또는 실패) 화면
-// - 탭 화면(TabsScreen) 안의 5개 탭 (store 의 tab):
-//     · home       : 목표 게이지 · 트랙 고르기 · 원탭 시작 · 버디
+// - 탭 화면(TabsScreen) 안의 5개 화면 (store 의 tab) — 탭바 버튼은 4개:
+//     · home       : HomeScreen — 오늘의 퀘스트 · 버디 · 미션/실무 · 복습 · 오늘의 운세 · 트랙/난이도(접힘)
 //     · quiz       : 트랙 진행도 + 감긴 길(스킬 패스)
 //     · practice   : 실무 — BackendQuest 프로토타입 iframe
-//     · collection : 캐릭터 도감
-//     · my         : 연속 학습 · 하트 · 단어장 · 클라우드 동기화
+//     · collection : 캐릭터 도감 — 탭바엔 없다. 홈 버디 카드·마이 탭 "도감" 행으로 들어간다
+//     · my         : 하트 · 도감 · 단어장 · 클라우드 동기화
 //   예전엔 이 전부가 홈 한 장에 세로로 쌓여 있어서 첫 화면이 8000px 짜리
 //   두루마리였다. 탭으로 나눠 한 화면에 한 가지 일만 보이게 했다.
 // - 좁은 한 컬럼 — 모바일/데스크탑 동일 레이아웃, 가독성 위해 max-w 제한.
@@ -19,21 +19,20 @@
 
 import { useEffect, useState } from "react";
 
-import { Buddy } from "./components/Buddy";
 import { CardDeck } from "./components/CardDeck";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { CollectionBook } from "./components/CollectionBook";
 import { DailyStats } from "./components/DailyStats";
-import { GoalGauge } from "./components/GoalGauge";
+import { HomeScreen } from "./components/HomeScreen";
 import { LessonComplete } from "./components/LessonComplete";
 import { LessonPath } from "./components/LessonPath";
+import { MissionToast } from "./components/MissionToast";
 import { NormalizationLab } from "./components/NormalizationLab";
 import { QuestionCard } from "./components/QuestionCard";
-import { QuickActions } from "./components/QuickActions";
 import { RewardOverlay } from "./components/RewardOverlay";
 import { SyncSettings } from "./components/SyncSettings";
 import { TabBar } from "./components/TabBar";
-import { TrackPicker, TrackProgress } from "./components/TrackPicker";
+import { TrackProgress } from "./components/TrackPicker";
 import { MAX_HEARTS, useStudyStore } from "./store/useStudyStore";
 import { useBack } from "./utils/useBack";
 
@@ -120,21 +119,17 @@ function HeartWarning() {
 }
 
 /** 마이 탭 — 예전엔 헤더 우측에 아이콘으로 다닥다닥 붙어 있던 것들
- *  (연속 학습 칩 · 하트 · 단어장 · 클라우드 동기화)을 한 카드에 줄 세운 곳.
+ *  (하트 · 단어장 · 클라우드 동기화)을 한 카드에 줄 세운 곳.
  *  360px 폰에서는 아이콘 4개만으로 헤더 폭이 터졌는데, 하루에 한 번 쓸까 말까 한
  *  기능들이라 "서랍"을 따로 만들어 옮겼다.
  *
  *  App.tsx 안의 로컬 함수인 이유: 하트 행이 이 파일의 <Hearts withTime /> 을
  *  재사용해야 하는데, 별도 파일로 빼면 App ↔ MyScreen 순환 import 가 된다. */
 function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
+  const setTab = useStudyStore((s) => s.setTab);
   return (
-    <div className="divide-y-2 divide-ink-200 rounded-2xl border-2 border-ink-200 bg-white">
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm font-extrabold text-ink-900">🔥 연속 학습</span>
-        <DailyStats />
-      </div>
-
-      <div className="flex items-center justify-between gap-3 px-4 py-3">
+    <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
+      <div className="flex min-h-14 items-center justify-between gap-3 px-4 py-3">
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-ink-900">❤️ 하트</span>
           <span className="block text-xs text-ink-500">
@@ -144,10 +139,22 @@ function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
         <Hearts withTime />
       </div>
 
-      {/* 행 전체가 버튼 — 폰에서 ›(작은 글자) 만 누르게 하면 과녁이 너무 좁다 */}
+      {/* 도감 — 탭바에서 빠진 대신 여기서 들어간다(홈 버디 카드도 같은 곳으로 간다).
+          행 전체가 버튼 — 폰에서 ›(작은 글자) 만 누르게 하면 과녁이 너무 좁다 */}
+      <button
+        onClick={() => setTab("collection")}
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-extrabold text-ink-900">📖 도감</span>
+          <span className="block text-xs text-ink-500">모은 버디 보기</span>
+        </span>
+        <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
+      </button>
+
       <button
         onClick={onOpenDeck}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
       >
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-ink-900">📇 단어장</span>
@@ -156,7 +163,7 @@ function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
         <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
       </button>
 
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex min-h-14 items-center justify-between px-4 py-3">
         <span className="text-sm font-extrabold text-ink-900">☁️ 클라우드 동기화</span>
         <SyncSettings />
       </div>
@@ -194,7 +201,7 @@ function TabsScreen() {
     <>
       {/* 헤더 — 우측에 아이콘 4개가 있던 시절엔 360px 폰에서 폭이 터졌다.
           지금은 나머지를 전부 마이 탭으로 내려보내고 하트만 남겼다.
-          그래도 (1) 부제는 좁은 화면에서 숨기고(sm:inline), (2) 로고 묶음은 shrink 를 허용하고,
+          그래도 (1) 부제는 제목 아래 줄로 내려 폭을 안 먹게 하고, (2) 로고 묶음은 shrink 를 허용하고,
           (3) 우측 묶음은 shrink-0 으로 안 찌그러뜨리는 원칙은 그대로 둔다. */}
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
@@ -206,17 +213,19 @@ function TabsScreen() {
             alt=""
             className="h-7 w-auto shrink-0"
           />
-          <div className="flex min-w-0 items-baseline gap-2">
+          <div className="flex min-w-0 flex-col">
             {/* whitespace-nowrap: 제목이 "csStud / y" 로 쪼개지지 않게.
                 제목은 앱 이름이라 줄이지 않고, 대신 아래 우측 묶음이 줄어든다. */}
-            <h1 className="whitespace-nowrap text-lg font-extrabold tracking-tight text-ink-900">
+            <h1 className="whitespace-nowrap font-display text-2xl font-bold leading-none text-ink-900">
               cs<span className="text-accent">Study</span>
             </h1>
-            {/* 부제는 있으면 좋고 없어도 되는 정보 — 좁은 화면에선 자리를 양보한다 */}
-            <span className="hidden truncate text-xs text-ink-500 sm:inline">개발 사고 회복</span>
+            {/* 부제 — 제목 아래 줄이라 폭을 안 먹어서 좁은 폰에서도 항상 보여준다 */}
+            <span className="truncate text-xs text-ink-500">오늘도 조금만.</span>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {/* 스트릭 칩 — 홈의 "오늘 풀면 N일째" 와 바로 연결되게 헤더에 꺼내 뒀다(누르면 달력) */}
+          <DailyStats />
           <Hearts />
         </div>
       </header>
@@ -224,18 +233,8 @@ function TabsScreen() {
       {/* 하트 0 경고 — 첫 화면 안(스크롤 없이 보이는 자리) */}
       <HeartWarning />
 
-      {tab === "home" && (
-        <>
-          <GoalGauge />
-          {/* 역할별 로드맵(트랙) 선택 + 완주 목표 */}
-          <TrackPicker />
-          {/* 원탭 시작 — 오늘의 5문제 / 복습 */}
-          <QuickActions />
-          {/* 버디(캐릭터) — 예전엔 길(8000px) 맨 아래라 사실상 아무도 못 봤다.
-              캐릭터가 이 앱의 정서적 핵심이니 스크롤 없이 보이는 자리로 올렸다. */}
-          <Buddy />
-        </>
-      )}
+      {/* 홈 — 카드 배치는 HomeScreen 이 전부 맡는다 */}
+      {tab === "home" && <HomeScreen />}
 
       {tab === "quiz" && (
         <>
@@ -252,7 +251,7 @@ function TabsScreen() {
       <div hidden={tab !== "practice"} className="flex flex-col gap-2">
         {/* 두 판 전환 토글. 두 판 모두 항상 마운트해 두고 hidden 으로만 가린다 —
             iframe 은 언마운트하면 진도가 날아가고, 정규화 실습도 박스 친 게 남아 있는 편이 낫다. */}
-        <div role="tablist" className="flex gap-1 rounded-2xl border-2 border-ink-200 bg-white p-1">
+        <div role="tablist" className="flex gap-2">
           {([
             ["backend", "🛠️ 백엔드 조립"],
             ["normalize", "🧩 정규화 실습"],
@@ -264,8 +263,10 @@ function TabsScreen() {
               aria-selected={practiceMode === id}
               onClick={() => setPracticeMode(id)}
               className={
-                "flex-1 rounded-xl px-2 py-2 text-sm font-extrabold transition-colors " +
-                (practiceMode === id ? "bg-accent-soft text-accent-dim" : "text-ink-500 hover:text-ink-700")
+                "min-h-11 flex-1 rounded-lg border-2 px-3 text-sm font-bold transition-colors " +
+                (practiceMode === id
+                  ? "border-accent bg-accent-soft text-accent-dim"
+                  : "border-ink-200 bg-white text-ink-500 hover:text-ink-700")
               }
             >
               {label}
@@ -273,13 +274,13 @@ function TabsScreen() {
           ))}
         </div>
         <div hidden={practiceMode !== "backend"} className="flex flex-col gap-2">
-          <p className="text-xs text-ink-500">
+          <p className="text-sm text-ink-500">
             🛠️ 실무 — 백엔드를 조립하는 실험판 (챕터 3 · 7문제). 진도는 저장되지 않아요.
           </p>
           <iframe
             title="실무 — BackendQuest 프로토타입"
             src={`${import.meta.env.BASE_URL}practice/index.html`}
-            className="h-[calc(100dvh-16rem)] w-full rounded-2xl border-2 border-ink-200 bg-white"
+            className="h-[calc(100dvh-16rem)] w-full rounded-2xl border border-ink-200 bg-white"
           />
         </div>
         <div hidden={practiceMode !== "normalize"}>
@@ -328,7 +329,7 @@ function QuizScreen() {
       <div className="flex shrink-0 items-center gap-3">
         <button
           onClick={goHome}
-          className="text-xl font-extrabold text-ink-400 transition-colors hover:text-ink-900"
+          className="flex min-h-11 min-w-11 shrink-0 items-center justify-center text-xl font-extrabold text-ink-400 transition-colors hover:text-ink-900"
           title="그만두고 홈으로"
           aria-label="홈으로"
         >
@@ -337,10 +338,10 @@ function QuizScreen() {
         {isQueueMode ? (
           <>
             {mode === "review" && (
-              <span className="shrink-0 text-sm font-bold text-duo-fox-ink">🔁</span>
+              <span className="shrink-0 text-sm font-bold text-duo-fox-ink">🔁 복습</span>
             )}
             {mode === "today" && (
-              <span className="shrink-0 text-sm font-bold text-duo-green">⚡</span>
+              <span className="shrink-0 text-sm font-bold text-duo-green">⚡ 오늘</span>
             )}
             {/* 듀오링고식 진행바 — 두꺼운 16px 트랙 + 젤리 하이라이트 (index.css).
                 스크린리더는 색칠된 div 를 못 읽으므로 role/aria 로 "몇 %인지"를 말해준다. */}
@@ -354,6 +355,10 @@ function QuizScreen() {
             >
               <div className="progress-fill" style={{ width: `${pct}%` }} />
             </div>
+            {/* 지금 몇 번째 문제인지 — 바만으론 "몇 개 남았지"가 바로 안 읽힌다 */}
+            <span className="shrink-0 font-round text-sm tabular-nums text-ink-500">
+              {lessonIndex + 1} / {lessonQueue.length}
+            </span>
             {/* 하트는 레슨 모드에서만 소모되므로 레슨에서만 보여준다 */}
             {mode === "lesson" && <Hearts withTime />}
           </>
@@ -405,6 +410,8 @@ export default function App() {
 
       {/* 획득/진화 축하 모달 — pendingReward 있을 때만 뜬다 (어느 화면에서나) */}
       <RewardOverlay />
+      {/* 오늘의 미션 완료 토스트 — 퀴즈 중에도 떠야 해서 여기(어느 화면에서나) */}
+      <MissionToast />
     </div>
   );
 }

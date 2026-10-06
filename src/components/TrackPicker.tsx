@@ -43,10 +43,10 @@ function TrackChip({
         // 홀로 떨어지고, 그 칩만 2줄이라 세로 정렬도 어긋났다.
         // → 가로 padding 을 줄이고 줄바꿈을 막아 한 줄에 앉힌다.
         //   items-center + 같은 높이(h-full)로 세 칩의 세로 정렬을 맞춘다.
-        "flex h-full min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap " +
-        "rounded-xl border-b-4 px-1.5 py-2.5 text-xs font-extrabold transition-colors " +
+        "flex h-full min-h-11 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap " +
+        "rounded-lg border-2 px-1.5 text-sm font-bold transition-colors " +
         (active
-          ? "border-duo-green-dim bg-duo-green text-white"
+          ? "border-accent bg-accent-soft text-accent-dim"
           : "border-ink-200 bg-white text-ink-500 hover:bg-ink-100")
       }
     >
@@ -57,7 +57,7 @@ function TrackChip({
 }
 
 /** 난이도 칩 4개 — (라벨, 값) 순서 그대로 렌더링. */
-const LEVELS: Array<{ level: Level | null; emoji: string; label: string }> = [
+export const LEVELS: Array<{ level: Level | null; emoji: string; label: string }> = [
   { level: null, emoji: "🎲", label: "믹스" },
   { level: "easy", emoji: "🌱", label: "초급" },
   { level: "normal", emoji: "🌿", label: "중급" },
@@ -71,8 +71,9 @@ export function TrackPicker() {
   const setLevel = useStudyStore((s) => s.setLevel);
 
   return (
-    <div className="rounded-2xl border-2 border-b-4 border-ink-200 bg-white px-4 py-3.5">
-      <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-ink-400">
+    // <details> 안에 들어가므로 카드 테두리 없이 위 여백만 (카드 중첩 방지)
+    <div className="pt-3">
+      <p className="mb-2 text-xs font-semibold text-ink-500">
         학습 트랙
       </p>
 
@@ -96,7 +97,7 @@ export function TrackPicker() {
         ))}
       </div>
 
-      <p className="mb-2 mt-3 text-xs font-extrabold uppercase tracking-widest text-ink-400">
+      <p className="mb-2 mt-3 text-xs font-semibold text-ink-500">
         난이도
       </p>
       <div className="flex items-stretch gap-2">
@@ -128,12 +129,12 @@ export function TrackProgress() {
   const current = TRACKS.find((t) => t.id === activeTrack);
 
   return (
-    <div className="rounded-2xl border-2 border-ink-200 bg-white p-4">
+    <div className="rounded-2xl border border-ink-200 bg-white p-4">
       <div className="mb-1 flex items-baseline justify-between">
-        <span className="text-xs font-extrabold text-ink-500">
+        <span className="text-xs font-semibold text-ink-500">
           {current ? `${current.name} 완주` : "전체 진도"}
         </span>
-        <span className="font-round text-xs font-extrabold tabular-nums text-duo-green">
+        <span className="font-round text-xs font-extrabold tabular-nums text-ink-500">
           {done}/{nodes.length} · {pct}%
         </span>
       </div>

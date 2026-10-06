@@ -5,9 +5,9 @@
     <!-- viewport-fit=cover: 아이폰 노치 영역까지 배경이 차게
          user-scalable=no: 앱 웹뷰에서 손가락 줌으로 화면이 커지거나 비율이 틀어지는 것 차단 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <!-- theme-color: 안드로이드 크롬 주소창 색. 종이 배경색(paper #FBFAF7)과 똑같이 맞춰서
-         주소창과 앱 화면이 한 장의 크림색 종이처럼 이어져 보이게 한다. -->
-    <meta name="theme-color" content="#FBFAF7" />
+    <!-- theme-color: 안드로이드 크롬 주소창 색. 배경색(paper #F7F8FA)과 똑같이 맞춰서
+         주소창과 앱 화면이 이어져 보이게 한다. -->
+    <meta name="theme-color" content="#F7F8FA" />
     <title>csStudy — 개발 사고 회복</title>
     <!-- description: 브라우저/검색 미리보기에 뜨는 한 줄. manifest 의 description 과 같은 문장으로 맞춰둔다
          (manifest 는 설치된 앱용, 이 태그는 웹으로 열었을 때용 — 둘 다 있어야 어디서든 같게 보인다) -->
@@ -23,17 +23,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="csStudy" />
 
-    <!-- ─── 손그림(스케치) 테마 폰트 ───────────────────────────
-         - Gaegu            → font-display : 손글씨 한글. 제목·버튼 라벨용.
-         - Nanum Pen Script → 더 흘려쓴 한글 손글씨. 말풍선/캡션 같은 "낙서" 자리.
-         - Gamja Flower     → 본문에 쓸 만큼 또박또박한 손글씨.
-         - Patrick Hand     → 숫자/영문 라벨(라틴 글리프)용 손글씨.
-         한 폰트에 없는 글자는 자동으로 뒤 폰트로 넘어간다(폰트 fallback).
-
-         폰트 파일은 앱에 내장돼 있다 — @font-face 선언은 src/index.css 에.
-         예전엔 여기서 Google Fonts / jsDelivr 를 <link> 로 불러왔는데,
-         (1) 비행기 모드에서 글씨가 깨지고 (2) 앱을 열 때마다 사용자 IP 가
-         남의 서버로 나가서 없앴다. 이제 외부 요청은 0 이다. -->
+    <!-- ─── 폰트 ───────────────────────────────────────────────
+         Gaegu Bold 1종(브랜드 로고·보상 제목)만 앱에 내장, 본문은 시스템 폰트.
+         @font-face 선언은 src/index.css 에. 외부 폰트 요청은 0 이다
+         (예전엔 Google Fonts 를 불러왔는데 오프라인에서 글씨가 깨지고
+         사용자 IP 가 남의 서버로 나가서 없앴다). -->
   </head>
   <body class="text-ink-700 font-sans antialiased">
     <div id="root"></div>

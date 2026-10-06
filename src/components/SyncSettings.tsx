@@ -57,7 +57,7 @@ export function SyncSettings() {
         onClick={() => setOpen(true)}
         title="클라우드 동기화 설정"
         aria-label={`동기화 설정 — ${statusLabel(syncStatus)}`}
-        className="flex shrink-0 items-center gap-1.5 rounded-full border-2 border-ink-200 bg-white px-3 py-1.5 text-xs font-extrabold text-ink-700"
+        className="flex shrink-0 items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-xs font-extrabold text-ink-700 min-h-11"
       >
         <span aria-hidden>{statusIcon(syncStatus)}</span>
         {statusLabel(syncStatus)}
@@ -128,14 +128,14 @@ export function SyncSettings() {
             <div className="mt-4 flex gap-2">
               <button
                 onClick={save}
-                className="btn-3d flex-1 rounded-xl border-duo-green-dim bg-duo-green px-4 py-2.5 text-sm font-extrabold text-white"
+                className="btn-3d flex-1 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-4 py-2.5 text-sm font-extrabold text-white"
               >
                 저장하고 연결
               </button>
               {syncStatus !== "off" && (
                 <button
                   onClick={() => void syncNow()}
-                  className="btn-3d rounded-xl border-2 border-ink-200 bg-white px-3 py-2.5 text-sm font-bold text-ink-500"
+                  className="btn-3d rounded-xl border-2 border-b-4 border-ink-200 bg-white px-3 py-2.5 text-sm font-bold text-ink-500"
                   title="지금 동기화"
                   aria-label="지금 동기화"
                 >

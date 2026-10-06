@@ -54,8 +54,8 @@ export function RewardOverlay() {
       >
         <Confetti burstId={burstId} />
 
-        <p className="text-xs font-bold uppercase tracking-widest text-accent">
-          {isNew ? "✨ NEW BUDDY ✨" : "⬆️ EVOLVED ⬆️"}
+        <p className="text-sm font-bold text-accent">
+          {isNew ? "✨ 새 버디!" : "⬆️ 진화!"}
         </p>
 
         <div
@@ -69,14 +69,14 @@ export function RewardOverlay() {
           </pre>
         </div>
 
-        <h3 id="reward-title" className="mt-3 text-lg font-extrabold text-ink-900">
+        <h3 id="reward-title" className="mt-3 font-display text-2xl text-ink-900">
           {stageInfo.title}
         </h3>
         <div className="mt-1 flex items-center justify-center gap-1.5">
           <span className="text-xs text-ink-500">{character.name}</span>
           <span
             className={
-              "rounded-full px-2 py-0.5 text-[10px] font-bold " + rarity.badge
+              "rounded-full px-2 py-0.5 text-xs font-bold " + rarity.badge
             }
           >
             {rarity.label}
@@ -88,7 +88,7 @@ export function RewardOverlay() {
 
         <button
           onClick={clearReward}
-          className="mt-5 w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-accent-dim active:scale-[0.98]"
+          className="btn-3d mt-5 min-h-12 w-full rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-4 text-base font-extrabold text-white hover:brightness-105"
         >
           {isNew ? "반가워! 🤝" : "멋지다! 🎉"}
         </button>

@@ -21,12 +21,23 @@ export function CollectionBook() {
   const buddies = useStudyStore((s) => s.buddies);
   const activeBuddyId = useStudyStore((s) => s.activeBuddyId);
   const setActiveBuddy = useStudyStore((s) => s.setActiveBuddy);
+  const setTab = useStudyStore((s) => s.setTab);
 
   const ownedCount = Object.keys(buddies).length;
 
   return (
     // 홈 카드와 같은 스타일 한 겹 — 탭 화면이니 배경/본체 이중 레이어가 필요 없다.
-    <div className="rounded-2xl border-2 border-ink-200 bg-white p-5">
+    <>
+    {/* 도감은 탭바에 없어서 돌아갈 길을 화면 안에 둔다.
+        탭 전환이라 히스토리를 안 쌓는다 — 뒤로가기 장부와 무관. */}
+    <button
+      type="button"
+      onClick={() => setTab("home")}
+      className="min-h-11 self-start px-1 text-sm font-bold text-ink-500 hover:text-ink-700"
+    >
+      ← 홈으로
+    </button>
+    <div className="rounded-2xl border border-ink-200 bg-white p-5">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-base font-extrabold text-ink-900">
           📖 버디 도감{" "}
@@ -37,7 +48,7 @@ export function CollectionBook() {
       </div>
 
       <p className="mb-4 text-xs leading-relaxed text-ink-500">
-        하루 목표를 달성하면 새 버디가 찾아와요. &lsquo;이해함&rsquo;을 누르면
+        하루 목표를 달성하면 새 버디가 찾아와요. 문제를 확실히 맞히면
         가끔(20%) 깜짝 등장하기도! 보유한 버디를 누르면 대표로 데리고
         다닙니다.
       </p>
@@ -52,13 +63,13 @@ export function CollectionBook() {
             return (
               <div
                 key={c.id}
-                className="flex flex-col items-center gap-1 rounded-2xl border-2 border-dashed border-ink-200 p-4 text-center"
+                className="flex flex-col items-center gap-1 rounded-2xl border border-dashed border-ink-300 p-4 text-center"
               >
                 <span className="text-2xl text-ink-400">❓</span>
                 <span className="text-xs font-bold text-ink-400">???</span>
                 <span
                   className={
-                    "rounded-full px-1.5 py-0.5 text-[10px] font-bold " +
+                    "rounded-full px-1.5 py-0.5 text-xs font-bold " +
                     rarity.badge
                   }
                 >
@@ -78,12 +89,13 @@ export function CollectionBook() {
               key={c.id}
               onClick={() => setActiveBuddy(c.id)}
               className={
-                "flex flex-col items-center gap-1 rounded-2xl p-4 text-center transition-all active:scale-95 " +
+                "flex flex-col items-center gap-1 rounded-2xl border p-4 text-center transition-colors " +
                 rarity.glow +
                 " " +
-                (isActive
-                  ? "bg-accent-soft ring-2 ring-accent"
-                  : "bg-ink-100/60 hover:bg-accent-soft/60")
+                (isActive ? "bg-accent-soft" : "bg-white hover:bg-ink-100") +
+                // 레어 이상은 rarity.glow 가 테두리 색을 직접 칠한다 — 둘 다 주면 어느 색이
+                // 이길지 CSS 순서에 달려서, glow 가 없을 때만 테두리 색(대표=파랑)을 준다.
+                (rarity.glow ? "" : isActive ? " border-accent" : " border-ink-200")
               }
             >
               <pre className="font-mono text-sm leading-snug text-ink-900">
@@ -92,7 +104,7 @@ export function CollectionBook() {
               <span className="text-xs font-bold text-ink-900">
                 {stageInfo.title}
               </span>
-              <span className="text-[10px] text-ink-500">
+              <span className="text-xs text-ink-500">
                 {c.name} · {stage}단계
               </span>
               {/* 진화 진행 점 3개 */}
@@ -117,7 +129,7 @@ export function CollectionBook() {
                 </div>
               )}
               {isActive && (
-                <span className="text-[10px] font-bold text-accent">
+                <span className="text-xs font-bold text-accent">
                   ★ 대표
                 </span>
               )}
@@ -126,5 +138,6 @@ export function CollectionBook() {
         })}
       </div>
     </div>
+    </>
   );
 }

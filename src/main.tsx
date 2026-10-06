@@ -24,7 +24,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { fai
         <button
           type="button"
           onClick={() => location.reload()}
-          className="btn-3d rounded-xl bg-duo-green px-6 py-3 font-display text-lg text-white"
+          className="btn-3d min-h-12 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white"
         >
           홈으로 돌아가기
         </button>

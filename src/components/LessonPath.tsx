@@ -25,25 +25,17 @@ import { unitsFor } from "../data/lessonPath";
 import type { LessonNode } from "../data/lessonPath";
 import type { CategoryGroup } from "../types";
 
-/** 유닛(카테고리)별 색상 — 이제 노드 색은 상태(완료/현재/잠금) 기반 .path-node-* 로 통일됐으므로
- *  이 팔레트는 유닛 배너(bg+dim)에만 쓴다. 노드/말풍선은 상태색(초록·골드·회색)을 직접 쓴다.
- *  Tailwind 는 클래스 문자열을 정적으로 찾으므로 리터럴로 나열한다. */
-// 배경은 "형광펜으로 슥 그은" 연한 틴트, 글자는 같은 계열의 진한 잉크색.
-// 예전엔 진한 원색 단색 + 흰 글씨였는데 두 가지가 한꺼번에 어긋났다:
-//   ① 컨셉 — 크림 종이 위 형광펜이 아니라 듀오링고식 솔리드 블록이었고,
-//   ② 대비 — 흰 글씨가 앰버 2.16:1, 주황 3.06:1 로 AA(4.5:1) 미달이었다.
-// 연한 배경 + 진한 잉크로 뒤집으면 둘 다 한 번에 풀린다.
-// 실측 대비비(배경↔글자): 초록 6.61 · 파랑 6.46 · 앰버 5.04 · 주황 5.12 · 빨강 6.68 — 전부 AA 통과.
-// bee/fox 는 짝이 되는 -soft 토큰이 없어서 종이색(paper-card)을 배경으로 쓴다.
+/** 유닛(카테고리)별 색상 — 유닛 배너의 왼쪽 4px 띠(bar)와 글자색(text)에만 쓴다.
+ *  노드/말풍선은 상태색(초록·골드·회색)을 직접 쓴다.
+ *  Tailwind 는 클래스 문자열을 정적으로 찾으므로 리터럴로 나열한다.
+ *  글자색은 전부 *-ink 계열(흰 바탕 대비 AA). 유닛이 5개를 넘으면 처음 색부터 다시 돈다. */
 const UNIT_COLORS = [
-  { bg: "bg-duo-green-soft", dim: "border-duo-green-dim", text: "text-duo-green-ink" },
-  { bg: "bg-accent-soft", dim: "border-accent-dim", text: "text-accent-dim" },
-  { bg: "bg-paper-card", dim: "border-duo-bee-dim", text: "text-duo-bee-ink" },
-  { bg: "bg-paper-card", dim: "border-duo-fox-ink", text: "text-duo-fox-ink" },
-  { bg: "bg-duo-red-soft", dim: "border-duo-red-dim", text: "text-duo-red-ink" },
+  { bar: "border-l-duo-green", text: "text-duo-green-ink" },
+  { bar: "border-l-accent", text: "text-accent-dim" },
+  { bar: "border-l-duo-bee", text: "text-duo-bee-ink" },
+  { bar: "border-l-duo-fox", text: "text-duo-fox-ink" },
+  { bar: "border-l-duo-red", text: "text-duo-red-ink" },
 ] as const;
-// duo-beetle(보라)은 짝이 되는 -dim 토큰이 없어서 뺐다. 새 색 토큰을 만드는 대신
-// 이미 짝이 맞는 5색을 돌린다 — 유닛이 5개를 넘어가면 처음 색부터 다시 시작.
 
 /** 노드 하나 — 동그란 3D 버튼 + (현재 노드면) 시작 말풍선.
  *  노드 색은 이제 유닛 색이 아니라 상태(완료/현재/잠금) 기반이라 유닛 color 는 안 받는다. */
@@ -93,8 +85,8 @@ function PathNode({
       {current && (
         <div
           className={
-            "start-bubble animate-bob rounded-xl border-2 border-b-4 border-ink-200 bg-white px-3 py-1.5 text-xs font-extrabold uppercase tracking-wide " +
-            (hearts > 0 ? "text-duo-green" : "text-duo-red")
+            "start-bubble animate-bob px-3 py-1.5 text-sm font-extrabold " +
+            (hearts > 0 ? "text-duo-green-ink" : "text-duo-red-ink")
           }
         >
           {hearts > 0 ? "시작" : "하트 없음 💔"}
@@ -121,7 +113,7 @@ function PathNode({
             : " (지금 풀 차례)"
         }`}
         className={
-          "path-node text-3xl " +
+          "path-node text-2xl " +
           stateClass +
           (locked || noHearts ? " opacity-60" : " hover:brightness-105")
         }
@@ -137,7 +129,7 @@ function GroupDivider({ group }: { group: CategoryGroup }) {
   return (
     <div className="my-4 flex items-center gap-3">
       <div className="h-0.5 flex-1 rounded bg-ink-200" />
-      <span className="text-xs font-extrabold uppercase tracking-wider text-ink-400">
+      <span className="text-xs font-semibold text-ink-500">
         {group}
       </span>
       <div className="h-0.5 flex-1 rounded bg-ink-200" />
@@ -244,29 +236,27 @@ export function LessonPath() {
             {showDivider && <GroupDivider group={unit.group} />}
 
             <details open={!unitDone}>
-              {/* 유닛 배너 = 접기 손잡이. 굵고 두툼하게(바닥 두께 border-b-4, 큰 라운드) */}
+              {/* 유닛 배너 = 접기 손잡이. 흰 카드 + 왼쪽 4px 색 띠 */}
               <summary
                 className={
-                  "mb-6 mt-2 flex cursor-pointer list-none items-center justify-between rounded-2xl border-2 border-b-4 px-5 py-4 [&::-webkit-details-marker]:hidden " +
-                  `${color.bg} ${color.dim} ${color.text}`
+                  "mb-6 mt-2 flex min-h-11 cursor-pointer list-none items-center justify-between rounded-2xl border border-l-4 border-ink-200 bg-white px-4 py-3 [&::-webkit-details-marker]:hidden " +
+                  color.bar
                 }
               >
                 <div>
-                  {/* 연한 배경 위에서는 opacity-90 이 대비를 깎아먹어서 뺐다.
-                      계산해둔 4.5:1 이상은 "불투명한 잉크색"일 때의 값이다. */}
-                  <p className="text-xs font-extrabold uppercase tracking-widest">
+                  <p className="text-xs font-semibold text-ink-500">
                     유닛 {unitIndex + 1} · {done}/{total} 완료
                   </p>
-                  <p className="text-lg font-extrabold">{unit.label}</p>
+                  <p className="text-base font-extrabold text-ink-900">{unit.label}</p>
                   {unit.blurb && (
-                    <p className="mt-0.5 max-w-[15rem] text-xs font-semibold leading-snug">
+                    <p className="mt-0.5 max-w-[15rem] text-xs leading-snug text-ink-500">
                       {unit.blurb}
                     </p>
                   )}
                 </div>
                 <span className="flex items-center gap-2">
                   {/* 완료 유닛만 "눌러서 펼칠 수 있다"는 힌트를 준다 */}
-                  {unitDone && <span className="text-lg">✓ ⌄</span>}
+                  {unitDone && <span className={"text-lg " + color.text}>✓ ⌄</span>}
                   <span className="text-3xl">{unit.emoji}</span>
                 </span>
               </summary>
@@ -287,15 +277,15 @@ export function LessonPath() {
         );
       })}
 
-      {/* 랜덤 연습 — 길의 끝에서 무한 연습 (하트 소모 없음). accent 3D 버튼 = 이제 Macaw 파랑. */}
+      {/* 랜덤 연습 — 길의 끝에서 무한 연습 (하트 소모 없음). Secondary 버튼. */}
       <button
         onClick={startRandom}
-        className="btn-3d w-full rounded-2xl border-b-4 border-accent-dim bg-accent px-4 py-3 text-sm font-extrabold uppercase tracking-wide text-white hover:brightness-105"
+        className="btn-3d min-h-12 w-full rounded-xl border-2 border-b-4 border-ink-200 bg-white px-4 text-sm font-bold text-accent hover:bg-ink-100"
       >
-        🎲 랜덤 연습 <span className="opacity-80 normal-case tracking-normal">— 하트 걱정 없이</span>
+        🎲 랜덤 연습 — 하트 걱정 없이
       </button>
 
-      <p className="mt-3 text-center text-xs font-semibold leading-relaxed text-ink-400">
+      <p className="mt-3 text-center text-xs leading-relaxed text-ink-400">
         길을 따라 한 칸씩. 천천히, 꾸준히 🐢 (❤️ 최대 {MAX_HEARTS}개)
       </p>
     </div>

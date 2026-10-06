@@ -124,8 +124,8 @@ export function StudyCalendar({ onClose }: { onClose: () => void }) {
             <div
               key={w}
               className={
-                "pb-1 text-center text-[10px] font-semibold " +
-                (i === 0 ? "text-rose-400" : "text-ink-400")
+                "pb-1 text-center text-xs font-semibold " +
+                (i === 0 ? "text-duo-red-ink" : "text-ink-400")
               }
             >
               {w}
@@ -143,7 +143,7 @@ export function StudyCalendar({ onClose }: { onClose: () => void }) {
                 key={d}
                 title={count > 0 ? `${d}일 — ${count}문제` : `${d}일`}
                 className={
-                  "flex aspect-square items-center justify-center rounded-lg text-[11px] tabular-nums transition-colors " +
+                  "flex aspect-square items-center justify-center rounded-lg text-xs tabular-nums transition-colors " +
                   intensityClass(count) +
                   (isToday ? " ring-2 ring-accent ring-offset-1" : "")
                 }
@@ -155,7 +155,7 @@ export function StudyCalendar({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* ─── 범례 — 깃허브 잔디처럼 ─── */}
-        <div className="mt-4 flex items-center justify-end gap-1 text-[10px] text-ink-400">
+        <div className="mt-4 flex items-center justify-end gap-1 text-xs text-ink-400">
           적게
           <span className="h-3 w-3 rounded bg-ink-100" />
           <span className="h-3 w-3 rounded bg-accent-soft" />

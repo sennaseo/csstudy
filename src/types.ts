@@ -211,6 +211,8 @@ export interface PersistedState {
   activeBuddyId: string | null;
   /** 일일 목표 보상을 받은 날 ('YYYY-MM-DD') — 하루 1회 제한용. */
   lastGoalRewardDay: string | null;
+  /** 오늘의 미션 보상(버디 XP)을 받은 날 ('YYYY-MM-DD') — 하루 1회 제한용. lastGoalRewardDay 와 같은 방식. */
+  lastMissionRewardDay: string | null;
   /** 역대 최고 연속 정답(콤보) 기록. */
   bestCombo: number;
   /** 남은 하트(목숨). 레슨에서 틀리면 1개 소모, 시간이 지나면 회복된다. */

@@ -134,6 +134,9 @@ export function mergeStates(a: PersistedState, b: PersistedState): PersistedStat
     // 보상 중복 방지 — 더 최신 날짜가 이긴다 ('YYYY-MM-DD' 는 문자열 비교 OK).
     lastGoalRewardDay:
       [a.lastGoalRewardDay, b.lastGoalRewardDay].filter(Boolean).sort().pop() ?? null,
+    // 미션 보상 중복 방지 — lastGoalRewardDay 와 같은 규칙(더 최신 날짜).
+    lastMissionRewardDay:
+      [a.lastMissionRewardDay, b.lastMissionRewardDay].filter(Boolean).sort().pop() ?? null,
     // 최고 콤보: 두 기기 중 더 높은 기록.
     bestCombo: Math.max(a.bestCombo ?? 0, b.bestCombo ?? 0),
     // 하트: 관대하게 더 많은 쪽. 회복 기준 시각은 더 최신.
