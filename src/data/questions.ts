@@ -1011,6 +1011,190 @@ stock.get("라떼");          // 5 — 목록을 안 뒤지고 즉시!
 
 // 목록에서 찾으면 처음부터 훑어야 함 (느림) ← 이 차이가 핵심`,
   },
+  {
+    id: "q-java-9",
+    category: "Java",
+    question: "int 와 Integer 는 뭐가 다른가? (기본형 vs 참조형)",
+    answer:
+      "int = 숫자를 직접 담은 맨손. 값 자체라 비어 있을 수 없고, 아무것도 안 넣으면 0 이다 (기본형, primitive). Integer = 숫자를 담은 상자. 상자라서 '아직 아무것도 없음'(null)을 표현할 수 있다 (참조형, wrapper 클래스). JS 에선 number 하나로 끝나지만, 자바는 TS 의 number 와 number | null 을 타입 이름으로 구분하는 셈. 그래서 DB 에서 비어 있을 수 있는 값이나 List<Integer> 같은 컬렉션에는 Integer 를 쓴다. 주의: null 인 Integer 를 int 에 넣는 순간(언박싱) NullPointerException 이 터지고, Integer 끼리는 == 대신 equals() 로 비교해야 한다.",
+    code: `int count = 0;          // 맨손: null 불가, 기본값 0
+Integer age = null;     // 상자: "아직 모름" 표현 가능 ✅
+// int bad = null;      // ❌ 컴파일 에러
+
+// 회사 코드에서 자주 보는 모양
+class UserForm {
+    Integer age;        // 폼에서 안 채우면 null → "미입력" 구분 가능
+}
+
+List<Integer> nums = new ArrayList<>(); // 컬렉션엔 상자만 들어감
+// List<int> nums;      // ❌ 기본형은 못 넣음
+
+int n = age;            // 💥 age 가 null 이면 NullPointerException (언박싱)
+
+// TS 로 치면
+// let count: number = 0;
+// let age: number | null = null;`,
+  },
+  {
+    id: "q-java-10",
+    category: "Java",
+    question: "배열(int[])과 ArrayList 는 언제 각각 쓰나? JS 배열과 비교하면?",
+    answer:
+      "배열 = 칸 수가 정해진 계란판. 만들 때 크기를 정하면 끝까지 그대로라, 칸을 늘리려면 새 판을 사야 한다 (고정 길이, .length). ArrayList = 늘어나는 고무줄 가방. add 할 때마다 알아서 커진다 (가변 길이, .size()). JS 배열은 push 로 마음대로 늘어나니까 자바로 치면 배열이 아니라 ArrayList 쪽에 가깝다. 실무(스프링) 코드는 대부분 List<T> + ArrayList 를 쓰고, 배열은 main(String[] args) 나 크기가 정해진 경우 정도에만 보인다.",
+    code: `// 배열 — 계란판 (크기 고정)
+int[] scores = new int[3];   // 칸 3개, 기본값 0
+scores[0] = 90;
+scores.length;               // 3 (괄호 없음!)
+// scores[3] = 70;           // 💥 ArrayIndexOutOfBoundsException
+
+// ArrayList — 고무줄 가방 (크기 가변)
+List<Integer> list = new ArrayList<>();
+list.add(90);
+list.add(80);                // 알아서 늘어남
+list.size();                 // 2 (메서드라 괄호 있음)
+list.get(0);                 // 90 — arr[0] 대신 get(0)
+
+// JS 배열 = ArrayList 에 가까움
+// const arr = []; arr.push(90); arr.length;`,
+  },
+  {
+    id: "q-java-11",
+    category: "Java",
+    question: "생성자(constructor)와 this 는 뭔가?",
+    answer:
+      "생성자 = 붕어빵이 틀에서 나오는 순간 속을 채워 넣는 작업. new 할 때 딱 한 번 자동으로 불리고, 클래스와 이름이 같으며 반환 타입이 없다. this = '지금 만들어지고 있는 나 자신'. 매개변수 name 과 필드 name 이 이름이 같을 때 this.name 이 '내 필드'를 가리켜 둘을 구분해준다 (부모를 가리키는 건 super). JS 의 class constructor(name) { this.name = name } 과 거의 같은 모양이다. 생성자를 하나도 안 쓰면 자바가 빈 기본 생성자를 만들어주지만, 하나라도 직접 쓰면 기본 생성자는 사라진다. 스프링 코드에서는 서비스가 필요한 부품(Repository 등)을 생성자로 받는 모양(생성자 주입)을 아주 자주 본다.",
+    code: `public class User {
+    private String name;
+    private int age;
+
+    // 생성자: 클래스 이름과 같고, 반환 타입 없음
+    public User(String name, int age) {
+        this.name = name;   // this.name = 내 필드, name = 매개변수
+        this.age = age;
+    }
+}
+
+User u = new User("철수", 20); // new 할 때 생성자 호출
+
+// JS 로 치면 거의 똑같다
+// class User {
+//   constructor(name, age) { this.name = name; this.age = age; }
+// }
+
+// 스프링에서 자주 보는 생성자 주입
+@Service
+public class UserService {
+    private final UserRepository repo;
+    public UserService(UserRepository repo) { this.repo = repo; }
+}`,
+  },
+  {
+    id: "q-java-12",
+    category: "Java",
+    question: "for / for-each / while 은 언제 각각 쓰나? (JS for...of 와 비교)",
+    answer:
+      "for = 번호표를 직접 세면서 도는 반복. 몇 번째인지(i)가 필요할 때 쓴다 (JS 의 for (let i = 0; ...) 와 똑같다). for-each = 줄 선 사람을 앞에서부터 하나씩 데려오기. 번호 없이 요소만 차례로 꺼내고, JS 의 for...of 와 같다 (키를 꺼내는 for...in 과 헷갈리지 말 것). while = '조건이 참인 동안 계속'. 몇 번 돌지 미리 모를 때 쓴다. 회사 Thymeleaf 의 th:each 도 결국 for-each 와 같은 생각이다. 주의: for-each 로 도는 도중에 그 리스트에서 remove 하면 ConcurrentModificationException 이 난다.",
+    code: `List<String> names = List.of("철수", "영희", "민수");
+
+// for — 번호(i)가 필요할 때
+for (int i = 0; i < names.size(); i++) {
+    System.out.println(i + "번: " + names.get(i));
+}
+
+// for-each — 요소만 차례로 (JS for...of 와 같음)
+for (String name : names) {
+    System.out.println(name);
+}
+// JS: for (const name of names) { console.log(name); }
+
+// while — 몇 번 돌지 모를 때
+int n = 100;
+while (n > 1) {
+    n = n / 2;
+}
+
+// Thymeleaf 도 같은 생각
+// <li th:each="name : \${names}" th:text="\${name}"></li>`,
+  },
+  {
+    id: "q-java-13",
+    category: "Java",
+    question: "캡슐화란? private 과 getter/setter 는 왜 쓰나?",
+    answer:
+      "캡슐화 = 은행 금고와 창구. 돈(필드)은 금고 안에 잠가두고(private), 손님은 창구(public getter/setter 메서드)를 통해서만 넣고 뺀다. 창구에서 '음수 입금은 안 돼요' 같은 규칙을 검사할 수 있어서, 아무 데서나 값이 망가지는 걸 막는다. React 로 치면 state 를 직접 바꾸지 않고 setState 로만 바꾸는 것과 같은 정신. 접근제어자는 네 단계: public(어디서나) > protected(같은 패키지 + 자식) > (아무것도 안 씀 = default, 같은 패키지만) > private(그 클래스 안에서만). 회사 코드에서 @Getter/@Setter 는 Lombok 이 getter/setter 를 자동으로 만들어주는 것이고, Thymeleaf 의 ${user.name} 도 실은 getName() 을 부른다.",
+    code: `public class Account {
+    private int balance;           // 금고: 밖에서 직접 못 만짐
+
+    public int getBalance() {      // 창구: 조회
+        return balance;
+    }
+
+    public void deposit(int amount) { // 창구: 규칙 검사 후 변경
+        if (amount <= 0) throw new IllegalArgumentException("음수 입금 불가");
+        balance += amount;
+    }
+}
+
+Account acc = new Account();
+// acc.balance = -999;   // ❌ 컴파일 에러 (private)
+acc.deposit(1000);       // ✅ 창구를 통해서만
+
+// React 로 치면: state 직접 수정 ❌, setState 로만 ✅
+// Lombok: @Getter @Setter 를 붙이면 위 메서드들을 자동 생성`,
+  },
+  {
+    id: "q-java-14",
+    category: "Java",
+    question: "다형성이란? 부모 타입 변수에 자식 객체를 담으면 어떻게 되나?",
+    answer:
+      "다형성 = '동물' 이라고 적힌 목줄. 목줄(변수 타입)에는 동물이라고 써 있지만, 실제로 묶인 건 개일 수도 고양이일 수도 있다. 소리 내라(sound())고 하면 목줄 글씨가 아니라 실제 묶인 녀석이 짖거나 운다. 규칙은 두 개: ① 부를 수 있는 메서드는 변수 타입(Animal)이 정한다 — Animal 에 없는 메서드는 컴파일 에러. ② 실제로 실행되는 내용은 담긴 객체(Dog)가 정한다 — 오버라이딩한 자식 버전이 돈다. 덕분에 호출하는 쪽은 상대가 누군지 몰라도 된다. React 에서 같은 props 모양만 맞추면 어떤 컴포넌트든 끼울 수 있는 것과 비슷하다. 스프링의 List<String> list = new ArrayList<>() 나 UserService 인터페이스에 구현체를 끼우는 모양이 전부 이것.",
+    code: `class Animal {
+    void sound() { System.out.println("..."); }
+}
+class Dog extends Animal {
+    @Override void sound() { System.out.println("멍멍"); }
+    void fetch() { System.out.println("공 가져옴"); }
+}
+class Cat extends Animal {
+    @Override void sound() { System.out.println("야옹"); }
+}
+
+Animal a = new Dog();   // 목줄엔 '동물', 실제론 개
+a.sound();              // "멍멍" ← ② 실행은 실제 객체 기준
+// a.fetch();           // ❌ ① Animal 목줄엔 fetch 가 없음
+
+List<Animal> pets = List.of(new Dog(), new Cat());
+for (Animal p : pets) p.sound(); // 멍멍, 야옹 — 부르는 쪽은 몰라도 됨
+
+// 실무에서 매일 보는 다형성
+List<String> list = new ArrayList<>();`,
+  },
+  {
+    id: "q-java-15",
+    category: "Java",
+    question: "제네릭 <T> 는 뭔가? TS 제네릭과 같은가?",
+    answer:
+      "제네릭 = 라벨 칸이 비어 있는 보관함. 만드는 쪽은 '여기 뭐가 들어갈지는 몰라'라며 T 로 비워두고, 쓰는 쪽이 <String> 처럼 채워 넣는다. 한 번 채우면 그 타입만 들어가서, 꺼낼 때 형변환 없이 안전하다 (컴파일 타임 타입 검사). TS 의 Array<string>, useState<number>() 와 생각이 똑같다. 차이 하나: 자바 제네릭에는 int 같은 기본형을 못 넣어서 List<Integer> 처럼 참조형을 써야 한다. 회사 코드에서 ResponseEntity<User>, Optional<User>, JpaRepository<User, Long> 처럼 꺾쇠가 보이면 '빈칸에 이 타입을 채웠구나' 로 읽으면 된다.",
+    code: `// 만드는 쪽: T 로 비워둔다
+class Box<T> {
+    private T item;
+    void put(T item) { this.item = item; }
+    T get() { return item; }
+}
+
+// 쓰는 쪽: 빈칸을 채운다
+Box<String> box = new Box<>();   // <> 는 왼쪽 보고 추론 (다이아몬드)
+box.put("사과");
+String s = box.get();            // 형변환 필요 없음
+// box.put(123);                 // ❌ 컴파일 에러
+
+// List<int> nums;               // ❌ 기본형 불가
+List<Integer> nums = new ArrayList<>(); // ✅
+
+// TS 와 똑같은 생각
+// class Box<T> { item!: T }
+// const [n, setN] = useState<number>(0);`,
+  },
 
   {
     id: "q-cs-5",
@@ -1217,6 +1401,88 @@ ssh-keygen -t rsa -b 4096      # 옛 장비/시스템 호환이 필요할 때만
 # 공개키 크기 실감
 #   Ed25519 공개키 ≈  68자 (한 줄)
 #   RSA 4096 공개키 ≈ 720자 (화면 넘김)`,
+  },
+  {
+    id: "q-cs-17",
+    category: "CS",
+    question: "Git 브랜치와 병합(merge)은 왜 쓰나?",
+    answer:
+      "브랜치 = 원본 문서를 건드리지 않고 복사본에서 마음껏 고쳐보는 평행 세계. main 은 언제나 돌아가는 안정판으로 두고, 기능마다 feature/login 같은 브랜치를 따서 작업한다. 망치면 그 브랜치만 버리면 되고, 여러 사람이 동시에 각자 세계에서 일해도 서로 안 부딪힌다. 병합(merge) = 다 만든 평행 세계의 변경을 원래 세계(main)에 합치는 것. 참고로 브랜치는 파일을 통째로 복사하는 게 아니라 '이 커밋을 가리키는 이름표'라서 아주 가볍다.",
+    code: `git switch -c feature/login   # 평행 세계 만들고 이동
+# ... 코드 수정 ...
+git add .
+git commit -m "feat: 로그인 화면"
+
+git switch main               # 원래 세계로 돌아와서
+git merge feature/login       # 평행 세계의 변경을 합친다
+
+# 망쳤다면? 브랜치만 버리면 main 은 멀쩡
+git branch -D feature/login`,
+  },
+  {
+    id: "q-cs-18",
+    category: "CS",
+    question: "Git 충돌(conflict)은 왜 나고 어떻게 푸나? PR 흐름은?",
+    answer:
+      "충돌 = 두 사람이 같은 문서의 같은 줄을 각자 다르게 고친 상황. 다른 줄이면 Git 이 알아서 합치지만, 같은 줄이면 '어느 쪽이 맞는지' 판단을 못 해서 사람에게 묻는다. 파일에 <<<<<<< ======= >>>>>>> 표시가 생기면 ① 둘 중 하나를 고르거나 섞어서 고치고 ② 표시를 지우고 ③ git add → commit 하면 끝. PR(Pull Request) 흐름은 '내 브랜치를 main 에 합쳐도 될까요?' 하고 결재를 올리는 것: 브랜치 push → PR 생성 → 동료 리뷰·자동 테스트 → 승인되면 merge. PR 에 충돌이 뜨면 내 브랜치에 최신 main 을 먼저 받아와(merge 또는 rebase) 내 자리에서 충돌을 풀고 다시 push 한다.",
+    code: `# 충돌 난 파일 모습
+<<<<<<< HEAD (내 브랜치)
+const title = "로그인";
+=======
+const title = "Sign in";
+>>>>>>> main (상대 변경)
+
+# ① 원하는 모양으로 고치고 ② 표시 지우기
+const title = "로그인";
+
+# ③ 해결 완료 알리기
+git add Login.tsx
+git commit
+
+# PR 에 충돌이 뜰 때: 최신 main 을 내 브랜치로 받아와서 해결
+git switch feature/login
+git pull origin main          # 여기서 충돌 → 위 방법으로 해결
+git push                      # PR 이 자동으로 갱신됨`,
+  },
+  {
+    id: "q-cs-19",
+    category: "CS",
+    question: "Docker 이미지와 컨테이너의 차이는?",
+    answer:
+      "이미지 = 밀키트. 앱 코드 + 실행에 필요한 것(자바 런타임, 라이브러리, 설정)을 한 봉지에 굳혀 둔 읽기 전용 포장본이다. 컨테이너 = 그 밀키트를 뜯어서 실제로 조리 중인 요리. 이미지 하나로 컨테이너를 여러 개 띄울 수 있고, 컨테이너를 지워도 이미지는 그대로 남는다 (클래스와 객체 관계와 비슷). 덕분에 '내 컴퓨터에선 되는데?' 문제가 사라진다 — 어디서든 같은 밀키트를 쓰니까. 가상머신(VM)과 달리 컨테이너는 운영체제를 통째로 싣지 않고 호스트 커널을 같이 써서 가볍다. 주의: 컨테이너 안에 쓴 파일은 컨테이너를 지우면 같이 사라지므로, 남겨야 할 데이터는 볼륨(volume)에 둔다.",
+    code: `# Dockerfile = 밀키트 레시피
+FROM eclipse-temurin:17-jre
+COPY build/libs/app.jar app.jar
+CMD ["java", "-jar", "app.jar"]
+
+docker build -t myapp .          # 레시피로 밀키트(이미지) 포장
+docker run -d -p 8080:8080 myapp # 뜯어서 조리 = 컨테이너 1
+docker run -d -p 8081:8080 myapp # 같은 이미지로 컨테이너 2
+
+docker images   # 밀키트 목록 (이미지)
+docker ps       # 지금 조리 중인 요리 목록 (컨테이너)`,
+  },
+  {
+    id: "q-cs-20",
+    category: "CS",
+    question: "배포란 뭔가? 스프링 부트 앱은 어떻게 서버에서 돌아가나?",
+    answer:
+      "배포 = 가게 오픈. 주방(내 컴퓨터)에서 만든 요리를 손님이 먹을 수 있게 매장(서버)에 내놓는 것. 스프링 부트는 ① 빌드: ./gradlew bootJar 로 코드와 라이브러리, 내장 톰캣까지 jar 파일 하나에 굳힌다 ② 실행: 서버에서 java -jar app.jar 로 띄우면 그 프로세스가 계속 살아서 요청을 받는다 ③ 설정: DB 주소·비밀번호처럼 환경마다 다른 값은 코드에 박지 않고 환경변수와 프로파일(dev/prod)로 바꿔 끼운다. 같은 jar 를 다시 빌드하지 않고 설정만 바꿔 개발·운영에 쓰는 게 핵심. React 로 치면 npm run build 로 dist 를 만들고 .env.production 으로 값을 바꾸는 것과 비슷한데, 차이는 React 결과물은 정적 파일이고 jar 는 계속 돌아가는 서버 프로그램이라는 점.",
+    code: `# ① 빌드 — jar 하나로 굳히기 (내장 톰캣 포함)
+./gradlew bootJar            # → build/libs/app.jar
+
+# ② 실행 + ③ 프로파일 선택
+java -jar app.jar --spring.profiles.active=prod
+#   → application.yml + application-prod.yml 을 읽는다
+
+# ③ 비밀값은 환경변수로 (코드·깃에 남기지 않기)
+export SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/shop
+export SPRING_DATASOURCE_PASSWORD=****
+#   → spring.datasource.url / password 를 덮어쓴다
+
+# React 비교
+# npm run build → dist/ (정적 파일, 웹서버가 나눠주기만 함)
+# bootJar      → app.jar (스스로 계속 도는 서버)`,
   },
   // ─── 운영체제 ──────────────────────────────────────────
   {
@@ -1630,6 +1896,151 @@ ws.send("안녕");   // 나도 아무 때나 보낼 수 있음
 // Socket.io 는 웹소켓이 아니라 그 위의 '포장지' (라이브러리)
 //   웹소켓이 안 되면 폴링으로 자동 전환해준다`,
   },
+  {
+    id: "q-net-13",
+    category: "네트워크",
+    question: "백엔드(서버)는 정확히 무슨 일을 하나? 프론트에서 다 하면 안 되나?",
+    answer:
+      "식당으로 치면 React 화면은 손님이 보는 홀(메뉴판·주문서)이고, 백엔드는 손님 눈에 안 보이는 주방이다. 주방은 주문서를 받아 ① 제대로 적혔는지 다시 확인하고(입력 검증) ② 가게 규칙대로 처리하고(업무 규칙 — 재고가 있나, 이 손님이 주문할 자격이 있나) ③ 장부에 적어 남긴다(저장 — DB). 프론트에서 다 하면 안 되는 이유: React 코드는 사용자 브라우저로 통째로 내려가서 누구나 들여다보고 고칠 수 있다. 그래서 프론트 검증은 '친절'이고 서버 검증이 '진짜 방어선'이다. 손님(클라이언트)이 요청하고 주방(서버)이 응답하는 이 구조를 클라이언트-서버 모델이라 한다.",
+    code: `// 프론트 (React) — 홀: 보여주고, 주문서를 보낸다
+if (qty < 1) return alert("1개 이상 골라주세요"); // 친절한 1차 확인일 뿐
+await axios.post("/api/orders", { itemId: 7, qty });
+
+// 백엔드 (Spring) — 주방: 진짜 판단은 여기서
+@PostMapping("/api/orders")
+public OrderResponse order(@RequestBody @Valid OrderRequest req) { // ① 다시 검증
+    return orderService.place(req);  // ② 재고·권한 확인 → ③ DB 저장
+}
+
+// 왜 서버에서 또 검사하나?
+//   Postman 이나 curl 로 { "qty": -100 } 을 직접 보내면
+//   React 의 if 문은 아예 거치지 않는다 → 서버만이 막을 수 있다`,
+  },
+  {
+    id: "q-net-14",
+    category: "네트워크",
+    question: "HTTP 요청·응답은 어떻게 생겼나? axios 호출 한 줄과 어떻게 대응되나?",
+    answer:
+      "편지 봉투와 같다. 맨 윗줄(시작줄)은 '무엇을 어디에' — 요청이면 메서드+주소(POST /api/users), 응답이면 결과 번호(201 Created). 그 아래 헤더는 봉투 겉면 메모 — 내용물 종류(Content-Type: application/json), 신분증(Authorization) 같은 것. 빈 줄 하나 뒤의 바디(본문)가 편지 내용물이고, 요즘 API 는 대부분 JSON 을 담는다. axios 는 이 세 칸을 채워주는 도구일 뿐이다 — 객체를 넘기면 JSON 문자열로 바꾸고 Content-Type 도 알아서 붙인다. 돌아온 응답의 상태 번호가 res.status, 바디가 res.data 다.",
+    code: `// axios 한 줄이
+axios.post("/api/users", { name: "yumin" }, {
+  headers: { Authorization: "Bearer abc123" },
+});
+
+// 실제로는 이런 글자 덩어리가 날아간다 (요청)
+//   POST /api/users HTTP/1.1          ← 시작줄: 메서드 + 주소
+//   Host: localhost:8080              ← 헤더 (봉투 겉면)
+//   Content-Type: application/json    ←   axios 가 자동으로 붙임
+//   Authorization: Bearer abc123
+//                                     ← 빈 줄 = 헤더 끝
+//   {"name":"yumin"}                  ← 바디 (내용물)
+
+// 돌아오는 응답
+//   HTTP/1.1 201 Created              ← 시작줄: 상태코드 → res.status
+//   Content-Type: application/json    ← 헤더             → res.headers
+//
+//   {"id":1,"name":"yumin"}           ← 바디             → res.data
+
+// 개발자도구 Network 탭에서 이 세 칸(Headers / Payload / Response)을 그대로 볼 수 있다
+// (HTTP/2 는 이걸 이진 조각으로 나눠 보내지만 칸 구성은 같다)`,
+  },
+  {
+    id: "q-net-15",
+    category: "네트워크",
+    question: "GET·POST·PUT·PATCH·DELETE 는 각각 CRUD 의 무엇에 해당하나?",
+    answer:
+      "도서관 대출 카드 관리로 보면 된다. 카드 보기 = GET (Read), 새 카드 만들기 = POST (Create), 카드를 통째로 새로 써서 바꿔 끼우기 = PUT (Update — 전체 교체), 카드의 한 칸만 고치기 = PATCH (Update — 부분 수정), 카드 버리기 = DELETE (Delete). 제일 헷갈리는 건 PUT 과 PATCH — PUT 은 원칙상 '보낸 내용이 곧 새 카드 전체'라서 빠뜨린 칸은 비워진 것으로 보고, PATCH 는 보낸 칸만 바뀐다. 다만 이건 약속일 뿐 실제 동작은 백엔드가 짠 대로다 — PUT 인데 부분 수정하는 API 도 흔하니, 메서드 이름보다 컨트롤러 코드를 확인하자.",
+    code: `// 같은 주소(/api/users)에 메서드만 바꿔서 CRUD 를 표현한다
+axios.get("/api/users");                 // R 목록 조회
+axios.get("/api/users/3");               // R 3번 하나 조회
+axios.post("/api/users", user);          // C 새로 만들기
+axios.put("/api/users/3", fullUser);     // U 통째로 교체 (모든 칸을 보냄)
+axios.patch("/api/users/3", { name: "yumin" }); // U 이름 칸만 수정
+axios.delete("/api/users/3");            // D 삭제
+
+// 스프링에서 짝이 되는 어노테이션
+//   @GetMapping  @PostMapping  @PutMapping  @PatchMapping  @DeleteMapping
+
+// ⚠️ HTML <form> 은 GET/POST 만 보낼 수 있다
+//   → Thymeleaf 화면에서 수정·삭제가 전부 POST 로 되어 있는 이유
+//   (th:method="delete" 는 숨은 _method 값으로 흉내 내는 방식 — 서버 설정을 켜야 동작)`,
+  },
+  {
+    id: "q-net-16",
+    category: "네트워크",
+    question: "HTTP 상태코드 2xx·3xx·4xx·5xx 는 무슨 뜻이고, 자주 보는 코드는?",
+    answer:
+      "첫 자리만 봐도 '누구 탓인지' 보인다. 2xx = 성공 (200 OK 그냥 성공, 201 Created 새로 만들어짐). 3xx = 다른 데로 가세요 (리다이렉트 — 로그인 안 하고 들어가면 로그인 페이지로 보내는 302). 4xx = 보낸 쪽(클라이언트) 잘못 — 400 요청 내용이 이상함(검증 실패), 401 누군지 모름(로그인 필요), 403 누군지는 아는데 권한 없음, 404 그런 주소나 데이터가 없음. 5xx = 받은 쪽(서버) 잘못 — 500 서버 코드에서 예외가 터짐. 401 과 403 이 제일 헷갈린다: 401 은 '신분증 보여주세요', 403 은 '신분증 확인했는데 출입 금지입니다'.",
+    code: `try {
+  const res = await axios.post("/api/users", form);
+  res.status;   // 201 → 성공 (2xx 는 정상 흐름으로 온다)
+} catch (e) {
+  // axios 는 기본적으로 4xx·5xx 를 catch 로 던진다
+  switch (e.response?.status) {
+    case 400: /* 입력값 검증 실패 → 폼에 에러 표시 */ break;
+    case 401: /* 로그인 필요 → 로그인 페이지로 */ break;
+    case 403: /* 권한 없음 → "접근 권한이 없습니다" */ break;
+    case 404: /* 주소 오타 or 없는 데이터 */ break;
+    case 500: /* 서버 버그 → 백엔드 로그 확인 요청 */ break;
+  }
+}
+
+// 4xx → 내가 보낸 요청부터 의심 / 5xx → 서버 로그부터 확인
+// 3xx 는 브라우저가 알아서 따라가서 axios 는 보통 최종 결과만 본다`,
+  },
+  {
+    id: "q-net-17",
+    category: "네트워크",
+    question: "REST API 에서 axios.get('/api/users') 는 백엔드의 어디와 만나나?",
+    answer:
+      "택배는 주소와 배송 방법이 둘 다 맞아야 도착한다. 스프링도 요청이 오면 '메서드 + 주소' 짝이 맞는 메서드를 찾아 실행한다 — axios.get('/api/users') 는 @GetMapping(\"/api/users\") 가 붙은 메서드와 만난다. 주소가 맞아도 메서드가 다르면(POST 로 보냄) 405, 주소 자체가 없으면 404 가 돌아온다. 값을 꺼내는 자리도 정해져 있다: 주소 속 값(/users/3)은 @PathVariable, 물음표 뒤 값(?page=2)은 @RequestParam, JSON 바디는 @RequestBody. 돌려준 자바 객체는 JSON 으로 바뀌어 res.data 가 된다. REST 는 이렇게 '주소는 명사(자원), 동작은 메서드'로 나누자는 약속이다 (/getUsers 가 아니라 GET /users).",
+    code: `// 프론트                                // 백엔드 (같은 짝끼리 만난다)
+axios.get("/api/users", { params: { page: 2 } });
+//   → GET /api/users?page=2          @GetMapping("/api/users")
+//                                    List<UserDto> list(@RequestParam int page)
+
+axios.get("/api/users/3");
+//   → GET /api/users/3               @GetMapping("/api/users/{id}")
+//                                    UserDto one(@PathVariable Long id)
+
+axios.post("/api/users", { name: "yumin" });
+//   → POST /api/users + JSON 바디    @PostMapping("/api/users")
+//                                    UserDto create(@RequestBody UserForm form)
+
+// 반환한 UserDto → (Jackson 이 JSON 으로 변환) → res.data
+
+// 회사 코드 읽을 때: 클래스 위 어노테이션부터 본다
+//   @RestController → 데이터(JSON)를 돌려줌 = axios 가 부르는 곳
+//   @Controller     → "user/list" 같은 화면 이름을 돌려줌 = Thymeleaf HTML
+//   클래스에 @RequestMapping("/api") 가 있으면 메서드 주소 앞에 붙는다`,
+  },
+  {
+    id: "q-net-18",
+    category: "네트워크",
+    question: "React 는 3000, 스프링은 8080 — 포트·localhost 는 뭐고 CORS 에러는 왜 나나?",
+    answer:
+      "localhost 는 '내 컴퓨터 자신'(127.0.0.1)이고, 포트는 한 건물 안의 호수다 — 3000호엔 React 개발 서버, 8080호엔 스프링 서버가 산다. 브라우저는 '출처(Origin) = 프로토콜 + 주소 + 포트' 셋이 다 같아야 같은 집으로 본다. 그래서 localhost:3000 화면이 localhost:8080 에 요청하면 '남의 집'이 되고, 서버가 '3000 은 받아도 돼'라는 허락 헤더(Access-Control-Allow-Origin)를 안 주면 브라우저가 응답을 막는다 — 이게 CORS 에러. 핵심은 막는 주체가 서버가 아니라 브라우저라는 점 (그래서 Postman 으로는 잘 된다). 해결은 둘: ① 서버가 허락 목록에 3000 을 등록 ② 개발 중엔 React 개발 서버의 프록시가 대신 전달해서 브라우저 눈엔 같은 집 요청으로 보이게 한다.",
+    code: `// 방법 ② 개발용 프록시 (Vite 기준 vite.config.ts)
+export default defineConfig({
+  server: {
+    proxy: { "/api": "http://localhost:8080" }, // /api 로 시작하면 8080 으로 대신 전달
+  },
+});
+axios.get("/api/users"); // 브라우저 눈엔 같은 집에 보낸 요청 → CORS 없음
+// (CRA 는 package.json 에 "proxy": "http://localhost:8080" 한 줄)
+
+// 방법 ① 서버에서 허락 (스프링)
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/api/**").allowedOrigins("http://localhost:3000");
+    }
+}
+
+// 포트 기본값: CRA 3000 · Vite 5173 · 스프링부트 8080 · MySQL 3306
+// 배포 땐 보통 화면과 /api 를 한 주소 아래로 묶어서 CORS 자체가 안 생기게 한다`,
+  },
   // ─── 데이터베이스 ──────────────────────────────────────
   {
     id: "q-db-1",
@@ -1875,6 +2286,132 @@ SADD tags "java"         # Set   — 중복 없는 집합
 ZADD rank 100 "player1"  # Sorted Set — 실시간 랭킹에 딱
 
 # 영속성: snapshot(RDB) + AOF(명령 기록) 로 재시작 시 복구`,
+  },
+  {
+    id: "q-db-14",
+    category: "데이터베이스",
+    question: "테이블·행·열·기본키(PK)는 엑셀 시트와 뭐가 다른가?",
+    answer:
+      "겉모습은 엑셀 시트와 똑같다 — 테이블 = 시트, 행(row, 레코드) = 데이터 한 건, 열(column, 컬럼) = 항목 이름. 차이는 '규칙을 강제한다'는 것. 엑셀은 나이 칸에 '스무살'을 써도, 같은 사람을 두 줄 써도 그냥 받아준다. DB 테이블은 미리 정한 설계도(스키마)에 안 맞으면 저장 자체를 거부한다 — 열마다 타입(INT 칸엔 숫자만)을 정하고 NOT NULL(빈칸 금지), UNIQUE(중복 금지) 같은 제약조건을 건다. 그중 기본키(PK)는 '이 행을 딱 하나로 집어내는 번호표'라 NULL 도 중복도 안 된다. 그래서 백엔드는 이름이 아니라 id 로 데이터를 찾는다 (axios.get('/api/users/3') 의 3 이 바로 PK).",
+    code: `CREATE TABLE users (
+  id         BIGINT       PRIMARY KEY AUTO_INCREMENT, -- 번호표: 1, 2, 3... 자동
+  email      VARCHAR(100) NOT NULL UNIQUE,  -- 빈칸 금지 + 중복 금지
+  name       VARCHAR(50)  NOT NULL,
+  age        INT,                           -- 숫자만 (NULL 은 허용)
+  created_at DATETIME     DEFAULT CURRENT_TIMESTAMP -- 안 넣으면 지금 시각
+);
+
+INSERT INTO users (email, name, age) VALUES ('a@a.com', '유민', 20);
+--   ✅ 들어감 (id 는 1 로 자동 부여)
+
+-- 엑셀이면 그냥 들어갔을 것들이 DB 에선 거절된다
+INSERT INTO users (email, name, age) VALUES ('b@b.com', '철수', '스무살');
+--   ❌ age 는 INT 칸 → Incorrect integer value (MySQL 기본 엄격 모드)
+INSERT INTO users (email, name) VALUES ('a@a.com', '또유민');
+--   ❌ email 중복 → Duplicate entry 에러`,
+  },
+  {
+    id: "q-db-15",
+    category: "데이터베이스",
+    question: "SELECT·INSERT·UPDATE·DELETE 기본형과, WHERE 를 빠뜨리면 생기는 일은?",
+    answer:
+      "DB 에 하는 말은 거의 이 네 가지다 — 조회 SELECT, 추가 INSERT, 수정 UPDATE, 삭제 DELETE (CRUD 의 R·C·U·D). WHERE 는 '어느 행에?'를 정하는 조건으로, 배열의 filter 와 같다. 무서운 건 UPDATE·DELETE 에서 WHERE 를 빠뜨렸을 때 — 에러가 나는 게 아니라 '조건 없음 = 전부'로 알아듣고 테이블의 모든 행을 바꾸거나 지운다. 그래서 실무에선 ① 같은 WHERE 로 먼저 SELECT 해서 몇 행이 걸리는지 보고 ② 트랜잭션 안에서 실행해 결과를 확인한 뒤 COMMIT 한다. MySQL Workbench 의 '안전 업데이트 모드'가 키 조건 없는 UPDATE·DELETE 를 막아두는 것도 이 사고 때문이다.",
+    code: `SELECT id, name FROM users WHERE age >= 20;      -- 조회 (users.filter(u => u.age >= 20))
+INSERT INTO users (name, age) VALUES ('유민', 25); -- 추가
+UPDATE users SET age = 26 WHERE id = 3;          -- 3번만 수정
+DELETE FROM users WHERE id = 3;                  -- 3번만 삭제
+
+-- ⚠️ WHERE 를 빠뜨리면
+UPDATE users SET age = 26;  -- 모든 회원 나이가 26 이 된다
+DELETE FROM users;          -- 모든 회원이 사라진다 (에러 없이 "N rows affected")
+
+-- 안전하게 하는 순서
+SELECT COUNT(*) FROM users WHERE id = 3;  -- 1) 몇 행 걸리나 먼저 확인
+START TRANSACTION;
+DELETE FROM users WHERE id = 3;           -- 2) 실행
+-- 3) 결과가 이상하면 ROLLBACK;  맞으면 COMMIT;`,
+  },
+  {
+    id: "q-db-16",
+    category: "데이터베이스",
+    question: "GROUP BY·COUNT·SUM·HAVING 은 어떻게 쓰고, WHERE 와 HAVING 은 뭐가 다른가?",
+    answer:
+      "영수증 더미를 손님별로 묶어 세는 것과 같다. GROUP BY = 같은 값끼리 한 무더기로 묶기, COUNT = 무더기 안의 개수, SUM = 합계 (AVG·MAX·MIN 도 같은 집계 함수). WHERE 와 HAVING 은 거르는 '시점'이 다르다: WHERE 는 묶기 전에 영수증 한 장 한 장을 거르고(취소된 주문 빼기), HAVING 은 묶은 뒤 무더기 단위로 거른다(주문 3건 이상인 손님만). 그래서 COUNT·SUM 같은 집계 결과로 거르는 조건은 WHERE 에 못 쓰고 HAVING 에 써야 한다. 또 SELECT 에는 원칙적으로 묶은 기준 컬럼과 집계 함수만 올 수 있다 — 무더기 하나에 이름이 여러 개면 뭘 보여줄지 모르니까.",
+    code: `-- orders(id, user_id, amount, status)
+SELECT user_id,
+       COUNT(*)    AS order_count,
+       SUM(amount) AS total
+FROM orders
+WHERE status <> 'CANCEL'   -- ① 묶기 전: 취소 주문을 한 장씩 제외
+GROUP BY user_id           -- ② 손님별로 무더기 만들기
+HAVING COUNT(*) >= 3       -- ③ 묶은 뒤: 3건 이상인 무더기만
+ORDER BY total DESC;       -- ④ 정렬
+
+-- 실행 순서: FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY
+--   그래서 WHERE 시점엔 아직 COUNT(*) 를 모른다 (묶기 전이라)
+
+-- COUNT(*) 는 행 수, COUNT(컬럼) 은 그 컬럼이 NULL 인 행은 안 센다
+
+-- 같은 일을 JS 로 하면
+--   const g = Object.groupBy(orders.filter(o => o.status !== "CANCEL"), o => o.userId);
+--   Object.entries(g).filter(([, list]) => list.length >= 3);`,
+  },
+  {
+    id: "q-db-17",
+    category: "데이터베이스",
+    question: "1:N·N:M 관계는 테이블로 어떻게 표현하고, ERD 에선 어떻게 읽나?",
+    answer:
+      "1:N = 회원 한 명이 주문 여러 개. 외래키(FK)는 항상 'N 쪽'(주문 테이블)에 둔다 — 주문서마다 '누구 주문인지' 회원번호를 적는 것. 반대로 회원 테이블에 주문번호를 적으려면 칸이 몇 개 필요할지 몰라서 불가능하다. N:M = 주문 하나에 상품이 여럿, 상품 하나도 여러 주문에 들어가는 관계. 이건 두 테이블만으로는 표현이 안 돼서 가운데에 '주문 상세' 같은 중간 테이블(연결 테이블)을 두고 양쪽 FK 를 둘 다 담아 1:N 두 개로 쪼갠다. 중간 테이블엔 수량·당시 가격처럼 '관계 자체의 정보'도 담을 수 있다. ERD(테이블 관계도)에선 선 끝이 까마귀 발 모양으로 갈라진 쪽이 N 이다.",
+    code: `-- 1:N   회원 1 ────< 주문 N    (까마귀 발 '<' 쪽이 N)
+CREATE TABLE orders (
+  id      BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,                 -- FK 는 N 쪽에!
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- N:M   주문 >───< 상품   → 중간 테이블로 1:N 두 개로 쪼갠다
+--       주문 1 ──< 주문상세 >── 1 상품
+CREATE TABLE order_items (
+  order_id   BIGINT,
+  product_id BIGINT,
+  quantity   INT NOT NULL,                 -- 관계 자체의 정보
+  PRIMARY KEY (order_id, product_id),
+  FOREIGN KEY (order_id)   REFERENCES orders(id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- 회사 JPA 코드에선 이렇게 보인다
+--   @ManyToOne User user;                    ← FK 를 가진 N 쪽 (orders.user_id)
+--   @OneToMany(mappedBy = "user") List<Order> orders;  ← 1 쪽 (실제 칸은 없음)
+--   @ManyToMany 는 중간 테이블에 칸(수량)을 못 더해서, 실무에선 중간 엔티티를 따로 만든다`,
+  },
+  {
+    id: "q-db-18",
+    category: "데이터베이스",
+    question: "스프링부트는 MySQL 에 어떻게 연결하나? (datasource·JDBC 드라이버·ddl-auto)",
+    answer:
+      "axios 에 baseURL 을 설정하듯, 스프링에는 'DB 주소·아이디·비밀번호'를 application.yml 의 spring.datasource 에 적어준다. 그런데 자바는 MySQL 말을 바로 못 한다 — JDBC 는 자바의 표준 '콘센트 모양'이고, JDBC 드라이버(mysql-connector-j)는 MySQL 에 맞춘 '어댑터'다. 그래서 build.gradle 에 드라이버를 꼭 추가해야 연결된다. JPA 를 쓴다면 spring.jpa.hibernate.ddl-auto 를 반드시 확인할 것 — 엔티티를 보고 테이블을 자동으로 만들어 주는 기능인데, create 는 켤 때마다 테이블을 지우고 새로 만든다. 운영 DB 에 create 가 켜지면 데이터가 통째로 날아간다. 운영은 validate(맞는지 확인만)나 none(아무것도 안 함)이 안전하다.",
+    code: `# build.gradle — 어댑터(드라이버) 꽂기
+#   runtimeOnly 'com.mysql:mysql-connector-j'
+#   implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+# application.yml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/shop  # jdbc:종류://주소:포트/DB이름
+    username: app
+    password: \${DB_PASSWORD}  # 비밀번호는 코드에 쓰지 말고 환경변수로
+    # driver-class-name: com.mysql.cj.jdbc.Driver  ← url 을 보고 자동 추론돼서 생략 가능
+  jpa:
+    hibernate:
+      ddl-auto: validate  # ⚠️ 여기를 꼭 본다
+
+# ddl-auto 값 (켤 때 테이블을 어떻게 할까)
+#   create      : 지우고 새로 만든다      → 운영에서 쓰면 데이터 전멸 💀
+#   create-drop : create + 끌 때 또 지움  → 테스트용
+#   update      : 바뀐 부분만 추가        → 컬럼 삭제·변경은 안 해줘서 꼬이기 쉽다
+#   validate    : 엔티티와 테이블이 맞는지 확인만 (안 맞으면 실행 실패)
+#   none        : 아무것도 안 함          → 운영의 기본 선택`,
   },
   // ─── 자료구조 ──────────────────────────────────────────
   {
@@ -2300,6 +2837,417 @@ spring:
 # 실행할 때 가방 선택:
 # java -jar app.jar --spring.profiles.active=prod`,
   },
+  {
+    id: "q-spring-9",
+    category: "SpringBoot",
+    question: "스프링부트 프로젝트는 어떻게 만들고 실행하나? (내 클래스가 안 잡히는 이유는?)",
+    answer:
+      "React 의 'npm create vite' 처럼 start.spring.io 에서 빌드 도구(Gradle/Maven), 자바 버전, 필요한 부품(의존성 — Spring Web, JPA, Thymeleaf 등)을 고르면 뼈대 zip 을 준다. build.gradle 이 package.json, './gradlew bootRun' 이 'npm run dev' 역할이고, 실행하면 내장 톰캣이 8080 포트로 뜬다. 주의할 점: @SpringBootApplication 은 '내가 놓인 패키지와 그 하위 폴더'만 훑어서(컴포넌트 스캔) 빈을 등록한다. 메인 클래스보다 바깥 패키지에 만든 컨트롤러는 스프링이 아예 모른다 → 404.",
+    code: `// start.spring.io 에서 고르는 것
+//   Project: Gradle   Language: Java   Spring Boot: 3.x
+//   Java: 17 이상 (부트 3 의 최소 버전)
+//   Dependencies: Spring Web, Spring Data JPA, Thymeleaf ...
+
+// React 와 짝 맞추기
+//   package.json      ↔ build.gradle      (부품 목록)
+//   npm run dev       ↔ ./gradlew bootRun (개발 실행)
+//   npm run build     ↔ ./gradlew build   (→ build/libs/*.jar)
+//   (배포)             java -jar app.jar
+
+com.example.shop
+ ├─ ShopApplication.java   // @SpringBootApplication — 여기가 스캔 시작점
+ ├─ order/OrderController  // ✅ 하위 패키지라 자동 등록
+ └─ member/MemberService   // ✅
+com.example.other.XController // ❌ 바깥 패키지 → 스캔 안 됨 → 404`,
+  },
+  {
+    id: "q-spring-10",
+    category: "SpringBoot",
+    question: "어노테이션(@)은 정체가 뭔가? 붙이면 왜 동작하나?",
+    answer:
+      "택배 상자에 붙이는 '취급주의' 스티커. 스티커 자체는 아무 일도 안 한다 — 택배 기사(스프링)가 스티커를 읽고 그에 맞게 다룰 뿐이다. 마찬가지로 어노테이션은 코드에 붙이는 표시(메타데이터)일 뿐이고, 스프링이 앱 시작 때 클래스들을 훑으며 '@Service 가 붙었네 → 객체 만들어 등록', '@GetMapping 이 붙었네 → 이 주소와 연결' 처럼 대신 일해준다. React 테스트에서 data-testid 를 붙여 두면 RTL 이 그걸 읽고 찾아주는 것과 같은 구조. 그래서 스프링이 안 읽는 곳(스캔 범위 밖, new 로 직접 만든 객체)에 붙이면 아무 효과가 없다.",
+    code: `@Service              // 스프링: "객체 만들어서 보관소에 등록할게"
+public class OrderService {
+
+    @Transactional    // 스프링: "이 메서드는 한 묶음으로 감쌀게"
+    public void order() { ... }
+}
+
+// 누가 읽느냐에 따라 시점이 다르다
+//   @Override        → 컴파일러가 읽음 (오버라이드 맞는지 검사)
+//   @Getter (롬복)    → 컴파일할 때 getter 코드를 대신 써 줌
+//   @Service 등 스프링 → 앱 실행 시 스프링이 읽고 처리
+
+// ❌ 함정: 직접 new 하면 스프링을 안 거치니 스티커가 무시된다
+OrderService s = new OrderService();
+s.order();  // @Transactional 효과 없음`,
+  },
+  {
+    id: "q-spring-11",
+    category: "SpringBoot",
+    question: "@RequestParam / @PathVariable / @RequestBody 는 각각 어디서 값을 꺼내나?",
+    answer:
+      "편지 봉투로 치면 주소(URL 경로), 주소 뒤 메모(쿼리스트링), 봉투 속 편지(본문)다. axios 로 보낼 때 위치와 그대로 짝이 맞는다: URL 에 끼운 값 → @PathVariable, axios 의 params(?page=1) → @RequestParam, axios 의 data(JSON) → @RequestBody. @RequestBody 는 JSON 을 자바 객체로 자동 변환해준다(Jackson). @RequestParam 은 기본이 필수라 빠지면 400 에러 — 선택값이면 required = false 나 defaultValue 를 준다.",
+    code: `// 프론트 (axios)
+axios.get("/users/3/orders", { params: { page: 1 } });
+axios.post("/users/3/orders", { item: "책", count: 2 });
+
+// 백엔드 (Spring)
+@GetMapping("/users/{id}/orders")
+public List<OrderDto> list(
+        @PathVariable Long id,                          // URL 의 3
+        @RequestParam(defaultValue = "0") int page) {   // ?page=1
+    ...
+}
+
+@PostMapping("/users/{id}/orders")
+public OrderDto create(
+        @PathVariable Long id,
+        @RequestBody OrderRequest req) {  // { item, count } JSON → 객체
+    ...
+}`,
+  },
+  {
+    id: "q-spring-12",
+    category: "SpringBoot",
+    question: "요청 하나가 스프링 안에서 어떤 순서로 처리되나?",
+    answer:
+      "큰 회사 안내 데스크를 떠올리면 된다. 모든 방문객(요청)은 먼저 안내 데스크(DispatcherServlet — 프론트 컨트롤러)를 거친다. 데스크가 주소를 보고 담당 부서(Controller)를 찾아 연결하고(React Router 가 path 로 컴포넌트를 고르는 것과 비슷), 컨트롤러는 일을 Service 에, Service 는 DB 일을 Repository 에 넘긴다. 결과가 돌아오면 @RestController 는 객체를 JSON 으로 바꿔 응답하고, @Controller 는 뷰 이름을 받아 Thymeleaf 가 HTML 을 그려 응답한다. 디버깅할 때 이 순서대로 '어디까지 왔나'를 찾으면 된다.",
+    code: `// 요청 한 개의 여정
+브라우저 / axios
+  → 톰캣 (내장 서버)
+  → 필터 (보안·인코딩 등, 스프링 시큐리티는 여기)
+  → DispatcherServlet          // 안내 데스크: 담당 컨트롤러 찾기
+  → Controller                 // @RequestBody 등으로 값 꺼내기
+  → Service                    // 비즈니스 로직, @Transactional
+  → Repository → DB            // SQL 실행
+  ← 결과 반환
+  ← @RestController: 객체 → JSON (Jackson)
+    @Controller    : "orders/list" → templates/orders/list.html 렌더링
+
+// 중간에 예외가 나면 → @ExceptionHandler 가 잡아 에러 응답`,
+  },
+  {
+    id: "q-spring-13",
+    category: "SpringBoot",
+    question: "DTO 와 Entity 는 왜 나누나? @Valid 는 뭘 해주나?",
+    answer:
+      "Entity = 회사 내부 서류 원본, DTO = 손님에게 보여줄 복사본 양식. 원본(Entity)을 그대로 밖에 내주면 비밀번호 같은 내부 정보가 새고, 화면 요구가 바뀔 때마다 DB 구조까지 흔들린다. 그래서 요청·응답은 DTO 로 따로 만들고, 안쪽에서만 Entity 로 바꿔 쓴다. 요청 DTO 필드에 @NotBlank, @Email 같은 규칙을 붙이고 컨트롤러 파라미터에 @Valid 를 달면, 컨트롤러 코드가 실행되기도 전에 검사해서 어기면 400 에러로 돌려보낸다. 프론트의 폼 검증(zod 등)을 서버에서 한 번 더 하는 것 — 프론트 검증은 우회될 수 있으니 서버 검증이 진짜 문지기다.",
+    code: `// 요청 DTO — 밖에서 들어오는 모양 + 검사 규칙
+public record SignUpRequest(
+    @NotBlank String name,
+    @Email @NotBlank String email,
+    @Size(min = 8) String password
+) {}
+
+// 응답 DTO — 내보낼 것만 (password 없음!)
+public record MemberResponse(Long id, String name) {}
+
+@PostMapping("/members")
+public MemberResponse signUp(@Valid @RequestBody SignUpRequest req) {
+    // 규칙 위반이면 여기 도착 전에 400 Bad Request
+    Member saved = memberService.join(req);     // 안쪽은 Entity
+    return new MemberResponse(saved.getId(), saved.getName());
+}
+// 부트 3: spring-boot-starter-validation 의존성 필요 (jakarta.validation)`,
+  },
+  {
+    id: "q-spring-14",
+    category: "SpringBoot",
+    question: "@Controller + Thymeleaf 와 @RestController 는 뭐가 다른가?",
+    answer:
+      "@Controller 는 완성된 요리(HTML 화면)를 내주는 식당, @RestController 는 재료(JSON 데이터)만 포장해 주는 가게. @Controller 메서드가 \"orders/list\" 같은 문자열을 반환하면 그건 응답 내용이 아니라 '뷰 이름'이고, Thymeleaf 가 templates/orders/list.html 에 Model 로 넘긴 값을 채워 HTML 을 만든다(서버 사이드 렌더링). React 로 치면 서버가 JSX 렌더링까지 해서 보내는 셈. th:each 는 map 으로 목록 돌리기, th:text 는 {값} 출력과 같다. @RestController 는 반환한 객체를 JSON 으로 보내고, 화면은 React 가 그린다.",
+    code: `@Controller
+public class OrderPageController {
+    @GetMapping("/orders")
+    public String list(Model model) {
+        model.addAttribute("orders", orderService.findAll()); // props 넘기기
+        return "orders/list";  // 뷰 이름 → templates/orders/list.html
+    }
+}
+
+<!-- templates/orders/list.html (Thymeleaf) -->
+<!-- th:each = orders.map(o => ...), th:text = {o.itemName} -->
+<ul>
+  <li th:each="o : \${orders}">
+    <a th:href="@{/orders/{id}(id=\${o.id})}"
+       th:text="\${o.itemName}">상품명</a>
+  </li>
+</ul>
+
+@RestController  // = @Controller + @ResponseBody
+public class OrderApiController {
+    @GetMapping("/api/orders")
+    public List<OrderDto> list() { return ...; }  // → JSON 배열
+}`,
+  },
+  {
+    id: "q-spring-15",
+    category: "SpringBoot",
+    question: "JpaRepository 의 findByXxx 는 어떻게 SQL 없이 동작하나?",
+    answer:
+      "주문서 양식에 칸만 정확히 채우면 주방이 알아서 요리하는 것. 인터페이스에 메서드 이름을 규칙대로 지으면(쿼리 메서드), 스프링 데이터 JPA 가 이름을 해석해서 쿼리를 자동으로 만들어준다. findByEmail → 'email 로 찾기', findByNameAndAge → 'name 그리고 age', OrderByCreatedAtDesc → '최신순 정렬'. 구현 클래스는 내가 안 만든다 — 인터페이스만 있으면 스프링이 실행 시 대신 만들어 꽂아준다. save / findById / findAll / deleteById 는 JpaRepository 를 상속만 해도 기본으로 생긴다. findById 는 없을 수도 있어서 Optional 로 준다.",
+    code: `public interface MemberRepository extends JpaRepository<Member, Long> {
+    //                                               엔티티 ↑   ↑ id 타입
+
+    Optional<Member> findByEmail(String email);
+    // → select ... from member where email = ?
+
+    List<Member> findByNameAndAgeGreaterThan(String name, int age);
+    // → where name = ? and age > ?
+
+    List<Member> findTop10ByOrderByCreatedAtDesc();
+    // → order by created_at desc limit 10
+
+    boolean existsByEmail(String email);   // 중복 가입 체크에 딱
+}
+
+// 상속만으로 공짜로 생기는 것
+memberRepository.save(member);
+memberRepository.findById(1L).orElseThrow();  // Optional 이라 꺼내야 함
+memberRepository.findAll();`,
+  },
+  {
+    id: "q-spring-16",
+    category: "SpringBoot",
+    question: "JPA 를 쓰는데도 SQL 을 알아야 하나? @Query 는 언제 쓰나?",
+    answer:
+      "JPA 는 자동 번역기라서, 번역된 결과(SQL)를 읽을 줄 모르면 이상하게 번역돼도 알아챌 수 없다. JPA 도 결국 SQL 을 만들어 DB 에 보내므로 ① 쿼리가 몇 번, 어떻게 나가는지 로그로 확인하고 ② 느린 쿼리·인덱스·조인을 고치려면 SQL 을 알아야 한다. 메서드 이름 쿼리로 표현이 너무 길어지거나 조인이 필요하면 @Query 로 직접 쓴다. 이때 쓰는 JPQL 은 SQL 과 비슷하지만 테이블이 아니라 엔티티 클래스·필드 이름 기준이다. DB 전용 문법이 꼭 필요하면 nativeQuery = true 로 진짜 SQL 을 쓴다.",
+    code: `public interface OrderRepository extends JpaRepository<Order, Long> {
+
+    // JPQL — 테이블(orders)이 아니라 엔티티(Order)와 필드(o.member) 기준
+    @Query("select o from Order o join fetch o.member where o.status = :status")
+    List<Order> findWithMember(@Param("status") OrderStatus status);
+
+    // 네이티브 SQL — DB 문법 그대로 (DB 를 바꾸면 깨질 수 있음)
+    @Query(value = "select * from orders where created_at > now() - interval 1 day",
+           nativeQuery = true)
+    List<Order> findRecent();
+}
+
+# application.yml — 실제로 나가는 SQL 을 눈으로 확인
+logging:
+  level:
+    org.hibernate.SQL: debug`,
+  },
+  {
+    id: "q-spring-17",
+    category: "SpringBoot",
+    question: "@ManyToOne / @OneToMany 와 '연관관계의 주인'은 무슨 뜻인가?",
+    answer:
+      "회원(Member) 여러 명이 한 팀(Team)에 속하는 관계에서, DB 에는 member 테이블에만 team_id(외래키) 칸이 있다. 그래서 '어느 팀 소속인지'를 실제로 적을 수 있는 쪽은 Member 의 @ManyToOne 이고, 이쪽이 연관관계의 주인이다. Team 의 @OneToMany(mappedBy = \"team\") 목록은 '저쪽 team 필드를 거울처럼 비춰 보는 것'일 뿐이라 읽기 전용이다. 흔한 실수: team.getMembers().add(member) 만 하면 DB 에는 아무것도 안 바뀐다 — 주인인 member.setTeam(team) 을 해야 외래키가 저장된다. 그래서 보통 두 쪽을 같이 맞춰 주는 편의 메서드를 만들고, @ManyToOne 은 기본이 즉시 로딩(EAGER)이라 LAZY 로 바꿔 두는 게 관례다.",
+    code: `@Entity
+public class Member {
+    @Id @GeneratedValue private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)  // 주인 ✅ (기본 EAGER → LAZY 권장)
+    @JoinColumn(name = "team_id")       // 외래키 칸을 실제로 가진 쪽
+    private Team team;
+}
+
+@Entity
+public class Team {
+    @Id @GeneratedValue private Long id;
+
+    @OneToMany(mappedBy = "team")       // 거울 🪞 (읽기 전용)
+    private List<Member> members = new ArrayList<>();
+
+    public void addMember(Member m) {   // 편의 메서드: 양쪽을 같이 맞춤
+        members.add(m);
+        m.setTeam(this);                // ← DB 에 반영되는 건 이 줄
+    }
+}
+// ❌ team.getMembers().add(m) 만 하면 team_id 는 null 그대로`,
+  },
+  {
+    id: "q-spring-18",
+    category: "SpringBoot",
+    question: "LAZY 로딩이란? 그리고 N+1 문제는 왜 생기고 어떻게 막나?",
+    answer:
+      "LAZY(지연 로딩) = 책 목록만 먼저 가져오고, 책을 펼칠 때 내용을 가지러 가는 것. 주문을 조회하면 연결된 회원은 '가짜 대리인(프록시)'으로 채워 두고, order.getMember().getName() 처럼 실제로 건드리는 순간 쿼리를 보낸다. 문제는 목록에서 터진다: 주문 100개를 1번에 가져온 뒤, 반복문으로 각 주문의 회원 이름을 꺼내면 회원 조회가 100번 더 나간다 → 총 1+N 번(N+1 문제). React 에서 목록을 받은 뒤 아이템마다 useEffect 로 상세 API 를 따로 부르는 것과 같은 낭비다. 해결: 처음부터 같이 가져오라고 시키는 fetch join(join fetch)이나 @EntityGraph, 또는 IN 으로 묶어 가져오는 batch size 설정. EAGER 로 바꾸는 건 해결이 아니다 — findAll 같은 JPQL 에서는 EAGER 여도 똑같이 N+1 이 난다.",
+    code: `// ❌ N+1: 주문 목록 1번 + 회원 조회 N번
+List<Order> orders = orderRepository.findAll();   // 쿼리 1번
+for (Order o : orders) {
+    o.getMember().getName();   // LAZY → 여기서 회원 쿼리가 주문마다 1번씩
+}
+// 로그: select ... from orders
+//       select ... from member where id=1
+//       select ... from member where id=2   ... (N번)
+
+// ✅ 해결 1: fetch join — 한 번에 조인해서 가져오기
+@Query("select o from Order o join fetch o.member")
+List<Order> findAllWithMember();
+
+// ✅ 해결 2: @EntityGraph
+@EntityGraph(attributePaths = "member")
+List<Order> findByStatus(OrderStatus status);
+
+// ✅ 해결 3: 묶어서 가져오기 (where id in (...))
+// spring.jpa.properties.hibernate.default_batch_fetch_size: 100`,
+  },
+  {
+    id: "q-spring-19",
+    category: "SpringBoot",
+    question: "@RestControllerAdvice 와 @ExceptionHandler 로 에러 응답을 어떻게 통일하나?",
+    answer:
+      "고객센터를 하나로 모으는 것. 컨트롤러마다 try-catch 로 에러를 제각각 처리하면 어떤 API 는 500 에 HTML, 어떤 API 는 400 에 다른 모양 JSON 이 나와서 프론트가 매번 다르게 파싱해야 한다. @RestControllerAdvice 클래스 하나를 만들고 그 안에 @ExceptionHandler(예외종류.class) 메서드를 두면, 어느 컨트롤러에서 그 예외가 터지든 여기로 모여서 '상태코드 + 같은 모양의 JSON' 으로 바뀐다. React 의 axios 인터셉터에서 error.response.data.message 하나만 보면 되게 만들어 주는 쪽이다. 부트 3 에는 표준 에러 형식인 ProblemDetail 도 있다.",
+    code: `// 서비스에서는 그냥 던진다
+throw new NotFoundException("회원이 없습니다: " + id);
+
+// 모든 컨트롤러의 에러를 여기서 한 번에
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> notFound(NotFoundException e) {
+        return ResponseEntity.status(404)
+                .body(new ErrorResponse("NOT_FOUND", e.getMessage()));
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class) // @Valid 실패
+    public ResponseEntity<ErrorResponse> invalid(MethodArgumentNotValidException e) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("INVALID", "입력값을 확인하세요"));
+    }
+}
+public record ErrorResponse(String code, String message) {}
+// 프론트는 언제나 { code, message } 만 보면 된다`,
+  },
+  {
+    id: "q-spring-20",
+    category: "SpringBoot",
+    question: "Pageable 과 Page 로 페이지네이션은 어떻게 하나?",
+    answer:
+      "책을 한 번에 다 주지 않고 '3쪽, 한 쪽에 20줄'처럼 잘라서 주는 것. 컨트롤러 파라미터에 Pageable 을 두면 ?page=0&size=20&sort=createdAt,desc 같은 쿼리를 스프링이 알아서 읽어 담아 준다. page 는 0부터 시작이라 프론트의 '1페이지'는 page=0 이다(자주 틀림). 리포지토리 메서드에 Pageable 을 넘기면 limit/offset 쿼리가 나가고, 결과 Page 에는 목록(content)과 함께 전체 개수(totalElements)·전체 페이지 수(totalPages)가 들어 있어 페이지 번호 버튼을 그릴 수 있다. 전체 개수를 세려고 count 쿼리가 한 번 더 나가므로, '더보기'/무한 스크롤처럼 전체 개수가 필요 없으면 Slice 를 쓰면 더 가볍다.",
+    code: `// GET /api/orders?page=0&size=20&sort=createdAt,desc
+@GetMapping("/api/orders")
+public Page<OrderDto> list(Pageable pageable) {   // 쿼리를 자동으로 담아줌
+    return orderRepository.findByStatus(OrderStatus.PAID, pageable)
+                          .map(OrderDto::from);   // Entity → DTO
+}
+
+// 리포지토리: 마지막 파라미터로 Pageable 만 추가
+Page<Order> findByStatus(OrderStatus status, Pageable pageable);
+
+// 응답 JSON (일부)
+// { "content": [ ... 20개 ... ],
+//   "totalElements": 1234, "totalPages": 62,
+//   "number": 0, "size": 20 }
+
+// 프론트: 사람이 보는 1페이지 = page=0
+axios.get("/api/orders", { params: { page: currentPage - 1, size: 20 } });`,
+  },
+  {
+    id: "q-spring-21",
+    category: "SpringBoot",
+    question: "JUnit 의 @Test 와 given-when-then 은 어떻게 쓰나? (React Testing Library 와 비교)",
+    answer:
+      "요리 시식 순서와 같다 — 재료 준비(given), 조리(when), 맛보기(then). 테스트 하나를 이 3단계로 나눠 쓰면 무엇을 검사하는지 한눈에 보인다. JUnit 에서는 메서드에 @Test 를 붙이면 테스트로 실행되고, 결과 확인은 assertThat(...).isEqualTo(...) 로 한다. RTL 로 치면 render() 가 given, userEvent.click() 이 when, expect(screen...).toBeInTheDocument() 가 then 이다. Jest 의 test(\"...\", () => {}) 자리가 @Test 메서드, expect 자리가 assertThat 인 셈. 실행은 './gradlew test' 또는 IDE 의 초록 화살표.",
+    code: `// JUnit 5 + AssertJ
+class CartTest {
+
+    @Test
+    @DisplayName("상품 두 개를 담으면 합계가 더해진다")
+    void addTwoItems() {
+        // given — 준비
+        Cart cart = new Cart();
+
+        // when — 실행
+        cart.add(new Item("책", 10000));
+        cart.add(new Item("펜", 2000));
+
+        // then — 검증
+        assertThat(cart.total()).isEqualTo(12000);
+    }
+}
+
+// 같은 구조의 RTL 테스트
+// test("버튼 누르면 카운트 증가", async () => {
+//   render(<Counter />);                                // given
+//   await userEvent.click(screen.getByRole("button"));  // when
+//   expect(screen.getByText("1")).toBeInTheDocument();  // then
+// });`,
+  },
+  {
+    id: "q-spring-22",
+    category: "SpringBoot",
+    question: "@SpringBootTest 와 @WebMvcTest(MockMvc)는 언제 쓰나? 버그는 어떻게 추적하나?",
+    answer:
+      "@SpringBootTest = 가게 전체를 열고 하는 리허설, @WebMvcTest = 홀(컨트롤러)만 열고 주방은 가짜로 두는 연습. @SpringBootTest 는 앱 전체(빈 전부, DB 연결까지)를 띄워 진짜에 가깝지만 느리고, @WebMvcTest 는 컨트롤러 계층만 띄워서 빠르다. 대신 서비스는 가짜(목)로 꽂아야 한다(부트 3.4+ @MockitoBean, 이전엔 @MockBean). MockMvc 는 서버를 실제로 켜지 않고 가짜 HTTP 요청을 보내 상태코드·JSON 을 검사하는 도구. 실제 버그 추적은 ① Postman(또는 브라우저 Network 탭)으로 요청을 재현하고 ② 서버 로그에서 예외 스택트레이스의 첫 'Caused by' 와 내 코드 줄을 찾고 ③ SQL 로그를 켜서 쿼리를 확인하는 순서로 한다.",
+    code: `@WebMvcTest(MemberController.class)     // 컨트롤러만 띄움 → 빠름
+class MemberControllerTest {
+
+    @Autowired MockMvc mockMvc;           // 가짜 HTTP 요청기
+    @MockitoBean MemberService memberService; // 주방은 가짜 (3.4 미만: @MockBean)
+
+    @Test
+    void 회원_조회() throws Exception {
+        given(memberService.find(1L)).willReturn(new MemberResponse(1L, "yumin"));
+
+        mockMvc.perform(get("/members/1"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.name").value("yumin"));
+    }
+}
+
+// @SpringBootTest — 전부 띄움 (느리지만 진짜에 가까움, 통합 테스트용)
+
+// 디버깅 순서
+// 1) Postman 으로 같은 요청 재현 (헤더·바디까지 똑같이)
+// 2) 로그에서 Exception / Caused by 와 "내 패키지" 줄 찾기
+// 3) logging.level.org.hibernate.SQL: debug 로 실제 쿼리 확인`,
+  },
+  {
+    id: "q-spring-23",
+    category: "SpringBoot",
+    question: "Spring Security 인증은 어떻게 동작하나? (세션 vs JWT, 401 vs 403)",
+    answer:
+      "건물 입구의 보안 게이트들. 요청은 컨트롤러에 닿기 전에 여러 겹의 보안 필터(필터 체인)를 지나며 '누구냐(인증)'와 '들어갈 수 있냐(인가)'를 검사받는다. 의존성만 추가해도 모든 주소가 잠기고 로그인 화면이 뜨는 이유가 이것. 신원 확인 방식은 두 가지: 세션 = 서버가 방문자 명단을 들고 있고 브라우저는 번호표(JSESSIONID 쿠키)만 냄 — Thymeleaf 같은 서버 렌더링 앱에 흔함. JWT = 서명된 출입증을 클라이언트가 들고 다니며 Authorization: Bearer 헤더로 냄 — 서버가 명단을 안 들고 있어 React SPA·모바일 API 에 흔함. 실패 코드는 401 = 누군지 모름(로그인 안 함·토큰 만료), 403 = 누군지는 알지만 권한 없음(일반 회원이 관리자 페이지). 단, 로그인 안 한 사람을 막는 모양은 앱 종류마다 다르다: API(JWT) 서버는 401 을 그대로 돌려주고 React 가 그걸 보고 로그인 화면으로 보내지만, 기본 formLogin 을 쓰는 화면 앱(회사 Thymeleaf 프로젝트)은 401 대신 302 로 /login 페이지로 리다이렉트한다. 그래서 브라우저 Network 탭에 401 이 안 보이고 302 → /login 이 보이면 '인증 실패'라는 뜻이다.",
+    code: `@Configuration
+public class SecurityConfig {
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/login", "/api/public/**").permitAll() // 누구나
+                .requestMatchers("/admin/**").hasRole("ADMIN")           // 관리자만
+                .anyRequest().authenticated())                           // 나머지는 로그인 필요
+            .formLogin(Customizer.withDefaults());   // 세션 방식 로그인 폼
+        return http.build();
+    }
+}
+
+// 요청 흐름: 톰캣 → [보안 필터 체인] → DispatcherServlet → Controller
+//                    ↑ 여기서 막히면 컨트롤러 로그는 아예 안 찍힌다
+
+// 401 Unauthorized : 신분증 없음 → 로그인 화면/토큰 재발급으로
+// 403 Forbidden    : 신분증은 있는데 출입 권한 없음`,
+  },
+  {
+    id: "q-spring-24",
+    category: "SpringBoot",
+    question: "Swagger(springdoc-openapi)는 뭐고, README 에는 무엇을 써야 하나?",
+    answer:
+      "Swagger = 코드에서 자동으로 뽑아 주는 API 메뉴판. springdoc-openapi 의존성을 넣으면 컨트롤러의 주소·파라미터·DTO 모양을 읽어 /swagger-ui/index.html 에 문서 화면을 만들어 주고, 거기서 바로 요청을 보내 볼 수도 있다(Postman 내장판). 코드와 문서가 따로 놀지 않는 게 핵심이라, 프론트는 백엔드에 '이 API 뭐 받아요?' 묻기 전에 여기부터 보면 된다. README 는 처음 온 사람의 길 안내서: ① 실행 방법(자바 버전, 프로파일, 필요한 환경변수 — 값 자체는 비밀이라 쓰지 않음) ② 구조와 기술 스택 ③ API 문서 링크 ④ 왜 이렇게 설계했는지·겪은 문제와 해결.",
+    code: `// build.gradle — 부트 3 은 springdoc 2.x
+implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.x.x'
+// 실행 후: http://localhost:8080/swagger-ui/index.html
+//         http://localhost:8080/v3/api-docs  (JSON 스펙)
+
+@Tag(name = "회원")
+@RestController
+public class MemberController {
+    @Operation(summary = "회원 단건 조회")   // 메뉴판 설명 한 줄
+    @GetMapping("/members/{id}")
+    public MemberResponse find(@PathVariable Long id) { ... }
+}
+
+# README.md 뼈대
+## 실행 방법      — Java 17, ./gradlew bootRun --args='--spring.profiles.active=dev'
+## 환경 변수      — DB_URL, JWT_SECRET (값은 적지 않는다)
+## 구조           — 패키지 구조, ERD 그림
+## API 문서       — /swagger-ui/index.html
+## 설계 결정 & 트러블슈팅 — 왜 이렇게 했나, N+1 을 어떻게 잡았나`,
+  },
 
   // ─── 구조설계 ─────────────────────────────────────────
   {
@@ -2682,6 +3630,10 @@ export const SUMMARIES: Record<string, string> = {
   "q-cs-14": "ECDSA 는 타원곡선을 써서 짧은 키로 같은 안전도를 낸다",
   "q-cs-15": "EdDSA 는 서명 난수를 해시로 정해 재사용 사고를 막는다",
   "q-cs-16": "Ed25519 는 키가 작고 빨라 SSH 서명의 기본값이 됐다",
+  "q-cs-17": "브랜치는 따로 작업하는 평행 세계고 병합은 그걸 합치는 것",
+  "q-cs-18": "충돌은 같은 줄을 둘 다 고쳐서 사람이 골라줘야 하는 상황",
+  "q-cs-19": "도커 이미지는 굳힌 포장본이고 컨테이너는 그걸 실행한 것",
+  "q-cs-20": "배포는 자르로 굳혀 서버에서 돌리고 설정은 환경변수로 바꾼다",
   "q-os-1": "주소 공간을 코드·데이터·스택으로 나눠 메모리를 아낀다",
   "q-os-2": "인터럽트는 벨을 울려 알리고 폴링은 계속 나가서 확인한다",
   "q-os-3": "fork 는 프로세스를 복제하고 exec 는 알맹이만 갈아끼운다",
@@ -2708,6 +3660,12 @@ export const SUMMARIES: Record<string, string> = {
   "q-net-10": "블로킹은 답이 올 때까지 멈추고 논블로킹은 바로 돌려받는다",
   "q-net-11": "블로킹은 제어권 축이고 동기 비동기는 완료 확인 축이다",
   "q-net-12": "웹소켓은 연결을 열어둬 서버가 먼저 말을 걸 수 있게 한다",
+  "q-net-13": "백엔드는 검증·업무 규칙·저장을 맡는 보이지 않는 주방이다",
+  "q-net-14": "HTTP 메시지는 시작줄과 헤더와 바디 세 칸으로 이뤄진다",
+  "q-net-15": "PUT 은 자원을 통째로 바꾸고 PATCH 는 보낸 칸만 고친다",
+  "q-net-16": "4xx 는 요청한 쪽 잘못이고 5xx 는 서버 쪽 잘못이다",
+  "q-net-17": "요청은 메서드와 주소 짝이 맞는 컨트롤러 메서드와 만난다",
+  "q-net-18": "포트가 다르면 다른 출처라 브라우저가 CORS 로 응답을 막는다",
   "q-db-1": "슈퍼키에서 군더더기를 뺀 최소 조합이 후보키가 된다",
   "q-db-2": "이상현상은 한 테이블에 정보를 몰아넣어 생기는 부작용이다",
   "q-db-3": "정규화는 원자값 부분종속 이행종속을 차례로 걷어낸다",
@@ -2721,6 +3679,11 @@ export const SUMMARIES: Record<string, string> = {
   "q-db-11": "커넥션 풀은 연결을 미리 만들어 빌려주고 반납받는다",
   "q-db-12": "테이블을 행 단위로 쪼갠 수평 파티셔닝이 곧 샤딩이다",
   "q-db-13": "레디스는 메모리에 올려두는 키밸류 저장소라 아주 빠르다",
+  "q-db-14": "엑셀과 달리 테이블은 타입과 제약조건으로 규칙을 강제한다",
+  "q-db-15": "WHERE 없는 UPDATE·DELETE 는 테이블의 모든 행에 적용된다",
+  "q-db-16": "WHERE 는 묶기 전 행을 거르고 HAVING 은 묶은 뒤 그룹을 거른다",
+  "q-db-17": "1:N 의 외래키는 N 쪽에 두고 N:M 은 중간 테이블로 푼다",
+  "q-db-18": "ddl-auto 를 create 로 두면 켤 때마다 테이블을 새로 만든다",
   "q-ds-1": "배열은 인덱스 접근이 빠르고 연결 리스트는 중간 삽입이 빠르다",
   "q-ds-2": "스택은 나중에 넣은 걸 먼저 큐는 먼저 온 걸 먼저 꺼낸다",
   "q-ds-3": "힙은 최댓값을 빠르게 꺼내는 반정렬 완전 이진 트리다",
@@ -2786,6 +3749,13 @@ export const SUMMARIES: Record<string, string> = {
   "q-java-6": "스태틱은 인스턴스가 아니라 클래스가 하나만 갖고 공유한다",
   "q-java-7": "체크 예외는 컴파일러가 처리를 강제하고 런타임은 안 한다",
   "q-java-8": "어레이리스트는 순서로 해시맵은 이름표로 값을 꺼낸다",
+  "q-java-9": "인트는 null 이 안 되고 인티저는 null 을 담을 수 있다",
+  "q-java-10": "배열은 길이가 고정이고 어레이리스트는 알아서 늘어난다",
+  "q-java-11": "생성자는 new 할 때 불리고 this 는 지금 만드는 나 자신이다",
+  "q-java-12": "포이치는 번호 없이 요소만 꺼내 JS 의 for...of 와 같다",
+  "q-java-13": "캡슐화는 필드를 프라이빗으로 숨기고 게터 세터로 연다",
+  "q-java-14": "부모 타입에 담아도 실제 실행은 자식 객체의 메서드다",
+  "q-java-15": "제네릭은 타입을 빈칸으로 두고 쓰는 쪽이 채워 넣는다",
   "q-spring-1": "스프링부트는 서버 설정을 미리 해둔 자바 웹 밀키트다",
   "q-spring-2": "레스트 컨트롤러에 매핑을 붙이면 주소와 메서드가 연결된다",
   "q-spring-3": "의존성 주입은 필요한 객체를 스프링이 만들어 꽂아주는 것",
@@ -2794,6 +3764,22 @@ export const SUMMARIES: Record<string, string> = {
   "q-spring-6": "컨트롤러는 접수 서비스는 로직 리포지토리는 DB 를 맡는다",
   "q-spring-7": "트랜잭셔널은 메서드 안 DB 작업을 한 묶음으로 처리한다",
   "q-spring-8": "프로파일은 환경마다 다른 설정을 통째로 갈아끼우게 해준다",
+  "q-spring-9": "프로젝트는 이니셜라이저로 받고 메인 클래스 아래 패키지만 스캔된다",
+  "q-spring-10": "어노테이션은 스프링이 읽고 대신 일해주는 표시 스티커다",
+  "q-spring-11": "경로 값은 패스배리어블 쿼리는 리퀘스트파람 본문은 리퀘스트바디로 받는다",
+  "q-spring-12": "요청은 디스패처 서블릿을 거쳐 컨트롤러 서비스 리포지토리로 흐른다",
+  "q-spring-13": "요청은 DTO 로 받아 Valid 로 검사하고 엔티티는 밖에 내놓지 않는다",
+  "q-spring-14": "컨트롤러는 타임리프 화면을 레스트 컨트롤러는 JSON 데이터를 준다",
+  "q-spring-15": "리포지토리 메서드 이름만 규칙대로 지으면 쿼리가 자동으로 생긴다",
+  "q-spring-16": "JPA 도 결국 SQL 을 만들기에 SQL 을 알아야 성능을 잡는다",
+  "q-spring-17": "외래키를 가진 다대일 쪽이 연관관계의 주인이라 그쪽만 DB 에 반영된다",
+  "q-spring-18": "지연 로딩은 프록시를 두고 목록에서 하나씩 건드리면 쿼리가 N+1 번 나간다",
+  "q-spring-19": "레스트 컨트롤러 어드바이스가 흩어진 예외를 한 모양 응답으로 모은다",
+  "q-spring-20": "Pageable 로 페이지와 크기를 받고 Page 는 전체 개수까지 담아 준다",
+  "q-spring-21": "테스트는 준비 실행 검증 순서로 쓰고 Test 를 붙이면 JUnit 이 돌린다",
+  "q-spring-22": "스프링부트테스트는 앱 전체를 WebMvcTest 는 웹 계층만 띄워 검사한다",
+  "q-spring-23": "시큐리티는 컨트롤러 앞 필터 체인에서 인증과 인가를 검사한다",
+  "q-spring-24": "스웨거는 코드에서 API 문서를 자동으로 뽑고 README 엔 실행법을 쓴다",
   "q-arch-1": "관심사 분리는 데이터·로직·화면을 각자 담당으로 나눈다",
   "q-arch-2": "상태는 가장 좁은 곳에서 시작해 필요할 때만 넓혀 올린다",
   "q-arch-3": "비즈니스 로직을 순수 함수로 빼면 화면 없이도 테스트된다",

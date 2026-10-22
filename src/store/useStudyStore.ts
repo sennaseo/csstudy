@@ -783,7 +783,11 @@ export const useStudyStore = create<StudyState>((set, get) => {
     },
 
     startLesson: (lessonId) => {
-      const node = NODE_BY_ID[lessonId];
+      // 지금 보고 있는 길(트랙·난이도)에서 먼저 찾는다. 전체 보기와 트랙은 같은 id 를
+      // 다른 문제 묶음으로 쓰기도 해서(예: lesson-CS-1), 조회표만 보면 남의 길 문제가 나온다.
+      const node =
+        nodesFor(get().activeTrack, get().activeLevel).find((n) => n.id === lessonId) ??
+        NODE_BY_ID[lessonId];
       if (!node || !get().isNodeUnlocked(lessonId)) return; // 잠긴 노드 차단
       get().regenHearts(); // 시간 경과분 먼저 회복
       if (get().hearts <= 0) return; // 하트 없으면 시작 불가 (복습으로 회복 유도)

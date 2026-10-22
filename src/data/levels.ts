@@ -38,6 +38,10 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-cs-14": "hard", // ECDSA 안전성: 키 길이 대비 안전도 트레이드오프 ★앵커
   "q-cs-15": "hard", // EdDSA vs ECDSA: 결정적 k·부채널 등 설계 차이 비교
   "q-cs-16": "hard", // Ed25519 선택 가이드: 용도별 트레이드오프 판단
+  "q-cs-17": "easy", // 브랜치/병합: 평행 세계 정의 하나
+  "q-cs-18": "normal", // 충돌 해결 3단계 + PR 흐름
+  "q-cs-19": "easy", // 이미지 vs 컨테이너: 밀키트 vs 요리 한 줄 대비
+  "q-cs-20": "easy", // 배포: 빌드→실행→설정 3단계 개요
 
   // ─── React ───
   "q-react-1": "easy", // 의존성 배열: "넣은 값 바뀔 때 실행" 한 줄
@@ -87,6 +91,13 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-java-6": "easy", // static: "인스턴스마다가 아니라 클래스에 하나" 한 줄이면 답
   "q-java-7": "normal", // Checked/Unchecked: 컴파일러 강제 조건과 대응 방식
   "q-java-8": "easy", // ArrayList vs HashMap: 순서 vs 이름표 용도 대비 (규칙2 단순 용도)
+  "q-java-9": "easy", // int vs Integer: null 가능 여부 한 줄 대비
+  "q-java-10": "easy", // 배열 vs ArrayList: 고정 vs 가변 한 줄 대비
+  "q-java-11": "easy", // 생성자 + this: 정의 두 개
+  "q-java-12": "easy", // for/for-each/while: 쓰임 한 줄씩 나열
+  "q-java-13": "easy", // 캡슐화: 금고와 창구 비유 정의 하나
+  "q-java-14": "normal", // 다형성: 호출 가능 범위(변수 타입) vs 실행 내용(실제 객체) 두 규칙
+  "q-java-15": "normal", // 제네릭: TS 제네릭과 같은 빈칸 개념
 
   // ─── 운영체제 ───
   "q-os-1": "normal", // 주소 공간 4영역 + 공유로 메모리 아끼는 이유 나열
@@ -117,6 +128,12 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-net-10": "normal", // Blocking/Non-blocking 동작 + 스레드 폭증 문제
   "q-net-11": "normal", // 두 축 개념 구분 + 4조합 나열, 트레이드오프 없음 (q-net-10 과 같은 층)
   "q-net-12": "normal", // 웹소켓 핸드셰이크·양방향 유지 + 폴링 대비 원리
+  "q-net-13": "easy", // 백엔드 = 주방: 검증·규칙·저장 세 가지 역할 한 줄
+  "q-net-14": "easy", // 요청/응답 = 시작줄·헤더·바디 세 칸 정의
+  "q-net-15": "easy", // 메서드 ↔ CRUD 종류별 한 줄 대응 (PUT/PATCH 차이 포함)
+  "q-net-16": "easy", // 상태코드 첫 자리별 뜻 + 대표 코드 정의 나열
+  "q-net-17": "easy", // 메서드+주소 짝 매칭, 값 꺼내는 자리 3가지 (q-spring-2 보다 연결 관점)
+  "q-net-18": "normal", // 출처 3요소 비교 → 브라우저가 막는 원리 + 해결 2가지
 
   // ─── 데이터베이스 ───
   "q-db-1": "easy", // 키 5종 종류별 정의 나열 (q-db-8 과 같은 규칙)
@@ -132,6 +149,11 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-db-11": "normal", // 커넥션 풀 동작 3단계 + 풀 크기 감각
   "q-db-12": "normal", // 파티셔닝/샤딩 관계 + 분할 기준 4가지 나열
   "q-db-13": "normal", // Redis 용도 + 영속성(RDB/AOF) 동작 나열
+  "q-db-14": "easy", // 테이블 = 규칙을 강제하는 시트, 제약조건 정의
+  "q-db-15": "easy", // CRUD SQL 4종 기본형 + WHERE 누락 = 전체 적용
+  "q-db-16": "normal", // WHERE/HAVING 시점 차이를 실행 순서로 설명해야 답
+  "q-db-17": "normal", // FK 위치 이유 + N:M 을 중간 테이블로 푸는 원리
+  "q-db-18": "easy", // datasource·드라이버 역할 + ddl-auto create 위험 한 줄
 
   // ─── 자료구조 ───
   "q-ds-1": "normal", // 배열/연결리스트 복잡도 + "위치를 알 때만 O(1)" 조건
@@ -156,6 +178,22 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-spring-6": "normal", // 3계층 분업 + 나누면 생기는 이점 3가지 나열
   "q-spring-7": "normal", // @Transactional 이 보장하는 것(All or Nothing·롤백) ★앵커
   "q-spring-8": "easy", // 프로파일: 환경별 설정 갈아끼우기 한 줄
+  "q-spring-9": "easy", // 이니셜라이저 → bootRun, 스캔 범위 한 가지 주의점
+  "q-spring-10": "easy", // 어노테이션 = 표시, 읽는 쪽이 일한다 한 줄
+  "q-spring-11": "easy", // 값 위치 3곳 ↔ 어노테이션 3개 짝 맞추기
+  "q-spring-12": "normal", // 필터→디스패처→계층→JSON/뷰 순서를 나열해야 답
+  "q-spring-13": "normal", // 나누는 이유 + @Valid 검사 시점·결과(400)
+  "q-spring-14": "easy", // 뷰 이름 반환 vs JSON 반환 한 줄 대비
+  "q-spring-15": "easy", // 이름 규칙 → 쿼리 자동 생성 한 줄
+  "q-spring-16": "normal", // SQL 이 필요한 이유 나열 + JPQL/native 구분
+  "q-spring-17": "hard", // 외래키 위치로 주인 판단 + mappedBy 읽기 전용 함정
+  "q-spring-18": "hard", // 프록시 지연 로딩 원리 + N+1 원인과 해결책 3가지 비교
+  "q-spring-19": "normal", // 전역 예외 처리 구조 + 응답 형식 통일 방법
+  "q-spring-20": "normal", // 0부터 시작·count 쿼리·Slice 조건까지
+  "q-spring-21": "easy", // given-when-then 3단계 틀 하나
+  "q-spring-22": "normal", // 두 테스트 범위 차이 + 목 주입 + 디버깅 순서
+  "q-spring-23": "normal", // 필터 체인 위치 + 세션/JWT 대비 + 401/403
+  "q-spring-24": "easy", // 자동 API 문서 + README 항목 꼽기
 
   // ─── 구조설계 (1~4) ───
   "q-arch-1": "easy", // 관심사 분리: 역할별로 나눈다 한 줄 ★앵커

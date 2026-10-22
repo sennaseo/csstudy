@@ -25,7 +25,7 @@
 import type { Category } from "../types";
 
 /** 트랙 id — 진행 상태 저장용 키라서 문자열을 함부로 바꾸지 말 것. */
-export type TrackId = "frontend" | "backend";
+export type TrackId = "frontend" | "backend" | "backend12w";
 
 /** 트랙 한 개를 이루는 한 칸(스텝) = 유닛 하나. */
 export interface TrackStep {
@@ -56,7 +56,18 @@ export interface Track {
 // CS 문제를 두 덩이로 나눈다 (id 를 직접 나열 — 문제를 추가하면 여기도 손봐야 한다).
 //   기초: 웹 개발자면 직군 상관없이 아는 게 이득인 것 (HTTPS, 멱등성, TCP, 캐시, 세션, DNS)
 //   심화: 서버를 직접 굴릴 때 필요한 것 (프로세스/스레드, 동기·비동기, 암호 알고리즘)
-const CS_BASIC = ["q-cs-2", "q-cs-3", "q-cs-4", "q-cs-5", "q-cs-6", "q-cs-9", "q-cs-10"];
+//   (Git q-cs-17·18 은 기초, 배포 q-cs-19·20 은 심화 — 백엔드 트랙이 CS 전체를 덮어야 해서 같이 담는다)
+const CS_BASIC = [
+  "q-cs-2",
+  "q-cs-3",
+  "q-cs-4",
+  "q-cs-5",
+  "q-cs-6",
+  "q-cs-9",
+  "q-cs-10",
+  "q-cs-17",
+  "q-cs-18",
+];
 const CS_DEEP = [
   "q-cs-1",
   "q-cs-7",
@@ -67,6 +78,8 @@ const CS_DEEP = [
   "q-cs-14",
   "q-cs-15",
   "q-cs-16",
+  "q-cs-19",
+  "q-cs-20",
 ];
 
 /**
@@ -169,6 +182,94 @@ export const TRACKS: Track[] = [
         category: "기술면접",
         label: "기술면접",
         blurb: "내가 쓴 기술을 내 말로 설명하기 — 면접장에 들어가는 건 프로젝트가 아니라 나다",
+      },
+    ],
+  },
+  {
+    id: "backend12w",
+    name: "백엔드 입문",
+    emoji: "🪜",
+    description:
+      "React 개발자가 12주 만에 Spring Boot 코드를 읽게 되는 길. 회사 프로젝트(Spring Boot+Thymeleaf) 읽기가 목표.",
+    // 같은 카테고리가 여러 번 나온다 (Java 2번, CS 3번, SpringBoot 3번, 데이터베이스 2번).
+    // 두 번째 등장부터는 노드 id 에 꼬리표(-2, -3)가 붙어서 서로 안 겹친다.
+    steps: [
+      {
+        category: "Java",
+        label: "1–2주 · Java 기초",
+        questionIds: ["q-java-1", "q-java-2", "q-java-4", "q-java-6", "q-java-7", "q-java-8", "q-java-9", "q-java-10", "q-java-11", "q-java-12"],
+        blurb: "스프링 코드는 결국 자바 — 문법부터 눈에 익히기",
+      },
+      {
+        category: "Java",
+        label: "3주 · 객체지향",
+        questionIds: ["q-java-3", "q-java-5", "q-java-13", "q-java-14", "q-java-15"],
+        blurb: "클래스·인터페이스를 알아야 스프링이 왜 그렇게 생겼는지 보인다",
+      },
+      {
+        category: "CS",
+        label: "3주 · Git",
+        questionIds: ["q-cs-17", "q-cs-18"],
+        blurb: "회사 코드를 받아오고 내 변경을 올리는 첫 관문",
+      },
+      {
+        category: "구조설계",
+        label: "3주 · 역할 분리",
+        questionIds: ["q-arch-1", "q-arch-5", "q-arch-10"],
+        blurb: "Controller·Service·Repository — 파일이 왜 나뉘어 있는지 알아보기",
+      },
+      {
+        category: "CS",
+        label: "4주 · 웹 기초",
+        questionIds: ["q-cs-2", "q-cs-3", "q-cs-5", "q-cs-9", "q-cs-10"],
+        blurb: "브라우저 요청이 서버까지 가는 길 — React 에서 보던 fetch 의 반대편",
+      },
+      {
+        category: "네트워크",
+        label: "4주 · HTTP와 REST",
+        questionIds: ["q-net-13", "q-net-14", "q-net-15", "q-net-16", "q-net-17", "q-net-18"],
+        blurb: "API 주소와 메서드가 왜 그렇게 생겼는지 — 컨트롤러 읽기의 바닥",
+      },
+      {
+        category: "SpringBoot",
+        label: "5–6주 · Spring Boot 기초",
+        questionIds: ["q-spring-1", "q-spring-2", "q-spring-3", "q-spring-5", "q-spring-6", "q-spring-9", "q-spring-10", "q-spring-11", "q-spring-12", "q-spring-13", "q-spring-14"],
+        blurb: "어노테이션 하나로 서버가 뜨는 이유 — Bean·DI·컨트롤러",
+      },
+      {
+        category: "데이터베이스",
+        label: "7–8주 · SQL과 DB",
+        questionIds: ["q-db-1", "q-db-2", "q-db-3", "q-db-8", "q-db-9", "q-db-14", "q-db-15", "q-db-16", "q-db-17", "q-db-18"],
+        blurb: "데이터는 결국 테이블에 — SELECT 부터 JOIN 까지",
+      },
+      {
+        category: "SpringBoot",
+        label: "9–10주 · JPA",
+        questionIds: ["q-spring-4", "q-spring-7", "q-spring-15", "q-spring-16", "q-spring-17", "q-spring-18", "q-spring-19", "q-spring-20"],
+        blurb: "SQL 대신 자바 객체로 DB 를 다루는 법 — Entity·Repository",
+      },
+      {
+        category: "데이터베이스",
+        label: "9–10주 · 트랜잭션",
+        questionIds: ["q-db-6", "q-db-7", "q-db-11"],
+        blurb: "돈이 빠져나갔는데 입금은 안 됐다면? — 전부 아니면 전무",
+      },
+      {
+        category: "SpringBoot",
+        label: "11–12주 · 테스트·보안",
+        questionIds: ["q-spring-8", "q-spring-21", "q-spring-22", "q-spring-23", "q-spring-24"],
+        blurb: "고쳐도 안 깨지는지 확인하고, 아무나 못 들어오게 막기",
+      },
+      {
+        category: "CS",
+        label: "11–12주 · 배포",
+        questionIds: ["q-cs-19", "q-cs-20"],
+        blurb: "내 컴퓨터에서 돌던 서버를 진짜 서버에 올리는 법",
+      },
+      {
+        category: "기술면접",
+        label: "11–12주 · 프로젝트 설명",
+        blurb: "12주 동안 읽은 코드를 내 말로 설명하기",
       },
     ],
   },

@@ -17,6 +17,9 @@
 // 레벨 뷰 = 노드 부분집합, id 불변 → 진행도 이월.
 // 새 노드를 만들지 않고 unitsFor/nodesFor 가 있는 노드를 걸러서 보여준다.
 // 그래서 레벨을 바꿔도 lessonProgress(완료 기록)가 그대로 유지된다.
+//
+// 트랙 전용 노드는 tag 로 id 를 분리한다 (예: 백엔드 입문 = "-b12" → lesson-Java-b12-1).
+// 다른 트랙과 같은 id 를 쓰면 문제 구성이 달라도 "이미 완료"로 보이는 가짜 완료가 생기기 때문.
 // =============================================================
 
 import type { Category, CategoryGroup, Level } from "../types";
@@ -131,8 +134,12 @@ export const ALL_UNITS: PathUnit[] = (
  * 한 트랙의 유닛들을 만든다 — 트랙 대본(steps) 순서 그대로.
  * 같은 카테고리가 두 번 나오면(CS → 웹 기초 / CS 심화) 두 번째부터 꼬리표를 붙여
  * 노드 id 충돌을 막는다. 첫 등장은 꼬리표가 없어서 예전 진행도와 그대로 이어진다.
+ *
+ * - tag: 트랙 전용 이름표. 주면 모든 노드 id 에 붙어서(lesson-Java-b12-1, review-Java-b12-2)
+ *   다른 트랙의 노드와 절대 안 겹친다 = 진행도도 따로 쌓인다.
+ *   frontend/backend 는 tag 가 "" 라서 id 가 예전 그대로다 (기존 진행도 무영향).
  */
-function buildTrackUnits(steps: TrackStep[]): PathUnit[] {
+function buildTrackUnits(steps: TrackStep[], tag = ""): PathUnit[] {
   const seen: Record<string, number> = {};
   return steps
     .map((step) => {
@@ -141,7 +148,7 @@ function buildTrackUnits(steps: TrackStep[]): PathUnit[] {
         category: step.category,
         group: GROUP_OF[step.category],
         emoji: CATEGORY_EMOJI[step.category],
-        nodes: buildNodes(step.category, step.questionIds, n > 1 ? `-${n}` : ""),
+        nodes: buildNodes(step.category, step.questionIds, `${tag}${n > 1 ? `-${n}` : ""}`),
         label: step.label,
         blurb: step.blurb,
       };
@@ -153,6 +160,7 @@ function buildTrackUnits(steps: TrackStep[]): PathUnit[] {
 export const TRACK_UNITS: Record<TrackId, PathUnit[]> = {
   frontend: buildTrackUnits(TRACK_BY_ID.frontend.steps),
   backend: buildTrackUnits(TRACK_BY_ID.backend.steps),
+  backend12w: buildTrackUnits(TRACK_BY_ID.backend12w.steps, "-b12"),
 };
 
 /**
@@ -174,6 +182,9 @@ export function unitsFor(trackId: TrackId | null, level: Level | null = null): P
 /**
  * 노드 조회표 — 모든 모드(전체 + 모든 트랙)의 노드를 다 담는다.
  * 트랙을 바꿔도 startLesson 이 노드를 못 찾는 일이 없게 하려고 합쳐 둔다.
+ * 같은 id 는 한 칸만 남으므로(나중 것이 덮어씀), 트랙 전용 노드는 tag 로 id 를 분리해
+ * 겹치지 않게 한다 (buildTrackUnits 의 tag 참고). 겹치는 id 는 frontend/backend 처럼
+ * 문제 구성까지 똑같은 노드뿐이라 어느 쪽이 남아도 결과가 같다.
  */
 export const NODE_BY_ID: Record<string, LessonNode> = Object.fromEntries(
   [...ALL_UNITS, ...Object.values(TRACK_UNITS).flat()]

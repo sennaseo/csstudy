@@ -36,6 +36,37 @@ import type { Level } from "../types";
   );
 }
 
+// 1-b) 백엔드 입문 트랙은 tag("-b12")로 id 를 분리했다 → 다른 트랙·전체 보기 노드와 하나도 안 겹쳐야 한다.
+//      (겹치면 문제 구성이 다른데도 "이미 완료"로 보이는 가짜 완료가 생긴다.)
+{
+  const otherIds = new Set(
+    [...ALL_UNITS, ...TRACK_UNITS.frontend, ...TRACK_UNITS.backend].flatMap((u) => u.nodes.map((n) => n.id))
+  );
+  const b12 = TRACK_UNITS.backend12w.flatMap((u) => u.nodes.map((n) => n.id));
+  const clash = b12.filter((id) => otherIds.has(id));
+  assert.deepEqual(clash, [], `백엔드 입문 노드 id 가 다른 트랙과 겹친다: ${clash.join(", ")}`);
+  assert.ok(b12.every((id) => id.includes("-b12")), "백엔드 입문 노드 id 에 -b12 가 없다");
+}
+
+// 1-b') NODE_BY_ID 로 꺼낸 백엔드 입문 노드가 다른 트랙 것으로 덮여 있지 않아야 한다
+//       (startLesson 은 NODE_BY_ID 만 보므로, 덮였으면 엉뚱한 문제가 나온다).
+//       ※ 전체 보기와 frontend/backend 는 원래부터 id 를 공유한다 (예: lesson-CS-1 은 전체 보기에선
+//         q-cs-1·2, 트랙에선 q-cs-2·3). 그건 이번 트랙과 별개의 기존 구조라 여기서 따지지 않는다.
+for (const n of TRACK_UNITS.backend12w.flatMap((u) => u.nodes)) {
+  assert.deepEqual(NODE_BY_ID[n.id]?.questionIds, n.questionIds, `NODE_BY_ID 에서 덮인 노드: ${n.id}`);
+}
+
+// 1-c) 새 트랙을 추가해도 기존 백엔드 트랙의 Java 레슨 내용은 그대로여야 한다.
+//      기존 백엔드 트랙의 Java 레슨 = Java 전체 문제를 2개씩 자른 것 (새 트랙 추가 전과 같은 모양).
+{
+  const javaAll = QUESTIONS.filter((q) => q.category === "Java").map((q) => q.id);
+  const backendJava = nodesFor("backend").filter((n) => n.category === "Java" && n.kind === "lesson");
+  backendJava.forEach((n, i) => {
+    assert.equal(n.id, `lesson-Java-${i + 1}`);
+    assert.deepEqual(n.questionIds, javaAll.slice(i * 2, i * 2 + 2), `백엔드 트랙 ${n.id} 내용이 바뀌었다`);
+  });
+}
+
 // 2) 트랙 안에서 문제 중복 없음 (레슨 노드끼리 — 복습 노드는 원래 다시 푸는 거라 제외).
 for (const track of TRACKS) {
   const ids = nodesFor(track.id)
@@ -86,9 +117,9 @@ for (const track of [...TRACKS.map((t) => t.id), null] as const) {
 assert.equal(unitsFor(null).length, ALL_UNITS.length);
 
 // 7) 레벨 뷰 = 노드 부분집합(진행도 보존) + 레슨 ≥3 + 복습 0개 + 유닛 개수 불변.
-//    (9개 뷰: 트랙 3 × 레벨 3)
+//    (12개 뷰: 트랙 4(전체 포함) × 레벨 3)
 {
-  const tracksToCheck: (TrackId | null)[] = ["frontend", "backend", null];
+  const tracksToCheck: (TrackId | null)[] = ["frontend", "backend", "backend12w", null];
   const levelsToCheck: Level[] = ["easy", "normal", "hard"];
   const rows: string[] = [];
 
@@ -130,7 +161,7 @@ assert.equal(unitsFor(null).length, ALL_UNITS.length);
     );
   }
 
-  console.log("✅ 레벨 뷰 점검 통과 (9개 뷰)");
+  console.log(`✅ 레벨 뷰 점검 통과 (${tracksToCheck.length * levelsToCheck.length}개 뷰)`);
   console.log(rows.join("\n"));
 }
 

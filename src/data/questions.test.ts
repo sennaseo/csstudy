@@ -65,14 +65,19 @@ const byLevel = LEVELS.map((lv) => [lv, QUESTIONS.filter((q) => LEVEL_OF[q.id] =
   assert.equal(Object.keys(LEVEL_OF).length, QUESTIONS.length, "LEVEL_OF 개수 ≠ 문제 수");
 
   // 6-b) 비율이 허용 범위 안인가 (목표 4:4:2)
+  //   절대 개수로 재면 문제를 추가할 때마다 깨진다 → 전체 대비 비율(%)로 잰다.
   const range: Record<Level, [number, number]> = {
-    easy: [40, 70],
-    normal: [45, 75],
-    hard: [15, 40],
+    easy: [25, 50],
+    normal: [35, 60],
+    hard: [10, 30],
   };
   for (const [lv, qs] of byLevel) {
     const [lo, hi] = range[lv];
-    assert.ok(qs.length >= lo && qs.length <= hi, `${lv} 개수 ${qs.length} 가 ${lo}~${hi} 범위 밖`);
+    const pct = (qs.length / QUESTIONS.length) * 100;
+    assert.ok(
+      pct >= lo && pct <= hi,
+      `${lv} 비율 ${pct.toFixed(1)}% (${qs.length}문제) 가 ${lo}~${hi}% 범위 밖`
+    );
   }
 }
 

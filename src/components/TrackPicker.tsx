@@ -42,7 +42,7 @@ function TrackChip({
         // "프론트엔드"(5글자)가 87px 칩에서 "프론트엔 / 드"로 쪼개져 마지막 한 글자가
         // 홀로 떨어지고, 그 칩만 2줄이라 세로 정렬도 어긋났다.
         // → 가로 padding 을 줄이고 줄바꿈을 막아 한 줄에 앉힌다.
-        //   items-center + 같은 높이(h-full)로 세 칩의 세로 정렬을 맞춘다.
+        //   items-center + 같은 높이(h-full)로 칩끼리 세로 정렬을 맞춘다 (트랙 줄은 2×2 격자, 난이도 줄은 한 줄).
         "flex h-full min-h-11 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap " +
         "rounded-lg border-2 px-1.5 text-sm font-bold transition-colors " +
         (active
@@ -77,9 +77,9 @@ export function TrackPicker() {
         학습 트랙
       </p>
 
-      {/* items-stretch: 칩 높이를 서로 맞춰 세로 정렬이 어긋나지 않게 */}
-      {/* 순서: 전체 → 프론트엔드 → 백엔드 (TRACKS 배열 순서를 그대로 따른다) */}
-      <div className="flex items-stretch gap-2">
+      {/* 2열 격자: 트랙 칩이 4개(전체+3)라 한 줄에 몰면 좁은 폰에서 넘친다 → 2×2 로 접는다 */}
+      {/* 순서: 전체 → 프론트엔드 → 백엔드 → 백엔드 입문 (TRACKS 배열 순서를 그대로 따른다) */}
+      <div className="grid grid-cols-2 gap-2">
         <TrackChip
           active={activeTrack === null}
           emoji="📚"
