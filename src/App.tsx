@@ -1,13 +1,14 @@
 // =============================================================
 // App
 // - 화면(view)을 3가지로 분기한다:
-//     · path           : 탭 화면 — 하단 탭바로 홈/이론/실무/마이를 오간다
+//     · path           : 탭 화면 — 하단 탭바로 홈/이론/실무/노트/마이를 오간다
 //     · quiz           : 문제 풀이 — 상단바(닫기/진행도/하트) + 퀴즈 카드
 //     · lessonComplete : 레슨 완료(또는 실패) 화면
-// - 탭 화면(TabsScreen) 안의 5개 화면 (store 의 tab) — 탭바 버튼은 4개:
+// - 탭 화면(TabsScreen) 안의 6개 화면 (store 의 tab) — 탭바 버튼은 5개:
 //     · home       : HomeScreen — 오늘의 퀘스트 · 버디 · 미션/실무 · 복습 · 오늘의 운세 · 트랙/난이도(접힘)
 //     · quiz       : 트랙 진행도 + 감긴 길(스킬 패스)
 //     · practice   : 실무 — BackendQuest 프로토타입 iframe
+//     · notes      : 공부노트 — 과목 > 단원 > 노트 목록과 노트 상세(NotesScreen)
 //     · collection : 캐릭터 도감 — 탭바엔 없다. 홈 버디 카드·마이 탭 "도감" 행으로 들어간다
 //     · my         : 하트 · 도감 · 단어장 · 클라우드 동기화
 //   예전엔 이 전부가 홈 한 장에 세로로 쌓여 있어서 첫 화면이 8000px 짜리
@@ -28,6 +29,7 @@ import { LessonComplete } from "./components/LessonComplete";
 import { LessonPath } from "./components/LessonPath";
 import { MissionToast } from "./components/MissionToast";
 import { NormalizationLab } from "./components/NormalizationLab";
+import { NotesScreen } from "./components/NotesScreen";
 import { QuestionCard } from "./components/QuestionCard";
 import { RewardOverlay } from "./components/RewardOverlay";
 import { SyncSettings } from "./components/SyncSettings";
@@ -287,6 +289,8 @@ function TabsScreen() {
           <NormalizationLab />
         </div>
       </div>
+
+      {tab === "notes" && <NotesScreen />}
 
       {tab === "collection" && <CollectionBook />}
 

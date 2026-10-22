@@ -187,7 +187,7 @@ export type AppView = "path" | "quiz" | "lessonComplete";
 
 /** 탭 화면(view:"path") 안에서 지금 어느 탭인지. 건물 층수 같은 것 —
  *  건물(view)은 그대로고 엘리베이터로 층만 옮겨 다닌다. */
-export type AppTab = "home" | "quiz" | "practice" | "collection" | "my";
+export type AppTab = "home" | "quiz" | "practice" | "notes" | "collection" | "my";
 
 /**
  * 퀴즈 동작 방식.
