@@ -57,11 +57,31 @@ const TIP_STYLE = {
   memo: { label: "📝 내 메모", cls: "border-duo-green-dim bg-duo-green-tint text-duo-green-ink" },
 } as const;
 
-/** 블록 하나 그리기 — 블록 종류(type)마다 모양만 다르다. */
-function NoteBlockView({ block }: { block: NoteBlock }) {
+// compare 열 색 — good=O(초록), bad=X(빨강), 없으면 회색.
+const TONE = {
+  good: { head: "✅ ", cls: "border-duo-green-dim bg-duo-green-tint", title: "text-duo-green-ink" },
+  bad: { head: "❌ ", cls: "border-duo-red-dim bg-duo-red-soft", title: "text-duo-red-ink" },
+  none: { head: "", cls: "border-ink-200 bg-ink-100", title: "text-ink-900" },
+} as const;
+
+/** 블록 하나 그리기 — 블록 종류(type)마다 모양만 다르다. no 는 h2 번호 배지용. */
+function NoteBlockView({ block, no }: { block: NoteBlock; no: number }) {
   switch (block.type) {
     case "h2":
-      return <h2 className="mt-2 text-base font-extrabold text-ink-900">{block.text}</h2>;
+      return (
+        <h2 className="mt-3 flex items-center gap-2 border-b-2 border-ink-200 pb-1.5 text-base font-extrabold text-ink-900">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">
+            {no}
+          </span>
+          <Inline text={block.text} />
+        </h2>
+      );
+    case "key":
+      return (
+        <div className="rounded-2xl bg-accent px-4 py-4 text-center text-base font-extrabold leading-snug text-white [&_code]:bg-white/20 [&_code]:text-white">
+          <Inline text={block.text} />
+        </div>
+      );
     case "p":
       return (
         <p className="text-sm leading-relaxed text-ink-700">
@@ -70,11 +90,53 @@ function NoteBlockView({ block }: { block: NoteBlock }) {
       );
     case "code":
       return (
-        <pre className="overflow-x-auto whitespace-pre rounded-xl bg-ink-100 p-3 font-mono text-xs leading-relaxed text-ink-900">
-          {block.code}
-        </pre>
+        <div className="overflow-hidden rounded-xl border border-ink-200">
+          <pre className="overflow-x-auto whitespace-pre bg-ink-100 p-3 font-mono text-xs leading-relaxed text-ink-900">
+            {block.code}
+          </pre>
+          {block.out !== undefined && (
+            <div className="border-t border-ink-200 bg-ink-900 px-3 py-2 font-mono text-xs leading-relaxed text-white">
+              <span className="mb-0.5 block font-sans text-[11px] font-extrabold text-ink-300">▶ 결과</span>
+              <span className="block whitespace-pre-wrap">{block.out}</span>
+            </div>
+          )}
+        </div>
       );
     case "list": {
+      if (block.style === "flow")
+        return (
+          <ol className="flex flex-col">
+            {block.items.map((s, i) => (
+              <li key={i} className="flex flex-col items-center">
+                {i > 0 && <span className="text-lg leading-6 text-accent">↓</span>}
+                <div className="flex w-full items-center gap-3 rounded-xl border-2 border-accent bg-accent-soft px-3 py-2.5 text-sm font-bold text-ink-900">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs text-white">
+                    {i + 1}
+                  </span>
+                  <span>
+                    <Inline text={s} />
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        );
+      if (block.style === "check")
+        return (
+          <div className="mt-3 rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green-tint px-4 py-3">
+            <span className="mb-1.5 block text-xs font-extrabold text-duo-green-ink">✅ 이것만 기억</span>
+            <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-ink-700">
+              {block.items.map((it, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="font-extrabold text-duo-green-ink">✓</span>
+                  <span>
+                    <Inline text={it} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
       const items = block.items.map((it, i) => (
         <li key={i}>
           <Inline text={it} />
@@ -87,6 +149,29 @@ function NoteBlockView({ block }: { block: NoteBlock }) {
         <ul className={cls + " list-disc"}>{items}</ul>
       );
     }
+    case "compare":
+      return (
+        <div className={"grid gap-2 " + (block.cols.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+          {block.cols.map((c, i) => {
+            const t = TONE[c.tone ?? "none"];
+            return (
+              <div key={i} className={"min-w-0 rounded-xl border-2 p-3 " + t.cls}>
+                <div className={"mb-1.5 text-sm font-extrabold " + t.title}>
+                  {t.head}
+                  <Inline text={c.title} />
+                </div>
+                <ul className="flex flex-col gap-1 text-xs leading-relaxed text-ink-700">
+                  {c.items.map((it, j) => (
+                    <li key={j} className="break-words">
+                      <Inline text={it} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      );
     case "tip": {
       const t = TIP_STYLE[block.kind];
       return (
@@ -164,9 +249,13 @@ export function NotesScreen() {
           <p className="text-sm text-ink-500">
             <Inline text={note.summary} />
           </p>
-          {note.blocks.map((b, i) => (
-            <NoteBlockView key={i} block={b} />
-          ))}
+          {(() => {
+            // h2 번호는 노트 안에서 몇 번째 h2 인가
+            let h = 0;
+            return note.blocks.map((b, i) => (
+              <NoteBlockView key={i} block={b} no={b.type === "h2" ? ++h : 0} />
+            ));
+          })()}
         </article>
         {(prev || next) && (
           <div className="flex gap-2">

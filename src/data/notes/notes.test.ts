@@ -23,12 +23,17 @@ for (const subject of NOTE_SUBJECTS) {
       // ④ summary 60자 이내
       assert.ok(note.summary.length <= 60, `${note.id} summary ${note.summary.length}자`);
       // ⑤ 인라인 백틱은 짝수 개 — 홀수면 렌더러(text.split("`"))가 뒷부분을 전부 코드로 그린다
+      // 블록 안 모든 문자열을 모은다(code 의 code·out 은 인라인 렌더 대상이 아니라 제외)
       const texts = [note.summary];
-      for (const b of note.blocks) {
-        if (b.type === "p" || b.type === "tip") texts.push(b.text);
-        else if (b.type === "list") texts.push(...b.items);
-        else if (b.type === "table") texts.push(...b.head, ...b.rows.flat());
-      }
+      const collect = (v: unknown, key = ""): void => {
+        if (typeof v === "string") {
+          if (key !== "code" && key !== "out" && key !== "type") texts.push(v);
+        } else if (Array.isArray(v)) v.forEach((x) => collect(x, key));
+        else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) collect(x, k);
+      };
+      note.blocks.forEach((b) => collect(b));
+      // ⑥ 노트당 h2 5개 이하 — 번호 배지가 길어지면 지도가 아니라 목차가 된다
+      assert.ok(note.blocks.filter((b) => b.type === "h2").length <= 5, `${note.id} h2 5개 초과`);
       for (const t of texts)
         assert.ok((t.split("`").length - 1) % 2 === 0, `${note.id} 백틱 홀수: ${t.slice(0, 40)}`);
     }
