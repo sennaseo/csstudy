@@ -171,7 +171,7 @@ button {
   transform: translateX(-50%);
   white-space: nowrap;
   z-index: 10;
-  border: 2px solid #15803D;
+  border: 2px solid #E5E7EB;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
@@ -186,7 +186,7 @@ button {
 .start-bubble::before {            /* 바깥 = 테두리 */
   top: 100%;
   border: 9px solid transparent;
-  border-top-color: #15803D;
+  border-top-color: #E5E7EB;
 }
 .start-bubble::after {             /* 안쪽 = 흰색 */
   top: calc(100% - 3px);
@@ -218,7 +218,7 @@ button {
 }
 
 /* ─── 캐릭터 존 집중선 ─────────────────────────────────────────
-   만화 효과선: 노랑(bee 35%) 쐐기를 10도마다 반복하고, 바깥을 둥글게 지워 "번쩍" 배경을 만든다.
+   B급 짤의 "Boom~" 폭발: 노랑·주황 쐐기를 번갈아 돌리고 가운데 흰 섬광, 바깥을 둥글게 지운다.
    정지 배경(애니메이션 없음) — 홈은 등장 모션 금지.
    ::before 는 기본으로 형제보다 아래에 그려지지만, 고양이(absolute)가 뒤에 오므로 고양이가 위에 보인다. */
 .meme-stage::before {
@@ -226,9 +226,12 @@ button {
   position: absolute;
   inset: -6px;
   border-radius: 9999px;
-  background: repeating-conic-gradient(rgba(245, 158, 11, 0.35) 0 10deg, transparent 10deg 20deg);
-  -webkit-mask: radial-gradient(circle, #000 55%, transparent 72%);
-  mask: radial-gradient(circle, #000 55%, transparent 72%);
+  /* 주황 폭발 — 가운데 흰 섬광 → 노랑 → 주황 가시. 바깥은 둥글게 흐려 사라진다 */
+  background:
+    radial-gradient(circle, #fff 0 22%, rgba(255, 230, 120, 0.9) 34%, transparent 52%),
+    repeating-conic-gradient(#FF9F1C 0 7deg, #FFD43B 7deg 14deg);
+  -webkit-mask: radial-gradient(circle, #000 45%, transparent 72%);
+  mask: radial-gradient(circle, #000 45%, transparent 72%);
 }
 
 /* ─── 진행바 ───────────────────────────────────────────────────
@@ -250,46 +253,49 @@ button {
 }
 
 /* ─── 스킬 패스 노드(원형 버튼) ────────────────────────────────
-   상태(완료/현재/잠금)는 색으로 구분한다. 두께감은 아래쪽 4px 테두리. */
+   완료·현재 = 유닛 색, 잠금 = 회색, 현재는 바깥 링. 두께감은 아래 8px 그림자. */
 .path-node {
+  /* 듀오링고 노드: 윗면(--unit) + 아래 8px 두께(--unit-side) + 비스듬한 광택 띠.
+     색은 LessonPath 가 유닛마다 CSS 변수로 넘긴다. */
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 9999px;
-  border: 2px solid;
-  border-bottom-width: 4px;
-  font-weight: 700;
-  transition: transform 80ms;
-}
-/* 완료 */
-.path-node-done {
-  background: #FEF3C7;
-  border-color: #D97706;
-  color: #92400E;
-}
-/* 현재 — 초록으로 채우고 살짝 크게. "여기야!" */
-.path-node-current {
-  background: #15803D;
-  border-color: #166534;
+  width: 72px;
+  height: 66px;
+  border-radius: 50%;
+  background: var(--unit, #58CC02);
+  box-shadow: 0 8px 0 var(--unit-side, #58A700);
   color: #fff;
-  transform: scale(1.06);
+  overflow: hidden;
+  transition: transform 80ms, box-shadow 80ms;
 }
-/* 잠금 */
+/* 광택 띠 — 왼쪽 위에서 오른쪽 아래로 흐르는 반투명 흰 줄 */
+.path-node::before {
+  content: "";
+  position: absolute;
+  inset: -20% 30% -20% 18%;
+  background: rgba(255, 255, 255, 0.22);
+  transform: rotate(-40deg);
+}
+/* 현재 — 바깥 회색 링. overflow:hidden 이라 링은 outline 으로 그린다 */
+.path-node-current {
+  outline: 7px solid #E5E7EB;
+  outline-offset: 7px;
+}
+/* 잠금 — 회색 노드에 회색 아이콘 */
 .path-node-locked {
-  background: #F3F4F6;
-  border-color: #D1D5DB;
-  color: #6B7280;
+  background: #E5E7EB;
+  box-shadow: 0 8px 0 #C4C8CF;
+  color: #A3A9B3;
   cursor: not-allowed;
 }
-.path-node:active:not(.path-node-locked) {
-  transform: translateY(2px);
+.path-node-locked::before {
+  background: rgba(255, 255, 255, 0.35);
 }
-/* 현재 노드는 scale 이 걸려 있으니, 눌릴 때도 그 크기를 유지해야 안 튄다 */
-.path-node-current:active {
-  transform: translateY(2px) scale(1.06);
+.path-node:active:not(.path-node-locked) {
+  transform: translateY(6px);
+  box-shadow: 0 2px 0 var(--unit-side, #58A700);
 }
 
 /* ─── 도넛 링 채우기 ───────────────────────────────────────────
@@ -370,4 +376,65 @@ summary:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid #2563EB; /* accent */
   outline-offset: 2px;
+}
+
+/* ─── B급 밈 짤 문법 ───────────────────────────────────────────
+   "등산을 왜 해요?" 류 촌스러운 짤 느낌: 빨간 타원 딱지, 형광 외곽선 제목,
+   노란 별폭발 숫자, 노란 반짝이. 홈의 밈 자리(퀘스트·오늘의 밈 카드)에서만 쓴다. */
+
+/* 빨간 타원 딱지 — 흰 굴림 굵게, 살짝 기울어짐 */
+.b-sticker {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 50%;
+  background: #DC2626;
+  color: #fff;
+  font-family: Gulim, "굴림", Dotum, "돋움", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 900;
+  font-size: 15px;
+  line-height: 1.2;
+  white-space: nowrap;
+  transform: rotate(-8deg);
+  box-shadow: 0 2px 0 rgba(17, 24, 39, 0.25);
+}
+.b-sticker-sm {
+  padding: 3px 12px;
+  font-size: 12px;
+  transform: rotate(-4deg);
+}
+
+/* 형광 연두 제목 + 두꺼운 진초록 외곽선. paint-order 로 외곽선을 글자 뒤에 그려 획이 안 얇아진다 */
+.b-neon {
+  color: #7CEB3A;
+  font-weight: 900;
+  -webkit-text-stroke: 6px #14532D;
+  paint-order: stroke fill;
+  text-shadow: 0 3px 0 #14532D;
+  letter-spacing: -0.02em;
+  isolation: isolate; /* .b-boom::before(z-index -1)가 카드 배경 뒤로 숨지 않게 */
+}
+
+/* 숫자 강조 — 뒤에 노란 별폭발, 글자는 빨강 + 흰 외곽선 */
+.b-boom {
+  position: relative;
+  display: inline-block;
+  margin: 0 0.15em;
+  color: #E11D48;
+  -webkit-text-stroke: 6px #fff;
+  text-shadow: none;
+}
+.b-boom::before {
+  content: "";
+  position: absolute;
+  inset: -0.3em -0.45em;
+  z-index: -1;
+  background: #FDE047;
+  clip-path: polygon(50% 0, 61% 26%, 90% 10%, 76% 38%, 100% 50%, 76% 62%, 90% 90%, 61% 74%, 50% 100%, 39% 74%, 10% 90%, 24% 62%, 0 50%, 24% 38%, 10% 10%, 39% 26%);
+}
+
+/* 노란 네 갈래 반짝이 ✦ */
+.b-sparkle {
+  display: inline-block;
+  background: #FACC15;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
 }

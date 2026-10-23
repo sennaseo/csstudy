@@ -26,6 +26,10 @@ export default {
         // 읽는 글자(본문·보기·해설)는 전부 시스템 산세리프.
         // 손글씨(Gaegu Bold 1종)는 브랜드 로고와 보상 순간 제목에만 쓴다.
         sans: SYSTEM_SANS,
+        // B급 밈 전용 — 시스템에 있는 굴림/바탕을 쓴다(파일 내장 0). 안드로이드엔 없어서
+        // 가장 가까운 고딕/명조(Noto)로 떨어진다. 밈 장식 글자에만, 본문엔 쓰지 않는다.
+        gulim: ["Gulim", "굴림", "Dotum", "돋움", "Apple SD Gothic Neo", "sans-serif"],
+        batang: ["Batang", "바탕", "AppleMyungjo", "Noto Serif KR", "Noto Serif CJK KR", "serif"],
         // font-round — 숫자용. 컴포넌트에 남은 font-round 를 안 지워도 되게 이름만 남겼다.
         round: SYSTEM_SANS,
         // font-display — 브랜드·보상 제목 전용.

@@ -6,8 +6,9 @@
 // 배치는 만화 밈 한 컷처럼(위에서 아래로):
 //   ① 위 블록 왼쪽 — 라벨 "⭐ 오늘의 퀘스트" · 제목(mood 별 "5문제만 풀자." …) · 진행 n / 5 + 바
 //      (색만이 아니라 숫자로도 진행을 보여준다)
-//   ② 위 블록 오른쪽 — 캐릭터 존 96×96: 노란 집중선 배경 + 로고 고양이 80px
-//      + 존 왼쪽 위에 겹친 빨간 효과선 글자(MemeBurst, "오늘도?" 같은 한 단어)
+//   ② 위 블록 오른쪽 — 캐릭터 존 96×96: 주황 폭발 배경 + 마스코트 80px + 노란 반짝이
+//      + 존 오른쪽 위에 빨간 타원 딱지(MemeBurst, "실화냐?" 같은 한 마디)
+//   B급 밈 짤 문법: 형광 연두 외곽선 제목, 숫자만 노란 별폭발, 바탕체 말풍선, 옅은 WOW~ 워터마크.
 //   ③ 말풍선 — 꼬리가 위의 고양이를 가리킨다. 같은 날·같은 상태면 같은 문구(날짜 시드).
 //   ④ 보상 칩 — 스토어가 "실제로" 주는 것만 적는다(거짓 보상 금지). 한 줄.
 //   ⑤ Primary CTA — 오늘의 5문제 (진행 중엔 "이어서", 달성 후엔 "한 판 더").
@@ -21,7 +22,7 @@ import { CHARACTERS } from "../data/characters";
 import { questBurst, questLine, questMood } from "../data/memes";
 import { dateKeyOf } from "../data/missions";
 import { DAILY_GOAL, useStudyStore } from "../store/useStudyStore";
-import { MemeBurst, MemeFigure } from "./MemeFigure";
+import { MemeBurst, MemeFigure, NumBoom, Sparkle } from "./MemeFigure";
 
 export function QuestCard() {
   const count = useStudyStore((s) => s.getTodayCount());
@@ -73,15 +74,24 @@ export function QuestCard() {
   return (
     <section
       aria-label="오늘의 퀘스트"
-      className="rounded-2xl border border-duo-green/20 bg-duo-green-tint p-4"
+      // relative + overflow-hidden: 오른쪽 아래 "WOW~" 워터마크가 카드 밖으로 안 새게
+      className="relative overflow-hidden rounded-2xl border border-duo-green/20 bg-duo-green-tint p-4"
     >
+      {/* 밈 짤 워터마크 — 아주 옅게, 장식 */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -bottom-1 right-2 -rotate-12 select-none font-display text-5xl font-bold text-duo-green/10"
+      >
+        WOW~
+      </span>
       {/* ①② 위 블록 — 왼쪽 글자 열 + 오른쪽 캐릭터 존을 가로로 나란히 */}
       <div className="flex gap-3">
         {/* 왼쪽 — 라벨·제목·진행. min-w-0 이 있어야 긴 제목이 칸을 밀어내지 않고 줄바꿈된다. */}
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-duo-green-ink">⭐ 오늘의 퀘스트</p>
-          <h2 className="mt-1 break-keep text-2xl font-extrabold leading-tight text-ink-900">
-            {title}
+          {/* 제목 — 형광 연두 + 두꺼운 진초록 외곽선(.b-neon). 숫자만 노란 별폭발 + 빨강(NumBoom). */}
+          <h2 className="b-neon mt-1 break-keep text-[1.7rem] leading-tight">
+            <NumBoom text={title} />
           </h2>
           <div className="mt-2 flex items-center gap-2">
             <span
@@ -110,18 +120,21 @@ export function QuestCard() {
         {/* 오른쪽 — 캐릭터 존 96×96. 뒤에 집중선(.meme-stage::before)이 깔리고,
             그 위에 고양이 80px(아래 가운데), 효과선 글자는 존 왼쪽 위로 삐져나오게 겹친다. */}
         <div className="meme-stage relative h-24 w-24 shrink-0">
+          <Sparkle size={16} className="absolute -left-2 bottom-3" />
+          <Sparkle size={11} className="absolute -right-1 top-8" />
           <MemeFigure
             slot="quest"
+            mood={mood}
             size={80}
             className="absolute bottom-0 left-1/2 -translate-x-1/2"
           />
-          <MemeBurst className="absolute -left-4 -top-1">{questBurst(mood)}</MemeBurst>
+          <MemeBurst className="absolute -right-2 -top-2">{questBurst(mood)}</MemeBurst>
         </div>
       </div>
 
       {/* ③ 말풍선 — 꼬리가 위·오른쪽(캐릭터 턱 밑)을 가리킨다(.meme-bubble).
           장식이 아니라 내용이라 aria-hidden 을 붙이지 않는다. */}
-      <p className="meme-bubble mt-4 break-keep font-display text-base text-ink-900">{line}</p>
+      <p className="meme-bubble mt-4 break-keep font-batang text-[15px] font-bold text-ink-900">{line}</p>
 
       {/* ④ 보상 칩 — 스토어가 실제로 주는 것만. 한 줄에 들어가야 한다. */}
       <p className="mt-3 inline-flex max-w-full items-center break-keep rounded-lg border border-duo-green/20 bg-white/70 px-2 py-1 text-xs font-semibold text-ink-700">

@@ -207,11 +207,11 @@ function TabsScreen() {
           (3) 우측 묶음은 shrink-0 으로 안 찌그러뜨리는 원칙은 그대로 둔다. */}
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          {/* 로고 고양이 — 글자는 이미지로 안 넣는다.
+          {/* 로고 마스코트(먼지요정 CSstudy) — 글자는 이미지로 안 넣는다.
               원본 로고의 'Study'가 흰색이라 앱의 밝은 배경(#FBFAF7)에서 안 보인다.
               글자는 기존처럼 텍스트로 두는 게 대비도 확실하고 어느 크기에서도 안 흐려진다. */}
           <img
-            src={`${import.meta.env.BASE_URL}logo-cat.png`}
+            src={`${import.meta.env.BASE_URL}mascot/face-happy.png`}
             alt=""
             className="h-7 w-auto shrink-0"
           />

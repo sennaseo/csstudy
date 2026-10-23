@@ -7,7 +7,7 @@
 // 비유: 항상 새 신문을 사되, 못 사는 날엔 어제 신문을 본다.
 // =============================================================
 
-const CACHE_NAME = "csstudy-v2";
+const CACHE_NAME = "csstudy-v3";
 
 // 설치 즉시 담아둘 최소한의 자산(앱 셸).
 // 이게 없으면 "설치 → 비행기 모드 → 첫 실행"이 빈 화면이 된다.
@@ -21,7 +21,13 @@ const SHELL = [
   "./index.html",
   "./manifest.webmanifest",
   "./icon-192.png",
-  "./logo-cat.png", // 헤더 로고 — 없으면 오프라인에서 깨진 이미지로 뜬다
+  // 마스코트 — 헤더 로고·퀘스트·오늘의 밈 카드. 없으면 오프라인에서 깨진 이미지로 뜬다
+  "./mascot/face-happy.png",
+  "./mascot/face-sad.png",
+  "./mascot/face-excited.png",
+  "./mascot/face-wink.png",
+  "./mascot/pose-laptop.png",
+  "./mascot/pose-sleep.png",
   // 해시 자산(JS/CSS)까지 넣어야 "설치 후 첫 실행이 오프라인"인 경우에도 앱이 뜬다.
   ...(Array.isArray(BUILD_ASSETS) ? BUILD_ASSETS : []),
 ];

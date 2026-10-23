@@ -43,9 +43,9 @@ export function Buddy() {
         />
       ) : (
         <div className="flex items-center justify-between gap-3">
-          {/* 아트 자리 — 버디가 없으니 로고 고양이가 대신 기다린다(장식) */}
+          {/* 아트 자리 — 버디가 없으니 마스코트가 대신 기다린다(장식) */}
           <img
-            src={`${import.meta.env.BASE_URL}logo-cat.png`}
+            src={`${import.meta.env.BASE_URL}mascot/face-happy.png`}
             alt=""
             aria-hidden
             width={28}

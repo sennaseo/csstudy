@@ -100,7 +100,7 @@ export function questLine(
 
 /** 퀘스트 카드 우상단 효과선 글자 (한 단어). */
 export function questBurst(mood: QuestMood): string {
-  return { idle: "오늘도?", progress: "지금이야!", done: "오 끝!", night: "졸려?" }[mood];
+  return { idle: "실화냐?", progress: "가보자고", done: "미쳤다", night: "자라 좀" }[mood];
 }
 
 const BUDDY_LINES: readonly string[] = [
@@ -182,13 +182,18 @@ export function dailyMeme(dateKey: string): DailyMeme | null {
 }
 
 /**
- * 밈 이미지 슬롯. 문자열이면 <img>, null 이면 컴포넌트 폴백(로고 고양이).
- * 실제 밈 이미지로 바꾸려면 public/memes/ 에 넣고 경로만 적는다.
+ * 밈 이미지 슬롯 — public/ 기준 경로. 마스코트 그림은 public/mascot/ (캐릭터 시트에서 오려냄).
  * 웹 오프라인용 public/sw.js SHELL 에도 추가해야 한다.
  */
-export const MEME_IMAGES: { quest: string | null; daily: string | null } = {
-  quest: "logo-cat.png",
-  daily: "logo-cat.png",
+export const MEME_IMAGES: { quest: Record<QuestMood, string>; daily: string } = {
+  // 마스코트(먼지요정 CSstudy) — 퀘스트 카드는 그날 기분(mood)에 맞는 표정·포즈를 쓴다.
+  quest: {
+    idle: "mascot/face-sad.png", // 아직 0문제 — 속상
+    progress: "mascot/pose-laptop.png", // 푸는 중 — 노트북 작업
+    done: "mascot/face-excited.png", // 목표 달성 — 신남
+    night: "mascot/pose-sleep.png", // 밤늦게 — 잠자기
+  },
+  daily: "mascot/face-wink.png",
 };
 
 /** 홈 실무 카드의 작은 손글씨 양념. */
