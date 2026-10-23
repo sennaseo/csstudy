@@ -1,6 +1,7 @@
 // =============================================================
 // NotesScreen (공부노트 탭)
-// - 목록 뷰: 과목 → 단원 → 노트 행. 행을 누르면 상세 뷰.
+// - 책장 뷰: 과목마다 공책 표지 한 권. 표지를 누르면 그 과목의 목록 뷰.
+// - 목록 뷰: 단원 → 노트 행. 행을 누르면 상세 뷰.
 // - 상세 뷰: 노트 블록(제목·문단·코드·팁·표)을 위에서부터 차례로 그린다.
 //
 // 왜 열린 노트를 스토어가 아닌 로컬 useState 로 두나
@@ -211,7 +212,14 @@ function NoteBlockView({ block, no }: { block: NoteBlock; no: number }) {
   }
 }
 
+// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green 위에만.
+const COVERS = [
+  { cover: "bg-accent", spine: "bg-accent-dim" },
+  { cover: "bg-duo-green", spine: "bg-duo-green-dim" },
+] as const;
+
 export function NotesScreen() {
+  const [openSubjectId, setOpenSubjectId] = useState<string | null>(null);
   const [openNoteId, setOpenNoteId] = useState<string | null>(null);
 
   const open = (id: string | null) => {
@@ -219,7 +227,13 @@ export function NotesScreen() {
     scrollTop();
   };
 
-  // 노트가 열려 있을 때만 뒤로가기 = 목록으로.
+  const openSubject = (id: string | null) => {
+    setOpenSubjectId(id);
+    scrollTop();
+  };
+
+  // 뒤로가기: 노트 → 목록 → 책장 순으로 한 칸씩. 과목이 먼저 열리니 장부에도 먼저 쌓인다.
+  useBack(() => openSubject(null), openSubjectId !== null);
   useBack(() => open(null), openNoteId !== null);
 
   const found = openNoteId ? findNote(openNoteId) : null;
@@ -279,56 +293,102 @@ export function NotesScreen() {
     );
   }
 
+  // ─── 책장 뷰 ───────────────────────────────
+  const subject = NOTE_SUBJECTS.find((s) => s.id === openSubjectId);
+  if (!subject)
+    return (
+      <>
+        <h2 className="text-xl font-extrabold text-ink-900">📒 공부노트</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {NOTE_SUBJECTS.map((s, i) => {
+            const c = COVERS[i % COVERS.length];
+            const total = s.units.reduce((n, u) => n + u.notes.length, 0);
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => openSubject(s.id)}
+                className={
+                  "relative flex aspect-[3/4] overflow-hidden rounded-r-2xl rounded-l-md border-b-4 border-black/20 text-left shadow-md transition-transform active:translate-y-0.5 " +
+                  c.cover
+                }
+              >
+                {/* 책등 + 스프링 고리 */}
+                <span className={"flex w-5 shrink-0 flex-col items-center justify-evenly " + c.spine}>
+                  {[0, 1, 2, 3, 4].map((k) => (
+                    <span key={k} className="h-1.5 w-1.5 rounded-full bg-white/70" />
+                  ))}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col items-center justify-center gap-3 p-3">
+                  <span className="text-4xl">{s.emoji}</span>
+                  {/* 표지 이름표 — 줄 쳐진 흰 스티커 */}
+                  <span className="w-full rounded-lg bg-white px-2 py-2 text-center shadow-sm [background-image:repeating-linear-gradient(transparent_0_15px,rgb(0_0_0/0.06)_15px_16px)]">
+                    <span className="block truncate text-base font-extrabold text-ink-900">{s.title}</span>
+                    <span className="block text-[11px] font-bold text-ink-500">
+                      {s.units.length}단원 · {total}장
+                    </span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </>
+    );
+
   // ─── 목록 뷰 ───────────────────────────────
+  const s = subject;
+  const total = s.units.reduce((n, u) => n + u.notes.length, 0);
   return (
     <>
-      <h2 className="text-xl font-extrabold text-ink-900">📒 공부노트</h2>
-      {NOTE_SUBJECTS.map((s) => {
-        const total = s.units.reduce((n, u) => n + u.notes.length, 0);
-        return (
-          <section key={s.id} className="flex flex-col gap-3">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-base font-extrabold text-ink-900">
-                {s.emoji} {s.title}
-              </h3>
-              <span className="text-xs font-bold text-ink-400">총 {total}장</span>
-            </div>
-            {s.units.map((u) => (
-              <div key={u.id} className="flex flex-col gap-1.5">
-                <h4 className="px-1 text-xs font-extrabold text-ink-500">{u.title}</h4>
-                {u.notes.length === 0 ? (
-                  // 빈 단원도 보여준다 — 커리큘럼 전체 지도가 보여야 "어디까지 왔나"가 읽힌다.
-                  <p className="rounded-2xl border border-dashed border-ink-200 px-4 py-3 text-xs text-ink-400">
-                    준비 중
-                  </p>
-                ) : (
-                  // 행 스타일은 마이 탭(MyScreen) 행과 같다 — 행 전체가 버튼.
-                  <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
-                    {u.notes.map((n) => (
-                      <button
-                        key={n.id}
-                        type="button"
-                        onClick={() => open(n.id)}
-                        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
-                      >
-                        <span className="min-w-0">
-                          <span className="block text-sm font-extrabold text-ink-900">
-                            {n.emoji} {n.title}
-                          </span>
-                          <span className="block text-xs text-ink-500">
-                            <Inline text={n.summary} />
-                          </span>
-                        </span>
-                        <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+      <button
+        type="button"
+        onClick={() => openSubject(null)}
+        className="min-h-11 self-start px-1 text-sm font-bold text-ink-500 hover:text-ink-700"
+      >
+        ← 책장
+      </button>
+      <section className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-xl font-extrabold text-ink-900">
+            {s.emoji} {s.title}
+          </h2>
+          <span className="text-xs font-bold text-ink-400">총 {total}장</span>
+        </div>
+        {s.units.map((u) => (
+          <div key={u.id} className="flex flex-col gap-1.5">
+            <h4 className="px-1 text-xs font-extrabold text-ink-500">{u.title}</h4>
+            {u.notes.length === 0 ? (
+              // 빈 단원도 보여준다 — 커리큘럼 전체 지도가 보여야 "어디까지 왔나"가 읽힌다.
+              <p className="rounded-2xl border border-dashed border-ink-200 px-4 py-3 text-xs text-ink-400">
+                준비 중
+              </p>
+            ) : (
+              // 행 스타일은 마이 탭(MyScreen) 행과 같다 — 행 전체가 버튼.
+              <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
+                {u.notes.map((n) => (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => open(n.id)}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-sm font-extrabold text-ink-900">
+                        {n.emoji} {n.title}
+                      </span>
+                      <span className="block text-xs text-ink-500">
+                        <Inline text={n.summary} />
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </section>
-        );
-      })}
+            )}
+          </div>
+        ))}
+      </section>
     </>
   );
 }

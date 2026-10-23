@@ -7,17 +7,17 @@ let count = 0;
 
 for (const subject of NOTE_SUBJECTS) {
   for (const unit of subject.units) {
-    // unit id "py-2" → 단원 번호 "2"
-    const unitNo = unit.id.split("-").pop();
+    // unit id "py-2" → 과목 접두어 "py", 단원 번호 "2"
+    const [prefix, unitNo] = unit.id.split("-");
     for (const note of unit.notes) {
       count++;
       // ① id 전역 유일
       assert.ok(!seen.has(note.id), `중복 id: ${note.id}`);
       seen.add(note.id);
-      // ② id 형식 n-py-<unit>-<n>, 소속 unit 번호와 일치
-      const m = /^n-py-(\d+)-(\d+)$/.exec(note.id);
+      // ② id 형식 n-<접두어>-<unit>-<n>, 소속 unit 의 접두어·번호와 일치
+      const m = /^n-([a-z]+)-(\d+)-(\d+)$/.exec(note.id);
       assert.ok(m, `id 형식 위반: ${note.id}`);
-      assert.equal(m[1], unitNo, `${note.id} 가 ${unit.id} 에 있음`);
+      assert.equal(`${m[1]}-${m[2]}`, `${prefix}-${unitNo}`, `${note.id} 가 ${unit.id} 에 있음`);
       // ③ 블록 1개 이상
       assert.ok(note.blocks.length >= 1, `${note.id} 블록 없음`);
       // ④ summary 60자 이내
