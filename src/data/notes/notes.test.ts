@@ -22,8 +22,7 @@ for (const subject of NOTE_SUBJECTS) {
       // ⑦ 포스터 타일 라벨 — 3열 타일에 들어가야 하니 짧게
       const label = NOTE_LABELS[note.id];
       assert.ok(label, `${note.id} 타일 라벨(labels.ts) 없음`);
-      assert.ok(label.short.length <= 16, `${note.id} short ${label.short.length}자`);
-      assert.ok(label.en.length <= 16, `${note.id} en ${label.en.length}자`);
+      assert.ok(label.length <= 16, `${note.id} 타일 제목 ${label.length}자`);
       // ③ 블록 1개 이상
       assert.ok(note.blocks.length >= 1, `${note.id} 블록 없음`);
       // ④ summary 60자 이내

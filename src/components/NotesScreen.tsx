@@ -2,8 +2,8 @@
 // NotesScreen (공부노트 탭)
 // - 책장 뷰: 과목마다 공책 표지 한 권. 표지를 누르면 그 과목의 목록 뷰.
 // - 목록 뷰: 단원마다 "꼭 볼 N가지" 포스터 한 장 (인스타 인포그래픽 형식).
-//   3열 타일 = 노트 1장. 타일 그림은 노트 본문의 첫 그림거리(비교·코드·단계·표)를 축소해 자동으로 그린다.
-//   그래서 노트를 새로 써도 그림을 따로 그릴 필요가 없다. 타일 이름표는 labels.ts.
+//   3열 타일 = 노트 1장 (그림 + 번호·짧은 제목). 타일 그림은 노트 본문의 첫 그림거리(비교·코드·단계·표)를 축소해 자동으로 그린다.
+//   그래서 노트를 새로 써도 그림을 따로 그릴 필요가 없다. 타일 제목은 labels.ts.
 // - 상세 뷰: 같은 포스터 톤. h2 마다 "01 제목" 번호 카드로 묶어 위에서부터 그린다.
 //
 // 왜 열린 노트를 스토어가 아닌 로컬 useState 로 두나
@@ -322,7 +322,7 @@ function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: Not
       {unit.notes.length > 0 && (
         <div className="mt-4 grid grid-cols-3 gap-2">
           {unit.notes.map((n, i) => {
-            const label = NOTE_LABELS[n.id] ?? { short: n.title, en: "" };
+            const label = NOTE_LABELS[n.id] ?? n.title;
             return (
               <button
                 key={n.id}
@@ -336,9 +336,8 @@ function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: Not
                 </span>
                 {/* 번호와 제목을 한 줄 글로 이어 쓴다 — 줄이 넘치면 둘째 줄이 왼쪽 끝에서 시작한다. */}
                 <span className="mt-2 break-keep px-1 text-[14px] font-black leading-tight tracking-tight text-reel-ink [overflow-wrap:anywhere]">
-                  <span className="text-[13px] text-reel">{pad2(i + 1)}</span> {label.short}
+                  <span className="text-[13px] text-reel">{pad2(i + 1)}</span> {label}
                 </span>
-                <span className="mt-0.5 truncate px-1 text-[11px] font-bold text-reel-sub">{label.en}</span>
               </button>
             );
           })}
