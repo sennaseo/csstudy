@@ -1,6 +1,7 @@
 // 공부노트 데이터 자체 점검 — npx tsx src/data/notes/notes.test.ts
 import assert from "node:assert/strict";
 import { NOTE_SUBJECTS } from "./index";
+import { NOTE_LABELS } from "./labels";
 
 const seen = new Set<string>();
 let count = 0;
@@ -18,6 +19,11 @@ for (const subject of NOTE_SUBJECTS) {
       const m = /^n-([a-z]+)-(\d+)-(\d+)$/.exec(note.id);
       assert.ok(m, `id 형식 위반: ${note.id}`);
       assert.equal(`${m[1]}-${m[2]}`, `${prefix}-${unitNo}`, `${note.id} 가 ${unit.id} 에 있음`);
+      // ⑦ 포스터 타일 라벨 — 3열 타일에 들어가야 하니 짧게
+      const label = NOTE_LABELS[note.id];
+      assert.ok(label, `${note.id} 타일 라벨(labels.ts) 없음`);
+      assert.ok(label.short.length <= 16, `${note.id} short ${label.short.length}자`);
+      assert.ok(label.en.length <= 16, `${note.id} en ${label.en.length}자`);
       // ③ 블록 1개 이상
       assert.ok(note.blocks.length >= 1, `${note.id} 블록 없음`);
       // ④ summary 60자 이내
@@ -39,5 +45,8 @@ for (const subject of NOTE_SUBJECTS) {
     }
   }
 }
+
+// 라벨 쪽에만 남은 고아 id 도 잡는다 (노트를 지우고 라벨을 안 지운 경우)
+for (const id of Object.keys(NOTE_LABELS)) assert.ok(seen.has(id), `labels.ts 에 없는 노트 id: ${id}`);
 
 console.log(`notes ${count}장 점검 통과`);
