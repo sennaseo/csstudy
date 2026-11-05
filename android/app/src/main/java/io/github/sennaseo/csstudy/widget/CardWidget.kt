@@ -42,6 +42,7 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 // day/night 한 쌍을 받는 팩토리는 glance.color 쪽에 있고, 그게 돌려주는 타입은 glance.unit 쪽이다.
 // 이름이 같아서 헷갈리지만 둘 다 있어야 한다.
@@ -257,12 +258,15 @@ private fun CardBody(card: Card, index: Int, total: Int) {
                 }
 
                 Spacer(modifier = GlanceModifier.height(if (medium) 8.dp else 4.dp))
+                // 용어는 카드의 주인공이라 가운데에 둔다. fillMaxWidth 가 있어야 가운데 기준이 카드 폭이 된다.
                 Text(
                     text = card.term,
+                    modifier = GlanceModifier.fillMaxWidth(),
                     style = TextStyle(
                         color = Ink,
                         fontSize = if (medium) 21.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
                     ),
                     maxLines = termLines,
                 )
