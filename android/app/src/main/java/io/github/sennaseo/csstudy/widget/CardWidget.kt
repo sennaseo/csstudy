@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -50,6 +51,7 @@ import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
 import io.github.sennaseo.csstudy.R
 import org.json.JSONObject
+import java.util.TimeZone
 import kotlin.random.Random
 
 // ── 카드 데이터 ──────────────────────────────────────────────────────────
@@ -102,6 +104,28 @@ fun stepIndex(size: Int, current: Int, delta: Int): Int =
 // Glance의 기본 상태 저장소는 위젯 인스턴스(glanceId)마다 파일이 따로 생긴다.
 // 그래서 홈에 두 개를 놓으면 서로 다른 카드를 보게 되는 게 공짜로 된다.
 val KEY_INDEX = intPreferencesKey("cardIndex")
+// KEY_INDEX 를 마지막으로 정한 날(로컬 기준 epoch day). 이 날이 오늘이 아니면 하루치만큼 건너뛴 카드를 보여준다.
+val KEY_DAY = longPreferencesKey("cardDay")
+
+// ── 매일 다른 카드 ──────────────────────────────────────────────────────
+// 오늘이 며칠째인지 (기기 시간대 기준). java.time 은 API 26+ 라 minSdk 24 에선 직접 계산한다.
+fun todayEpochDay(nowMillis: Long = System.currentTimeMillis()): Long {
+    val offset = TimeZone.getDefault().getOffset(nowMillis)
+    return Math.floorDiv(nowMillis + offset, 86_400_000L)
+}
+
+// 화면에 보여줄 카드 번호. 저장은 안 하고 계산만 한다 — 그래서 그리는 쪽에 쓰기 경쟁이 없다.
+//  - 오늘 정한 카드면 그대로.
+//  - 날이 바뀌었으면 저장된 카드에서 (1 + 날짜×37 mod (n-1)) 칸 건너뛴다.
+//    건너뛰는 칸이 1..n-1 이라 전날 카드와 절대 같지 않고, 37 이 119 와 서로소라
+//    며칠 동안 안 눌러도 날마다 다른 카드가 나온다. 순차 +1 이 아니라서 같은 분야가 줄줄이 나오지도 않는다.
+fun dailyIndex(size: Int, storedIndex: Int, storedDay: Long?, today: Long): Int {
+    if (size <= 0) return 0
+    val base = storedIndex.coerceIn(0, size - 1)
+    if (storedDay == null || storedDay == today || size == 1) return base
+    val jump = 1 + Math.floorMod(today * 37, (size - 1).toLong()).toInt()
+    return stepIndex(size, base, jump)
+}
 
 // ── 색 ──────────────────────────────────────────────────────────────────
 // 앱(tailwind.config.js)과 같은 팔레트: 흰 카드 + 잉크 회색 + 도메인색 칩.
@@ -150,10 +174,13 @@ class CardWidget : GlanceAppWidget() {
         // 그리는 도중에 뽑으면 런처가 다시 그릴 때마다 다른 카드가 나온다.
         updateAppWidgetState(context, id) { prefs ->
             if (prefs[KEY_INDEX] == null) prefs[KEY_INDEX] = Random.nextInt(cards.size)
+            // 업데이트 전부터 있던 위젯은 날짜가 비어 있다. 오늘 날짜를 박아서 내일부터 바뀌게 한다.
+            if (prefs[KEY_DAY] == null) prefs[KEY_DAY] = todayEpochDay()
         }
         provideContent {
             val prefs: Preferences = currentState()
-            val index = (prefs[KEY_INDEX] ?: 0).coerceIn(0, cards.size - 1)
+            // 날짜는 그릴 때마다 새로 읽는다. 런처가 주기 업데이트로 다시 그리면 자정을 넘긴 순간 다음 카드가 나온다.
+            val index = dailyIndex(cards.size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], todayEpochDay())
             CardBody(cards[index], index, cards.size)
         }
     }
@@ -318,7 +345,11 @@ class PrevAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val size = loadCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
-            prefs[KEY_INDEX] = stepIndex(size, prefs[KEY_INDEX] ?: 0, -1)
+            // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
+            val today = todayEpochDay()
+            val shown = dailyIndex(size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], today)
+            prefs[KEY_INDEX] = stepIndex(size, shown, -1)
+            prefs[KEY_DAY] = today
         }
         CardWidget().update(context, glanceId)
     }
@@ -328,7 +359,11 @@ class NextAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val size = loadCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
-            prefs[KEY_INDEX] = stepIndex(size, prefs[KEY_INDEX] ?: 0, 1)
+            // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
+            val today = todayEpochDay()
+            val shown = dailyIndex(size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], today)
+            prefs[KEY_INDEX] = stepIndex(size, shown, 1)
+            prefs[KEY_DAY] = today
         }
         CardWidget().update(context, glanceId)
     }
