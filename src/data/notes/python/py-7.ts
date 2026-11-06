@@ -12,6 +12,7 @@ export const PY7: NoteUnit = {
       summary: "딕셔너리는 번호(인덱스) 대신 이름표(키)로 찾는 사물함",
       blocks: [
         { type: "key", text: "딕셔너리는 몇 번째가 아니라 이름표(키)로 찾는다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🏷️", label: "키 `'name'`"}, {icon: "🗄️", label: "dict", ink: "blue"}, {icon: "🎁", label: "값 `'Kim'`", ink: "green"}], edges: ["`get`", ""]},
         {
           type: "tip",
           kind: "analogy",
@@ -87,6 +88,7 @@ export const PY7: NoteUnit = {
       summary: "키로 빼고(pop), 없으면 넣고(setdefault), 통째로 덮고(update)",
       blocks: [
         { type: "key", text: "`pop` 은 빼고, `setdefault` 는 없을 때만 넣고, `update` 는 덮는다" },
+        {type: "figure", kind: "tree", root: {icon: "🗄️", label: "딕셔너리 바꾸기"}, children: [{icon: "➖", label: "`pop`", sub: "빼기", ink: "red"}, {icon: "🤏", label: "`setdefault`", sub: "없을 때만 넣기", ink: "blue"}, {icon: "🔁", label: "`update`", sub: "덮어쓰기", ink: "green"}]},
         {
           type: "table",
           head: ["메서드", "설명"],
@@ -155,6 +157,7 @@ export const PY7: NoteUnit = {
       summary: "세트는 중복 없고 순서 없는 주머니, 꺼낼 땐 '임의'로",
       blocks: [
         { type: "key", text: "세트 = 중복 없음 + 순서 없음" },
+        {type: "figure", kind: "tree", root: {icon: "📝", label: "세트 고치기"}, children: [{icon: "➕", label: "`add`", sub: "하나 넣기", ink: "green"}, {icon: "💥", label: "`remove`", sub: "없으면 에러", ink: "red"}, {icon: "🤫", label: "`discard`", sub: "없어도 조용", ink: "blue"}]},
         {
           type: "tip",
           kind: "analogy",
@@ -217,6 +220,7 @@ export const PY7: NoteUnit = {
       summary: "수학 집합 연산 그대로: - & | 와 부분집합 <= >=",
       blocks: [
         { type: "key", text: "차집합 - · 교집합 & · 합집합 |" },
+        {type: "figure", kind: "tree", root: {icon: "🧮", label: "A, B 집합"}, children: [{icon: "➖", label: "차집합 `-`", sub: "A 에만", ink: "red"}, {icon: "🤝", label: "교집합 `&`", sub: "둘 다", ink: "blue"}, {icon: "🫂", label: "합집합 `|`", sub: "하나라도", ink: "green"}]},
         {
           type: "tip",
           kind: "analogy",
@@ -266,6 +270,7 @@ export const PY7: NoteUnit = {
       summary: "set 요소와 dict 키가 빠르고 중복 없는 이유 = 해시(지문)",
       blocks: [
         { type: "key", text: "set 요소·dict 키는 해시 테이블에 저장된다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔑", label: "키 `'a'`"}, {icon: "🧮", label: "`hash()`", sub: "번호 계산", ink: "blue"}, {icon: "🗃️", label: "3번 칸", sub: "바로 찾아감", ink: "green"}], caption: "그래서 빠르고, 같은 키는 같은 칸이라 중복이 없다"},
         {
           type: "tip",
           kind: "analogy",
@@ -358,6 +363,7 @@ export const PY7: NoteUnit = {
       summary: "pop(key[, default]) 의 [ ] 는 '있어도 되고 없어도 되는 것'",
       blocks: [
         { type: "key", text: "문서의 [ ] 는 넣어도 되고 안 넣어도 되는 것" },
+        {type: "figure", kind: "stack", layers: [{icon: "📜", label: "`pop(key[, default])`"}, {icon: "✅", label: "`key`", sub: "꼭 넣기", ink: "green"}, {icon: "🤷", label: "`[, default]`", sub: "넣어도 되고 안 넣어도 됨", ink: "blue"}]},
         {
           type: "compare",
           cols: [

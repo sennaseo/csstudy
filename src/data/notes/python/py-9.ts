@@ -12,6 +12,7 @@ export const PY9: NoteUnit = {
       summary: "class Student(Person) 한 줄로 부모의 속성·메서드를 재사용한다",
       blocks: [
         { type: "key", text: "`class 자식(부모):` 한 줄로 부모의 속성·메서드를 물려받는다" },
+        {type: "figure", kind: "tree", root: {icon: "🧑", label: "`Person`", sub: "이름·인사", ink: "blue"}, children: [{icon: "🎓", label: "`Student`", sub: "+ 학번"}, {icon: "💼", label: "`Professor`", sub: "+ 학과"}], caption: "자식은 부모 것을 물려받고 자기 것만 더한다"},
         { type: "h2", text: "상속이 필요한 이유" },
         {
           type: "compare",
@@ -127,6 +128,7 @@ Student().talk()`,
       summary: "부모가 여럿이면 MRO 순서로 찾고, super()는 그 순서의 '다음 부모'를 부른다",
       blocks: [
         { type: "key", text: "`super()`는 '내 부모'가 아니라 'MRO에서 내 다음'" },
+        {type: "figure", kind: "flow", nodes: [{icon: "👶", label: "`Child`"}, {icon: "👨", label: "`Dad`", sub: "왼쪽 부모 먼저", ink: "blue"}, {icon: "👩", label: "`Mom`"}, {icon: "🧓", label: "`object`"}], edges: ["MRO", "", ""], caption: "`super()` = 이 줄에서 내 다음 칸"},
         { type: "h2", text: "다중 상속: 왼쪽 부모가 우선" },
         {
           type: "code",
@@ -290,6 +292,7 @@ Child().show_value()`,
       summary: "문법 에러는 실행 전에, 예외는 실행 중에 터진다 — 내장 예외 이름 외우기",
       blocks: [
         { type: "key", text: "문법 에러는 실행 전에, 예외는 실행 중에 터진다" },
+        {type: "figure", kind: "tree", root: {icon: "🐞", label: "에러"}, children: [{icon: "📝", label: "문법 에러", sub: "실행 전에 막힘", ink: "red", leaves: ["`SyntaxError`"]}, {icon: "💥", label: "예외", sub: "실행 중에 터짐", ink: "blue", leaves: ["`ZeroDivisionError`", "`KeyError`"]}]},
         { type: "h2", text: "버그와 디버깅" },
         {
           type: "compare",
@@ -391,6 +394,7 @@ range(3).index(6)
       summary: "터질 수 있는 코드는 try에, 터지면 except, 안 터지면 else, 항상 finally",
       blocks: [
         { type: "key", text: "try 시도 → except 터지면 → else 안 터지면 → finally 무조건" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🧪", label: "`try`", sub: "일단 해 봄"}, {icon: "🚑", label: "`except`", sub: "터지면", ink: "red"}, {icon: "🎉", label: "`else`", sub: "안 터지면", ink: "green"}, {icon: "🧹", label: "`finally`", sub: "무조건", ink: "blue"}]},
         { type: "h2", text: "예외 처리 4개 키워드" },
         {
           type: "table",
@@ -497,6 +501,7 @@ except:                              # 그 외 모든 예외
       summary: "except는 하위 예외부터, as로 예외 객체 받기, 검사 먼저냐 실행 먼저냐",
       blocks: [
         { type: "key", text: "except 는 구체적인 하위 예외부터 쓴다" },
+        {type: "figure", kind: "tree", root: {icon: "🧱", label: "`Exception`"}, children: [{icon: "🧮", label: "`ArithmeticError`", leaves: ["`ZeroDivisionError`"]}, {icon: "🔍", label: "`LookupError`", leaves: ["`KeyError`", "`IndexError`"]}], caption: "except 는 아래(구체적인 것)부터 쓴다"},
         { type: "h2", text: "내장 예외의 상속 계층" },
         {
           type: "list",

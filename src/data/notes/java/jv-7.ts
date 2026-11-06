@@ -12,6 +12,7 @@ export const JV7: NoteUnit = {
       summary: "상자에 '무엇을 담는지' 이름표를 붙여 꺼낼 때 형변환을 없앤다",
       blocks: [
         { type: "key", text: "제네릭 = 클래스를 만들 때가 아니라 쓸 때 타입을 정한다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📦", label: "`Box<T>`", sub: "타입 빈칸"}, {icon: "🏭", label: "`new Box<String>()`", ink: "blue"}, {icon: "🔤", label: "String 전용 상자", ink: "green"}], edges: ["쓸 때 정함", ""]},
         {
           type: "tip",
           kind: "analogy",
@@ -73,6 +74,7 @@ export const JV7: NoteUnit = {
       summary: "순서 있는 줄(List), 중복 없는 주머니(Set), 이름표 사물함(Map)",
       blocks: [
         { type: "key", text: "자료를 담는 그릇은 List·Set·Map 세 갈래" },
+        {type: "figure", kind: "tree", root: {icon: "🗃️", label: "컬렉션"}, children: [{icon: "📋", label: "`List`", sub: "순서 O, 중복 O", leaves: ["`ArrayList`"]}, {icon: "🎯", label: "`Set`", sub: "중복 X", ink: "blue", leaves: ["`HashSet`"]}, {icon: "🗄️", label: "`Map`", sub: "키 → 값", ink: "green", leaves: ["`HashMap`"]}]},
         { type: "h2", text: "인터페이스 계층" },
         {
           type: "list",
@@ -131,6 +133,7 @@ export const JV7: NoteUnit = {
       summary: "파이썬 list 와 가장 닮은 ArrayList, 메서드 이름만 다르다",
       blocks: [
         { type: "key", text: "번호(인덱스)로 쓰는 줄 서기 = `ArrayList`" },
+        {type: "figure", kind: "tree", root: {icon: "📋", label: "`List`"}, children: [{icon: "🚃", label: "`ArrayList`", sub: "번호로 바로 찾기 빠름", ink: "green"}, {icon: "🔗", label: "`LinkedList`", sub: "앞뒤 넣고 빼기 빠름", ink: "blue"}]},
         { type: "h2", text: "주요 메서드" },
         {
           type: "table",
@@ -188,6 +191,7 @@ export const JV7: NoteUnit = {
       summary: "같은 객체인지는 equals 와 hashCode 두 개로 판단한다",
       blocks: [
         { type: "key", text: "Set 은 중복을 거른다. '같다'의 기준은 `equals` + `hashCode`" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🧮", label: "`hashCode()`", sub: "같은 칸?"}, {icon: "🟰", label: "`equals()`", sub: "내용 같나?", ink: "blue"}, {icon: "🚫", label: "중복 → 버림", ink: "red"}], edges: ["같으면", "같으면"]},
         { type: "h2", text: "HashSet vs TreeSet" },
         {
           type: "code",
@@ -244,6 +248,7 @@ export const JV7: NoteUnit = {
       summary: "파이썬 dict 의 자바판, d[k] 대신 get·put 을 쓴다",
       blocks: [
         { type: "key", text: "`HashMap` = 키로 값을 찾는 사물함, 파이썬 `dict` 와 같은 역할" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🏷️", label: "키 `\"apple\"`"}, {icon: "🗄️", label: "`HashMap`", ink: "blue"}, {icon: "🎁", label: "값 `3`", ink: "green"}], edges: ["`get`", ""]},
         { type: "h2", text: "주요 메서드" },
         {
           type: "table",
@@ -309,6 +314,7 @@ export const JV7: NoteUnit = {
       summary: "돌면서 지울 땐 Iterator, 정렬 기준은 Comparable·Comparator",
       blocks: [
         { type: "key", text: "기본 정렬 기준은 `Comparable`, 그때그때 바꾸는 기준은 `Comparator`" },
+        {type: "figure", kind: "tree", root: {icon: "🔃", label: "정렬 기준"}, children: [{icon: "🏠", label: "`Comparable`", sub: "클래스 안에 기본 기준", ink: "blue", leaves: ["`compareTo`"]}, {icon: "🧩", label: "`Comparator`", sub: "밖에서 그때그때", ink: "green", leaves: ["`compare`"]}]},
         { type: "h2", text: "Iterator: 돌면서 안전하게 지우기" },
         {
           type: "code",

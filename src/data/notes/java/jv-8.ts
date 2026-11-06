@@ -12,6 +12,7 @@ export const JV8: NoteUnit = {
       summary: "이름 없는 함수 (a, b) -> a + b, 담는 그릇은 메서드 하나짜리 인터페이스",
       blocks: [
         { type: "key", text: "람다 = 메서드 하나짜리 인터페이스를 짧게 구현하는 문법" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📜", label: "익명 클래스", sub: "5줄"}, {icon: "⚡", label: "`(a, b) -> a + b`", sub: "1줄", ink: "green"}], edges: ["줄이기"], caption: "메서드가 하나뿐인 인터페이스를 짧게 구현"},
         {
           type: "tip",
           kind: "analogy",
@@ -76,6 +77,7 @@ export const JV8: NoteUnit = {
       summary: "Function·Predicate·Consumer·Supplier 네 개면 대부분 해결",
       blocks: [
         { type: "key", text: "인터페이스를 매번 만들지 말고 `java.util.function` 에 있는 걸 쓴다" },
+        {type: "figure", kind: "tree", root: {icon: "🧰", label: "`java.util.function`"}, children: [{icon: "🏭", label: "`Supplier`", sub: "() → 값"}, {icon: "🍽️", label: "`Consumer`", sub: "값 → ()"}, {icon: "🔄", label: "`Function`", sub: "값 → 값", ink: "blue"}, {icon: "❓", label: "`Predicate`", sub: "값 → boolean", ink: "green"}]},
         { type: "h2", text: "표준 4종" },
         {
           type: "table",
@@ -136,6 +138,7 @@ export const JV8: NoteUnit = {
       summary: "데이터를 흘려보내며 거르고 바꾸는 파이프, 최종 연산이 있어야 흐른다",
       blocks: [
         { type: "key", text: "스트림 = 컬렉션을 파이프에 흘려 가공하는 방법, 원본은 그대로" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🚰", label: "생성", sub: "`list.stream()`"}, {icon: "🔧", label: "중간 연산", sub: "`filter` `map`", ink: "blue"}, {icon: "🎁", label: "최종 연산", sub: "`toList()`", ink: "green"}], edges: ["", ""], caption: "최종 연산 전엔 아무 일도 안 일어난다"},
         { type: "h2", text: "3단계 흐름" },
         {
           type: "list",
@@ -195,6 +198,7 @@ export const JV8: NoteUnit = {
       summary: "거르고(filter) 바꾸고(map) 줄 세우고(sorted) 중복 빼고 자르기",
       blocks: [
         { type: "key", text: "중간 연산은 스트림을 받아 스트림을 돌려준다, 그래서 계속 이어 붙인다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔢", label: "1 2 3 4 5"}, {icon: "🧹", label: "`filter(짝수)`", sub: "2 4", ink: "blue"}, {icon: "✖️", label: "`map(x*10)`", sub: "20 40", ink: "green"}]},
         { type: "h2", text: "5종 한눈에" },
         {
           type: "table",
@@ -248,6 +252,7 @@ export const JV8: NoteUnit = {
       summary: "파이프 끝에서 결과를 받는 방법: 모으기·세기·합치기",
       blocks: [
         { type: "key", text: "최종 연산이 스트림을 리스트·문자열·숫자·Map 으로 바꾼다" },
+        {type: "figure", kind: "tree", root: {icon: "🎁", label: "최종 연산"}, children: [{icon: "📋", label: "`toList()`", sub: "리스트"}, {icon: "🔢", label: "`count()`", sub: "개수", ink: "blue"}, {icon: "➕", label: "`reduce`", sub: "하나로 합치기", ink: "green"}, {icon: "🗂️", label: "`groupingBy`", sub: "Map 으로 묶기", ink: "red"}]},
         { type: "h2", text: "자주 쓰는 최종 연산" },
         {
           type: "table",
@@ -308,6 +313,7 @@ export const JV8: NoteUnit = {
       summary: "값이 있을 수도 없을 수도 있음을 상자로 감싸 null 사고를 막는다",
       blocks: [
         { type: "key", text: "`Optional` = 값이 들어 있거나 비어 있는 상자, 열기 전에 확인하게 만든다" },
+        {type: "figure", kind: "tree", root: {icon: "📦", label: "`Optional<T>`"}, children: [{icon: "🎁", label: "값 있음", sub: "`get()` / `orElse`", ink: "green"}, {icon: "🫙", label: "비어 있음", sub: "`orElse(기본값)`", ink: "red"}], caption: "열어 보기 전에 비었는지 확인하게 만든다"},
         {
           type: "tip",
           kind: "analogy",

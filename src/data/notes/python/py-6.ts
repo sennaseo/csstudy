@@ -12,6 +12,7 @@ export const PY6: NoteUnit = {
       summary: "데이터를 담는 그릇(자료구조)마다 전용 도구(메서드)가 딸려 있다",
       blocks: [
         { type: "key", text: "그릇(자료구조)마다 전용 도구(메서드)가 있다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📋", label: "객체", sub: "`'hi'`"}, {icon: "🔧", label: "`.메서드()`", ink: "blue"}, {icon: "🎁", label: "결과", sub: "`'HI'`", ink: "green"}], edges: ["점(.)", ""], caption: "그릇마다 전용 도구(메서드)가 붙어 있다"},
         { type: "h2", text: "자료구조(Data Structure)" },
         {
           type: "p",
@@ -82,6 +83,7 @@ export const PY6: NoteUnit = {
       summary: "find/index 는 위치 찾기, is~ 는 참/거짓 판정",
       blocks: [
         { type: "key", text: "find 는 없으면 -1, index 는 없으면 에러" },
+        {type: "figure", kind: "tree", root: {icon: "🔍", label: "글자 찾기"}, children: [{icon: "🧭", label: "`find`", sub: "없으면 -1", ink: "green"}, {icon: "💥", label: "`index`", sub: "없으면 에러", ink: "red"}]},
         { type: "h2", text: "메서드 표" },
         {
           type: "table",
@@ -134,6 +136,7 @@ export const PY6: NoteUnit = {
       summary: "문자열은 불변이라 원본은 그대로, 바뀐 '복사본'을 돌려준다",
       blocks: [
         { type: "key", text: "원본은 그대로, 고친 새 문자열을 돌려준다" },
+        {type: "figure", kind: "refs", vars: [{name: "s", to: 0}, {name: "s.upper()", to: 1}], objs: [{icon: "📝", label: "'hi'", sub: "원본 그대로"}, {icon: "🆕", label: "'HI'", sub: "새 문자열", ink: "blue"}]},
         {
           type: "tip",
           kind: "memo",
@@ -212,6 +215,7 @@ export const PY6: NoteUnit = {
       summary: "리스트는 원본을 직접 고친다 — append 는 돌려주는 게 없다",
       blocks: [
         { type: "key", text: "리스트 메서드는 원본을 고치고 None 을 돌려준다" },
+        {type: "figure", kind: "tree", root: {icon: "📋", label: "리스트 고치기", sub: "원본 변경, `None` 반환"}, children: [{icon: "➕", label: "추가", ink: "green", leaves: ["`append`", "`extend`", "`insert`"]}, {icon: "➖", label: "삭제", ink: "red", leaves: ["`remove`", "`pop`", "`clear`"]}]},
         { type: "h2", text: "메서드 표" },
         {
           type: "table",
@@ -281,6 +285,7 @@ export const PY6: NoteUnit = {
       summary: "index/count 는 찾기, reverse 는 뒤집기(정렬 아님), sort 는 정렬",
       blocks: [
         { type: "key", text: "reverse 는 뒤집기만, 정렬은 sort" },
+        {type: "figure", kind: "tree", root: {icon: "📋", label: "`[3, 1, 2]`"}, children: [{icon: "🔃", label: "`.sort()`", sub: "→ [1, 2, 3]", ink: "green"}, {icon: "↩️", label: "`.reverse()`", sub: "→ [2, 1, 3]", ink: "blue"}]},
         { type: "h2", text: "메서드 표" },
         {
           type: "table",
@@ -339,6 +344,7 @@ export const PY6: NoteUnit = {
       summary: "= 는 복사가 아니라 같은 물건에 이름표 하나 더 붙이기",
       blocks: [
         { type: "key", text: "= 는 복사가 아니라 이름표 하나 더 붙이기" },
+        {type: "figure", kind: "refs", vars: [{name: "a", to: 0}, {name: "b = a", to: 0}, {name: "c = a[:]", to: 1}], objs: [{icon: "📋", label: "[1, 2]", sub: "같은 리스트 공유"}, {icon: "📋", label: "[1, 2]", sub: "얕은 복사본", ink: "blue"}]},
         { type: "h2", text: "가변 vs 불변" },
         {
           type: "code",
@@ -396,6 +402,7 @@ export const PY6: NoteUnit = {
       summary: "숫자 판정 엄격함 순서: isdecimal ⊆ isdigit ⊆ isnumeric",
       blocks: [
         { type: "key", text: "`isdecimal() ⊆ isdigit() ⊆ isnumeric()`" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "🔢", label: "`isnumeric`", sub: "½ 같은 분수도"}, {icon: "²", label: "`isdigit`", sub: "² 같은 위첨자도"}, {icon: "0️⃣", label: "`isdecimal`", sub: "0~9 만 (가장 엄격)"}]},
         { type: "h2", text: "엄격함 순서" },
         {
           type: "list",

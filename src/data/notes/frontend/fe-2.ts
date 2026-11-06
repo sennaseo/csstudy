@@ -12,6 +12,7 @@ export const FE2: NoteUnit = {
       summary: "상태는 한곳에, 바꾸는 길은 action 하나뿐 — Redux 의 뿌리",
       blocks: [
         { type: "key", text: "데이터는 한 방향으로만 흐른다" },
+        {type: "figure", kind: "cycle", nodes: [{icon: "🖱️", label: "View", sub: "클릭"}, {icon: "📨", label: "Action", ink: "red"}, {icon: "⚙️", label: "Reducer", sub: "새 상태", ink: "blue"}, {icon: "🏪", label: "Store", sub: "알림", ink: "green"}]},
         { type: "h2", text: "한 바퀴" },
         {
           type: "list",
@@ -57,6 +58,7 @@ console.log(reducer(s, { type: "reset" }));`,
       summary: "값이 바뀌면 구독자 모두에게 알림을 보내는 발행·구독 구조",
       blocks: [
         { type: "key", text: "바뀌면 알려줄게, 구독만 해" },
+        {type: "figure", kind: "tree", root: {icon: "📢", label: "`set(1)`", sub: "값이 바뀜 → 발행", ink: "red"}, children: [{icon: "🅰️", label: "구독자 A"}, {icon: "🅱️", label: "구독자 B"}, {icon: "🖼️", label: "화면"}], caption: "구독한 모두에게 동시에 알림"},
         { type: "h2", text: "직접 만들기" },
         {
           type: "code",
@@ -107,6 +109,7 @@ count.set(2);`,
       summary: "앱 전체에서 딱 하나만 있어야 하는 객체를 ES 모듈로 만든다",
       blocks: [
         { type: "key", text: "import 할 때마다 같은 하나를 받는다" },
+        {type: "figure", kind: "refs", vars: [{name: "a.ts", to: 0}, {name: "b.ts", to: 0}, {name: "c.ts", to: 0}], objs: [{icon: "🔌", label: "`api`", sub: "딱 하나뿐인 객체"}], caption: "어디서 import 해도 같은 하나"},
         { type: "h2", text: "ES 모듈은 한 번만 실행된다" },
         {
           type: "code",
@@ -148,6 +151,7 @@ import { api } from "./api"; // 둘 다 같은 객체`,
       summary: "서버에서 온 데이터는 캐시로 다루고, UI 상태만 직접 관리한다",
       blocks: [
         { type: "key", text: "서버 데이터는 내 것이 아니라 빌려 온 사본" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🗄️", label: "서버 DB", sub: "진짜 주인", ink: "red"}, {icon: "📦", label: "캐시", sub: "React Query", ink: "blue"}, {icon: "🖼️", label: "화면", ink: "green"}], edges: ["fetch", "data"]},
         { type: "h2", text: "두 종류" },
         {
           type: "compare",
@@ -193,6 +197,7 @@ import { api } from "./api"; // 둘 다 같은 객체`,
       summary: "서버 응답 전에 성공했다고 치고 화면부터 바꾼 뒤 실패하면 되돌린다",
       blocks: [
         { type: "key", text: "일단 바꾸고, 틀리면 되돌린다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "👍", label: "화면 먼저 +1", ink: "green"}, {icon: "💾", label: "이전 값 저장"}, {icon: "🌐", label: "서버 요청", ink: "blue"}, {icon: "↩️", label: "실패면 되돌리기", ink: "red"}], edges: ["", "", "실패?"]},
         { type: "h2", text: "흐름" },
         {
           type: "list",
@@ -234,6 +239,7 @@ import { api } from "./api"; // 둘 다 같은 객체`,
       summary: "파일 종류가 아니라 기능별로 폴더를 나누고 층 사이 import 방향을 정한다",
       blocks: [
         { type: "key", text: "종류별 서랍 대신 기능별 상자" },
+        {type: "figure", kind: "stack", layers: [{icon: "🚀", label: "app", sub: "라우터·Provider"}, {icon: "📄", label: "pages", sub: "화면 조립"}, {icon: "🧱", label: "widgets", sub: "큰 블록"}, {icon: "✨", label: "features", sub: "사용자 행동", ink: "red"}, {icon: "📦", label: "entities", sub: "도메인 모델"}, {icon: "🧰", label: "shared", sub: "버튼·유틸", ink: "blue"}], caption: "import 는 위에서 아래로만 ↓"},
         { type: "h2", text: "종류별 vs 기능별" },
         {
           type: "compare",

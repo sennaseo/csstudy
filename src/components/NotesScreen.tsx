@@ -22,6 +22,7 @@ import { NOTE_SUBJECTS } from "../data/notes";
 import { NOTE_LABELS } from "../data/notes/labels";
 import type { Note, NoteBlock, NoteSubject, NoteUnit } from "../data/notes/types";
 import { NoteBoard } from "./NoteBoard";
+import { figureIcons } from "./NoteFigure";
 import { useBack } from "../utils/useBack";
 
 // 노트 id → { 노트, 같은 단원의 노트 목록 } 을 찾는다. 노트 수가 적어서 매번 훑어도 충분하다.
@@ -45,6 +46,9 @@ const plain = (t: string) => t.split("`").join("");
 
 /** 타일 그림거리 고르기 — 노트 본문에서 처음 나오는 "그림이 되는 블록". 없으면 이모지. */
 function pickArt(note: Note): NoteBlock | null {
+  // 그림(figure)이 있으면 무조건 그게 대표 그림
+  const fig = note.blocks.find((b) => b.type === "figure");
+  if (fig) return fig;
   for (const b of note.blocks) {
     if (b.type === "compare" && b.cols.length >= 2) return b;
     if (b.type === "code") return b;
@@ -126,6 +130,21 @@ function NoteArt({ note }: { note: Note }) {
           ))}
         </div>
       );
+    case "figure": {
+      // 그림 속 아이콘 최대 3개. 흐름·순환이면 사이에 화살표.
+      const icons = figureIcons(b).slice(0, 3);
+      const arrow = b.kind === "flow" || b.kind === "cycle";
+      return (
+        <div className="flex items-center justify-center gap-0.5">
+          {icons.map((ic, i) => (
+            <span key={i} className="flex items-center gap-0.5">
+              {i > 0 && <span className="text-[11px] font-black text-reel">{arrow ? "→" : "·"}</span>}
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-reel/40 bg-white text-xl">{ic}</span>
+            </span>
+          ))}
+        </div>
+      );
+    }
     default:
       return <span className="self-center text-4xl">{note.emoji}</span>;
   }

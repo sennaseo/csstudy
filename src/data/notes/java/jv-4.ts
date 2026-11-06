@@ -12,6 +12,7 @@ export const JV4: NoteUnit = {
       summary: "클래스는 설계도, new 로 찍어낸 객체, 변수에는 객체 주소가 담긴다",
       blocks: [
         { type: "key", text: "클래스는 설계도, `new` 가 실물을 만든다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📐", label: "`class Car`", sub: "설계도"}, {icon: "🏭", label: "`new Car()`", ink: "blue"}, {icon: "🚗", label: "객체", sub: "실물", ink: "green"}], edges: ["찍기", ""]},
         { type: "h2", text: "세 단어 정리" },
         {
           type: "table",
@@ -89,6 +90,7 @@ System.out.println(myCar == other);`,
       summary: "객체가 가진 데이터(필드)와 동작(메서드), 메서드 선언 모양",
       blocks: [
         { type: "key", text: "필드는 객체가 아는 것, 메서드는 객체가 하는 것" },
+        {type: "figure", kind: "tree", root: {icon: "🚗", label: "`Car` 객체"}, children: [{icon: "🧠", label: "필드", sub: "아는 것", ink: "blue", leaves: ["`color`", "`speed`"]}, {icon: "🏃", label: "메서드", sub: "하는 것", ink: "green", leaves: ["`run()`", "`stop()`"]}]},
         { type: "h2", text: "인스턴스마다 따로 가진다" },
         {
           type: "code",
@@ -189,6 +191,7 @@ System.out.println(x);`,
       summary: "객체를 만들 때 한 번 도는 생성자, 기본 생성자 규칙, this 와 this()",
       blocks: [
         { type: "key", text: "생성자는 `new` 할 때 딱 한 번 도는 초기화 코드" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🏭", label: "`new Car(\"red\")`"}, {icon: "🔧", label: "생성자", sub: "`this.color = color`", ink: "blue"}, {icon: "🚗", label: "준비된 객체", ink: "green"}]},
         { type: "h2", text: "생성자 모양" },
         {
           type: "code",
@@ -278,6 +281,7 @@ System.out.println(p.name);`,
       summary: "같은 이름, 다른 매개변수로 메서드 여러 개 만들기와 규칙",
       blocks: [
         { type: "key", text: "이름은 같게, 매개변수 목록은 다르게" },
+        {type: "figure", kind: "tree", root: {icon: "🖨️", label: "`println`"}, children: [{icon: "🔢", label: "`(int)`"}, {icon: "🔤", label: "`(String)`"}, {icon: "✅", label: "`(boolean)`"}], caption: "이름은 같고 매개변수만 다르다"},
         { type: "h2", text: "같은 이름 여러 개" },
         {
           type: "code",
@@ -363,6 +367,7 @@ System.out.println("text");`,
       summary: "모든 객체가 공유하는 클래스 변수·메서드, 인스턴스 멤버와의 차이",
       blocks: [
         { type: "key", text: "static 은 객체가 아니라 클래스에 하나" },
+        {type: "figure", kind: "tree", root: {icon: "📐", label: "`Car.count`", sub: "static: 클래스에 하나", ink: "red"}, children: [{icon: "🚗", label: "car1", sub: "자기 `color`"}, {icon: "🚙", label: "car2", sub: "자기 `color`"}]},
         { type: "h2", text: "클래스 변수 vs 인스턴스 변수" },
         {
           type: "code",
@@ -442,6 +447,7 @@ System.out.println(Student.getCount());`,
       summary: "접근 제어자 4단계 범위, getter/setter 캡슐화, package·import",
       blocks: [
         { type: "key", text: "필드는 private 로 숨기고 메서드로만 통하게" },
+        {type: "figure", kind: "stack", layers: [{icon: "🌍", label: "`public`", sub: "어디서나", ink: "green"}, {icon: "📦", label: "`protected`", sub: "같은 패키지 + 자식"}, {icon: "🏘️", label: "(default)", sub: "같은 패키지만"}, {icon: "🔒", label: "`private`", sub: "클래스 안에서만", ink: "red"}]},
         { type: "h2", text: "접근 제어자 4단계" },
         {
           type: "table",

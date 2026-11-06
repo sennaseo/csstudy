@@ -8,6 +8,7 @@
 // =============================================================
 
 import type { Note, NoteBlock } from "../data/notes/types";
+import { NoteFigure } from "./NoteFigure";
 
 /** 인라인 `코드` — 백틱으로 쪼개면 홀수 번째 조각이 코드 부분이다. */
 export function Inline({ text }: { text: string }) {
@@ -59,6 +60,8 @@ function BoardBlock({ block }: { block: NoteBlock }) {
           <Inline text={block.text} />
         </div>
       );
+    case "figure":
+      return <NoteFigure block={block} />;
     case "h2":
       return null; // 섹션 제목은 NoteBoard 가 번호와 함께 직접 그린다
     case "p":

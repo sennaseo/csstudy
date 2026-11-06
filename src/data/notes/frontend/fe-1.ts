@@ -12,6 +12,7 @@ export const FE1: NoteUnit = {
       summary: "데이터 가져오기와 화면 그리기를 다른 컴포넌트로 나눈다",
       blocks: [
         { type: "key", text: "가져오는 놈과 그리는 놈을 나눈다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🗄️", label: "API"}, {icon: "🛰️", label: "가져오는 쪽", sub: "Container", ink: "blue"}, {icon: "🖼️", label: "그리는 쪽", sub: "Presentational", ink: "green"}], edges: ["데이터", "props"]},
         { type: "h2", text: "역할 나누기" },
         {
           type: "compare",
@@ -53,6 +54,7 @@ function UserListContainer() {
       summary: "여러 컴포넌트가 쓰는 상태 로직을 use 함수 하나로 뽑아낸다",
       blocks: [
         { type: "key", text: "UI 는 두고 로직만 떼어 재사용한다" },
+        {type: "figure", kind: "tree", root: {icon: "🪝", label: "`useToggle()`", sub: "로직 한 벌", ink: "red"}, children: [{icon: "🪟", label: "모달"}, {icon: "📂", label: "아코디언"}, {icon: "🌙", label: "다크모드"}], caption: "훅은 하나, 상태는 쓰는 곳마다 따로"},
         { type: "h2", text: "반복되던 로직" },
         {
           type: "compare",
@@ -99,6 +101,7 @@ function Modal() {
       summary: "부모와 자식 부품이 상태를 몰래 공유해 조립식으로 쓰는 컴포넌트",
       blocks: [
         { type: "key", text: "props 한 무더기 대신 부품을 조립한다" },
+        {type: "figure", kind: "tree", root: {icon: "🗂️", label: "`<Tabs>`", sub: "상태 보관", ink: "red"}, children: [{icon: "🔘", label: "`Tabs.Tab`", leaves: ["눌린 탭 바꿈"]}, {icon: "📄", label: "`Tabs.Panel`", leaves: ["보일지 결정"]}], caption: "자식 부품이 Context 로 상태를 꺼내 쓴다"},
         { type: "h2", text: "props 지옥 vs 조립" },
         {
           type: "compare",
@@ -140,6 +143,7 @@ Tabs.Tab = function Tab({ i, children }: { i: number; children: ReactNode }) {
       summary: "무엇을 그릴지를 함수 prop 으로 받아 로직과 화면을 분리한다",
       blocks: [
         { type: "key", text: "데이터는 내가 줄게, 그림은 네가 그려" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🖱️", label: "Tracker", sub: "x, y 관리", ink: "blue"}, {icon: "🧾", label: "`render(x,y)`"}, {icon: "🖼️", label: "내 JSX", ink: "green"}], edges: ["호출", "반환"]},
         { type: "h2", text: "모양" },
         {
           type: "code",
@@ -181,6 +185,7 @@ Tabs.Tab = function Tab({ i, children }: { i: number; children: ReactNode }) {
       summary: "컴포넌트를 받아 기능을 덧입힌 새 컴포넌트를 돌려주는 함수",
       blocks: [
         { type: "key", text: "컴포넌트를 포장지로 감싸 기능을 더한다" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "🛡️", label: "`withAuth`", sub: "로그인 검사 포장지", ink: "red"}, {icon: "📊", label: "`Dashboard`", sub: "원래 컴포넌트 (안 건드림)", ink: "ink"}], caption: "포장지가 원래 컴포넌트를 감싼다"},
         { type: "h2", text: "함수가 컴포넌트를 반환" },
         {
           type: "code",
@@ -221,6 +226,7 @@ const SecretPage = withAuth(Dashboard);`,
       summary: "입력값을 React state 가 쥐는지, DOM 이 쥐는지의 차이",
       blocks: [
         { type: "key", text: "값의 주인이 React 인가 DOM 인가" },
+        {type: "figure", kind: "tree", root: {icon: "⌨️", label: "입력값의 주인은?"}, children: [{icon: "⚛️", label: "제어", sub: "React state", ink: "blue", leaves: ["`value` + `onChange`", "타이핑마다 리렌더"]}, {icon: "🌐", label: "비제어", sub: "DOM", ink: "green", leaves: ["`defaultValue` + `ref`", "필요할 때 꺼내 봄"]}]},
         { type: "h2", text: "두 방식" },
         {
           type: "code",
@@ -263,6 +269,7 @@ const ref = useRef<HTMLInputElement>(null);
       summary: "여러 층 아래로 props 를 넘기지 않고 Context 로 바로 꺼내 쓴다",
       blocks: [
         { type: "key", text: "props 릴레이 대신 방송국을 세운다" },
+        {type: "figure", kind: "tree", root: {icon: "📡", label: "Provider", sub: "`value=\"dark\"`", ink: "red"}, children: [{icon: "🧱", label: "Layout", sub: "안 씀"}, {icon: "📋", label: "Sidebar", sub: "안 씀"}, {icon: "🔘", label: "Button", sub: "`useContext`", ink: "green"}], caption: "중간층을 건너뛰고 필요한 곳이 바로 받는다"},
         { type: "h2", text: "Prop drilling 문제" },
         {
           type: "list",
@@ -306,6 +313,7 @@ function Button() {
       summary: "동작과 접근성만 제공하고 모양은 하나도 정하지 않는 컴포넌트",
       blocks: [
         { type: "key", text: "뇌는 빌려주고 얼굴은 내가 그린다" },
+        {type: "figure", kind: "stack", layers: [{icon: "🎨", label: "얼굴", sub: "내가: 색·크기·마크업", ink: "blue"}, {icon: "🧠", label: "뇌", sub: "라이브러리: 키보드·aria", ink: "red"}]},
         { type: "h2", text: "무엇을 나누나" },
         {
           type: "compare",
@@ -352,6 +360,7 @@ function Button() {
       summary: "UI 를 원자→분자→유기체→템플릿→페이지 다섯 단계로 쌓는 설계법",
       blocks: [
         { type: "key", text: "작은 조각을 쌓아 페이지를 만든다" },
+        {type: "figure", kind: "stack", layers: [{icon: "📄", label: "페이지", sub: "실제 데이터"}, {icon: "📐", label: "템플릿", sub: "빈 뼈대"}, {icon: "🦠", label: "유기체", sub: "헤더"}, {icon: "🧪", label: "분자", sub: "검색창"}, {icon: "⚛️", label: "원자", sub: "버튼·입력", ink: "red"}], caption: "아래 작은 조각을 쌓아 위로 올라간다"},
         { type: "h2", text: "다섯 단계" },
         {
           type: "list",

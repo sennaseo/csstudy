@@ -12,6 +12,7 @@ export const JV5: NoteUnit = {
       summary: "extends로 부모를 물려받고, 자식 생성자는 super()로 부모 생성자부터 부른다",
       blocks: [
         { type: "key", text: "`class 자식 extends 부모` 하나로 필드·메서드를 물려받는다" },
+        {type: "figure", kind: "tree", root: {icon: "🐾", label: "`Animal`", sub: "`name` · `eat()`", ink: "blue"}, children: [{icon: "🐶", label: "`Dog`", sub: "+ `bark()`"}, {icon: "🐱", label: "`Cat`", sub: "+ `meow()`"}], caption: "`extends` 는 부모 하나만"},
         { type: "h2", text: "extends로 물려받기" },
         {
           type: "code",
@@ -88,6 +89,7 @@ d.bark();`,
       summary: "부모 메서드를 같은 모양으로 다시 쓰면 오버라이딩, @Override로 실수 방지",
       blocks: [
         { type: "key", text: "이름·매개변수가 같은 메서드를 자식이 다시 쓰면 오버라이딩" },
+        {type: "figure", kind: "tree", root: {icon: "🐾", label: "`Animal.sound()`", sub: "\"...\""}, children: [{icon: "🐶", label: "`Dog`", sub: "\"멍\"", ink: "green"}, {icon: "🐱", label: "`Cat`", sub: "\"야옹\"", ink: "green"}], caption: "자식이 같은 메서드를 다시 쓴다 (`@Override`)"},
         { type: "h2", text: "부모 메서드 덮어쓰기" },
         {
           type: "code",
@@ -151,6 +153,7 @@ new Cat().sound();`,
       summary: "부모 타입 변수에 자식 객체를 담고, 호출은 실제 객체의 메서드가 실행된다",
       blocks: [
         { type: "key", text: "변수 타입은 부모, 실행되는 메서드는 실제 객체 것" },
+        {type: "figure", kind: "refs", vars: [{name: "Animal a", to: 0}], objs: [{icon: "🐶", label: "Dog 객체", sub: "`a.sound()` → \"멍\"", ink: "green"}], caption: "변수 타입은 부모, 실행되는 건 실제 객체 것"},
         { type: "h2", text: "부모 타입으로 받기" },
         {
           type: "code",
@@ -217,6 +220,7 @@ if (c instanceof Dog dog) {      // Java 16+ 패턴 매칭
       summary: "final은 더 이상 못 바꾸게 막고, Object의 toString·equals·hashCode는 재정의",
       blocks: [
         { type: "key", text: "final은 잠금, Object는 모든 클래스의 조상" },
+        {type: "figure", kind: "tree", root: {icon: "🔒", label: "`final`"}, children: [{icon: "📦", label: "변수", sub: "값 못 바꿈"}, {icon: "🔧", label: "메서드", sub: "오버라이딩 금지"}, {icon: "📐", label: "클래스", sub: "상속 금지"}]},
         { type: "h2", text: "final 세 군데" },
         {
           type: "table",
@@ -293,6 +297,7 @@ System.out.println(set.size());`,
       summary: "몸통 없는 추상 메서드를 가진 미완성 설계도, 자식이 반드시 채워야 한다",
       blocks: [
         { type: "key", text: "추상 클래스는 미완성 설계도, new로 못 만든다" },
+        {type: "figure", kind: "tree", root: {icon: "📐", label: "`abstract Shape`", sub: "`area()` 미완성", ink: "red"}, children: [{icon: "⚪", label: "`Circle`", sub: "`area()` 완성", ink: "green"}, {icon: "⬛", label: "`Square`", sub: "`area()` 완성", ink: "green"}], caption: "추상 클래스는 `new` 못 함"},
         { type: "h2", text: "추상 메서드와 추상 클래스" },
         {
           type: "code",
@@ -358,6 +363,7 @@ for (Shape s : shapes) {
       summary: "인터페이스는 할 수 있는 일의 약속, implements로 여러 개를 동시에 구현한다",
       blocks: [
         { type: "key", text: "상속은 하나만, 인터페이스는 여러 개 구현 가능" },
+        {type: "figure", kind: "tree", root: {icon: "🦆", label: "`Duck`"}, children: [{icon: "🐦", label: "extends `Bird`", sub: "부모는 하나", ink: "blue"}, {icon: "🏊", label: "implements `Swim`", ink: "green"}, {icon: "🛫", label: "implements `Fly`", ink: "green"}], caption: "상속은 하나, 인터페이스는 여러 개"},
         { type: "h2", text: "implements와 다중 구현" },
         {
           type: "code",

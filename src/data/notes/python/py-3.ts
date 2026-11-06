@@ -12,6 +12,7 @@ export const PY3: NoteUnit = {
       summary: "변경 가능한 list, 변경 불가능한 tuple, 정수 시퀀스를 만드는 range",
       blocks: [
         { type: "key", text: "list는 고칠 수 있고, tuple은 못 고치고, range는 숫자를 뽑아 준다" },
+        {type: "figure", kind: "tree", root: {icon: "📏", label: "시퀀스 3형제"}, children: [{icon: "📋", label: "`list`", sub: "고칠 수 있음", ink: "green"}, {icon: "🔒", label: "`tuple`", sub: "못 고침", ink: "red"}, {icon: "🔢", label: "`range`", sub: "숫자 뽑기", ink: "blue"}]},
         {
           type: "compare",
           cols: [
@@ -106,6 +107,7 @@ print(list(range(10, 0, -3)))`,
       summary: "key-value 쌍 dict, 중복 없는 set, 값 없음 None, 참거짓 Boolean + 컬렉션 표",
       blocks: [
         { type: "key", text: "dict는 이름으로 찾는 사물함, set은 중복 없는 출석부" },
+        {type: "figure", kind: "tree", root: {icon: "🧺", label: "비시퀀스"}, children: [{icon: "🗄️", label: "`dict`", sub: "이름표로 찾는 사물함", ink: "blue"}, {icon: "📝", label: "`set`", sub: "중복 없는 출석부", ink: "green"}]},
         { type: "h2", text: "dict: key-value 쌍, 순서·중복 없음, 변경 가능" },
         {
           type: "compare",
@@ -209,6 +211,7 @@ print(my_dict[0])  # 0 을 key 로 찾는다`,
       summary: "파이썬이 알아서 하는 암시적 형변환, 내가 지정하는 명시적 형변환",
       blocks: [
         { type: "key", text: "섞어 계산하면 자동 변환, 나머지는 직접 int()·str()" },
+        {type: "figure", kind: "tree", root: {icon: "🔄", label: "형변환"}, children: [{icon: "🤖", label: "암시적", sub: "파이썬이 자동", ink: "blue", leaves: ["`3 + 5.0` → `8.0`"]}, {icon: "✋", label: "명시적", sub: "내가 직접", ink: "green", leaves: ["`int('3')` → `3`"]}]},
         {
           type: "compare",
           cols: [
@@ -295,6 +298,7 @@ print(list({'a': 1, 'b': 2}))  # dict 는 key 만 넘어간다`,
       summary: "+= 복합 연산자, == 와 is 의 차이, and·or·not 논리 연산",
       blocks: [
         { type: "key", text: "== 는 값이 같은지, is 는 같은 객체인지" },
+        {type: "figure", kind: "refs", vars: [{name: "a", to: 0}, {name: "b", to: 1}], objs: [{icon: "📋", label: "[1, 2]", sub: "객체 ①"}, {icon: "📋", label: "[1, 2]", sub: "객체 ②", ink: "blue"}], caption: "`a == b` → True (값 같음) · `a is b` → False (다른 객체)"},
         { type: "h2", text: "복합 연산자: 연산 + 할당 한 번에" },
         {
           type: "table",
@@ -397,6 +401,7 @@ print((name == 'Alice') or (age == 30))`,
       summary: "and/or 가 값을 돌려주는 단축평가, in, + 와 * 의 두 얼굴, 우선순위",
       blocks: [
         { type: "key", text: "and·or 는 True/False 가 아니라 마지막으로 본 값을 돌려준다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔍", label: "`0 and 5`"}, {icon: "🛑", label: "0 이 거짓", sub: "더 볼 필요 없음", ink: "red"}, {icon: "↩️", label: "`0` 반환", ink: "green"}], edges: ["왼쪽부터", "멈춤"]},
         { type: "h2", text: "단축평가 (Short-circuit evaluation)" },
         {
           type: "p",

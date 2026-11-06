@@ -12,6 +12,7 @@ export const JV3: NoteUnit = {
       summary: "같은 타입 값을 고정 칸 수로 묶는 배열, new 로 만들기와 기본값",
       blocks: [
         { type: "key", text: "배열은 칸 수가 정해진 같은 타입 상자 줄" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📝", label: "`int[] a`", sub: "선언"}, {icon: "🏗️", label: "`new int[3]`", sub: "칸 3개", ink: "blue"}, {icon: "📦", label: "[0, 0, 0]", sub: "기본값", ink: "green"}]},
         { type: "h2", text: "파이썬 리스트와 다른 점" },
         {
           type: "compare",
@@ -94,6 +95,7 @@ System.out.println(flags[0]);`,
       summary: "length 로 도는 for, 값만 꺼내는 향상된 for, 범위 밖 인덱스 예외",
       blocks: [
         { type: "key", text: "인덱스는 0 부터 length - 1 까지" },
+        {type: "figure", kind: "stack", layers: [{icon: "📦", label: "10 · 20 · 30", sub: "값"}, {icon: "🔢", label: "0 · 1 · 2", sub: "인덱스", ink: "blue"}, {icon: "💥", label: "`a[3]`", sub: "범위 밖 → 예외", ink: "red"}]},
         { type: "h2", text: "두 가지 for" },
         {
           type: "code",
@@ -164,6 +166,7 @@ System.out.println(scores[3]);`,
       summary: "배열 안에 배열을 담는 2차원 배열, 행·열 길이와 이중 for",
       blocks: [
         { type: "key", text: "2차원 배열은 배열을 칸으로 가진 배열" },
+        {type: "figure", kind: "refs", vars: [{name: "m[0]", to: 0}, {name: "m[1]", to: 1}], objs: [{icon: "📦", label: "[1, 2, 3]", sub: "0행"}, {icon: "📦", label: "[4, 5]", sub: "1행 (길이 달라도 됨)", ink: "blue"}], caption: "2차원 배열 = 배열을 칸으로 가진 배열"},
         { type: "h2", text: "행과 열" },
         {
           type: "code",
@@ -237,6 +240,7 @@ System.out.println(Arrays.deepToString(tri));`,
       summary: "= 는 같은 배열을 가리킬 뿐, copyOf·clone 으로 진짜 복사, toString·sort",
       blocks: [
         { type: "key", text: "`b = a` 는 복사가 아니라 주소 공유" },
+        {type: "figure", kind: "refs", vars: [{name: "a", to: 0}, {name: "b = a", to: 0}, {name: "c = a.clone()", to: 1}], objs: [{icon: "📦", label: "[1, 2]", sub: "같은 배열 공유", ink: "red"}, {icon: "📦", label: "[1, 2]", sub: "새 배열", ink: "green"}]},
         { type: "h2", text: "참조 복사의 함정" },
         {
           type: "code",
@@ -318,6 +322,7 @@ System.out.println(Arrays.toString(words));`,
       summary: "한번 만든 문자열은 안 바뀐다, 리터럴 풀, == 대신 equals 로 비교",
       blocks: [
         { type: "key", text: "문자열 내용 비교는 무조건 `equals`" },
+        {type: "figure", kind: "refs", vars: [{name: "s1 = \"hi\"", to: 0}, {name: "s2 = \"hi\"", to: 0}, {name: "s3 = new", to: 1}], objs: [{icon: "🏊", label: "\"hi\"", sub: "리터럴 풀"}, {icon: "🆕", label: "\"hi\"", sub: "새 객체", ink: "red"}], caption: "`s1 == s3` 는 false → 내용 비교는 `equals`"},
         { type: "h2", text: "String 은 불변" },
         {
           type: "code",
@@ -395,6 +400,7 @@ System.out.println("JAVA".equalsIgnoreCase("java"));`,
       summary: "자주 쓰는 String 메서드, 반복해서 이어 붙일 땐 StringBuilder",
       blocks: [
         { type: "key", text: "읽고 자르는 건 String, 반복해서 붙이는 건 StringBuilder" },
+        {type: "figure", kind: "tree", root: {icon: "🔤", label: "문자열 다루기"}, children: [{icon: "📖", label: "`String`", sub: "읽기·자르기", leaves: ["`substring`", "`split`"]}, {icon: "🧱", label: "`StringBuilder`", sub: "반복해서 붙이기", ink: "green", leaves: ["`append`", "`reverse`"]}]},
         { type: "h2", text: "자주 쓰는 메서드" },
         {
           type: "code",

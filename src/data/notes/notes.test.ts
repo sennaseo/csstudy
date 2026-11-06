@@ -39,6 +39,19 @@ for (const subject of NOTE_SUBJECTS) {
       note.blocks.forEach((b) => collect(b));
       // ⑥ 노트당 h2 5개 이하 — 번호 배지가 길어지면 지도가 아니라 목차가 된다
       assert.ok(note.blocks.filter((b) => b.type === "h2").length <= 5, `${note.id} h2 5개 초과`);
+      // ⑧ 그림(figure) 모양 검사 — 그림이 깨지는 데이터를 미리 잡는다
+      for (const b of note.blocks) {
+        if (b.type !== "figure") continue;
+        if (b.kind === "flow") {
+          assert.ok(b.nodes.length >= 2, `${note.id} flow 상자 2개 미만`);
+          if (b.edges) assert.equal(b.edges.length, b.nodes.length - 1, `${note.id} flow edges 개수`);
+        }
+        if (b.kind === "cycle") assert.ok(b.nodes.length >= 3 && b.nodes.length <= 5, `${note.id} cycle 은 3~5개`);
+        if (b.kind === "tree") assert.ok(b.children.length >= 2 && b.children.length <= 4, `${note.id} tree 갈래는 2~4개`);
+        if (b.kind === "stack") assert.ok(b.layers.length >= 2, `${note.id} stack 층 2개 미만`);
+        if (b.kind === "refs")
+          for (const v of b.vars) assert.ok(v.to >= 0 && v.to < b.objs.length, `${note.id} refs ${v.name} 가 없는 상자를 가리킴`);
+      }
       for (const t of texts)
         assert.ok((t.split("`").length - 1) % 2 === 0, `${note.id} 백틱 홀수: ${t.slice(0, 40)}`);
     }

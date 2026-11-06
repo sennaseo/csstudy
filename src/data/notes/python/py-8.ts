@@ -12,6 +12,7 @@ export const PY8: NoteUnit = {
       summary: "데이터와 함수를 따로 두면 절차 지향, 한 덩어리로 묶으면 객체 지향",
       blocks: [
         { type: "key", text: "데이터와 함수를 따로 두나, 한 객체로 묶나" },
+        {type: "figure", kind: "tree", root: {icon: "🧭", label: "코드를 묶는 법"}, children: [{icon: "📜", label: "절차 지향", ink: "blue", leaves: ["데이터 따로", "함수 따로"]}, {icon: "🧱", label: "객체 지향", ink: "green", leaves: ["데이터 + 함수", "한 객체로"]}]},
         {
           type: "tip",
           kind: "analogy",
@@ -98,6 +99,7 @@ print(c.hp)`,
       summary: "클래스는 설계도, 객체는 속성+행동, 인스턴스는 그 설계도로 찍은 실물",
       blocks: [
         { type: "key", text: "클래스를 만든다 == 타입을 만든다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📐", label: "클래스", sub: "설계도"}, {icon: "🏭", label: "`Person()`", ink: "blue"}, {icon: "🧍", label: "인스턴스", sub: "실제 객체", ink: "green"}], edges: ["찍어내기", ""]},
         { type: "h2", text: "세 용어" },
         {
           type: "table",
@@ -202,6 +204,7 @@ print('hello'.upper())`,
       summary: "class 키워드로 설계도 작성 → __init__·인스턴스 변수·클래스 변수·메서드",
       blocks: [
         { type: "key", text: "`self.x` 는 각자, 클래스 바로 밑 변수는 공유" },
+        {type: "figure", kind: "tree", root: {icon: "📐", label: "`class Person`", sub: "`count = 0` 공유", ink: "red"}, children: [{icon: "🧍", label: "p1", sub: "`self.name='Kim'`"}, {icon: "🧍", label: "p2", sub: "`self.name='Lee'`"}], caption: "`self.x` 는 각자, 클래스 변수는 모두 공유"},
         {
           type: "tip",
           kind: "analogy",
@@ -315,6 +318,7 @@ print(Circle.pi, c1.pi, c2.pi)`,
       summary: "self를 받으면 인스턴스, cls를 받으면 클래스, 아무것도 안 받으면 스태틱",
       blocks: [
         { type: "key", text: "self면 인스턴스, cls면 클래스, 없으면 스태틱" },
+        {type: "figure", kind: "tree", root: {icon: "🔧", label: "메서드 3종"}, children: [{icon: "🧍", label: "인스턴스", sub: "`self`", ink: "green"}, {icon: "📐", label: "클래스", sub: "`cls`", ink: "blue"}, {icon: "🪨", label: "스태틱", sub: "아무것도 안 받음"}]},
         { type: "h2", text: "self 동작 원리" },
         {
           type: "code",
@@ -409,6 +413,7 @@ instance.static_method(1)              # 가능하지만 쓰지 말 것`,
       summary: "속성은 인스턴스 → 클래스 순으로 찾고, __str__ 같은 매직 메서드는 자동 호출",
       blocks: [
         { type: "key", text: "속성은 인스턴스 먼저, 없으면 클래스" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🧍", label: "인스턴스", sub: "먼저 찾음"}, {icon: "📐", label: "클래스", ink: "blue"}, {icon: "💥", label: "AttributeError", ink: "red"}], edges: ["없으면", "없으면"]},
         { type: "h2", text: "인스턴스와 클래스의 이름 공간" },
         {
           type: "list",

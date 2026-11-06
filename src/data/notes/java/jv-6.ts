@@ -12,6 +12,7 @@ export const JV6: NoteUnit = {
       summary: "에러는 손쓸 수 없는 문제, 예외는 코드로 대비할 수 있는 문제",
       blocks: [
         { type: "key", text: "에러는 못 막고, 예외는 잡아서 처리한다" },
+        {type: "figure", kind: "tree", root: {icon: "🌊", label: "`Throwable`"}, children: [{icon: "☠️", label: "`Error`", sub: "못 막음", ink: "red", leaves: ["`OutOfMemoryError`"]}, {icon: "🩹", label: "`Exception`", sub: "잡아서 처리", ink: "green", leaves: ["`IOException`", "`RuntimeException`"]}]},
         { type: "h2", text: "에러 vs 예외" },
         {
           type: "compare",
@@ -70,6 +71,7 @@ System.out.println("프로그램 계속");`,
       summary: "try에서 터지면 catch로 점프, finally는 무슨 일이 있어도 실행된다",
       blocks: [
         { type: "key", text: "try에서 터지면 catch, finally는 항상" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🧪", label: "`try`"}, {icon: "🚑", label: "`catch`", sub: "터지면", ink: "red"}, {icon: "🧹", label: "`finally`", sub: "항상", ink: "blue"}]},
         { type: "h2", text: "기본 모양" },
         {
           type: "code",
@@ -132,6 +134,7 @@ test("x");`,
       summary: "checked 예외는 컴파일러가 처리를 강제, throws로 떠넘기고 throw로 던진다",
       blocks: [
         { type: "key", text: "checked는 처리 강제, unchecked는 선택" },
+        {type: "figure", kind: "tree", root: {icon: "💥", label: "Exception"}, children: [{icon: "📋", label: "checked", sub: "처리 강제", ink: "red", leaves: ["`IOException`", "`throws` 필수"]}, {icon: "🤷", label: "unchecked", sub: "선택", ink: "blue", leaves: ["`RuntimeException`", "`NullPointerException`"]}]},
         { type: "h2", text: "checked vs unchecked" },
         {
           type: "table",
@@ -199,6 +202,7 @@ try {
       summary: "try 괄호 안에 연 자원은 블록이 끝나면 자동으로 close() 된다",
       blocks: [
         { type: "key", text: "괄호 안에 열면 끝날 때 알아서 닫힌다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📂", label: "`try (자원 열기)`"}, {icon: "⚙️", label: "작업", ink: "blue"}, {icon: "🚪", label: "자동 `close()`", ink: "green"}], caption: "finally 로 직접 닫을 필요 없음"},
         { type: "h2", text: "finally로 닫던 방식" },
         {
           type: "code",
@@ -257,6 +261,7 @@ System.out.println("끝");`,
       summary: "기본형을 객체로 감싼 게 래퍼 클래스, 비교는 ==가 아니라 equals",
       blocks: [
         { type: "key", text: "`int` 는 값, `Integer` 는 객체. 객체 비교는 `equals`" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔢", label: "`int 5`", sub: "값"}, {icon: "🎁", label: "`Integer`", sub: "객체", ink: "blue"}], edges: ["오토박싱 ⇄ 언박싱"], caption: "객체끼리 비교는 `==` 말고 `equals`"},
         { type: "h2", text: "기본형과 래퍼 클래스" },
         {
           type: "table",
@@ -329,6 +334,7 @@ System.out.println(String.valueOf(n) + 1);`,
       summary: "계산은 Math, 난수는 Random, 날짜는 LocalDate부터 써 보자",
       blocks: [
         { type: "key", text: "직접 만들기 전에 표준 API부터 찾는다" },
+        {type: "figure", kind: "tree", root: {icon: "🧰", label: "표준 API"}, children: [{icon: "🧮", label: "`Math`", sub: "max·abs·pow"}, {icon: "🎲", label: "`Random`", sub: "난수", ink: "blue"}, {icon: "📅", label: "`LocalDate`", sub: "날짜", ink: "green"}]},
         { type: "h2", text: "Math" },
         {
           type: "code",

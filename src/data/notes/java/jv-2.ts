@@ -12,6 +12,7 @@ export const JV2: NoteUnit = {
       summary: "정수끼리 나누면 몫만, %는 나머지, ++는 앞에 붙나 뒤에 붙나가 핵심",
       blocks: [
         { type: "key", text: "정수 나누기 정수는 정수, ++ 는 위치에 따라 값이 달라진다" },
+        {type: "figure", kind: "tree", root: {icon: "➗", label: "`7 / 2`"}, children: [{icon: "🔢", label: "int ÷ int", sub: "= 3 (버림)", ink: "red"}, {icon: "🎯", label: "double 섞기", sub: "`7 / 2.0` = 3.5", ink: "green"}]},
         { type: "h2", text: "산술 연산자" },
         {
           type: "table",
@@ -84,6 +85,7 @@ System.out.println(x);`,
       summary: "&&·||·!와 단락 평가, 삼항 연산자, 문자열은 == 말고 equals",
       blocks: [
         { type: "key", text: "논리 연산은 결과가 정해지면 나머지를 계산하지 않는다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔍", label: "`false && …`"}, {icon: "🛑", label: "뒤는 계산 안 함", ink: "red"}, {icon: "↩️", label: "`false`", ink: "green"}], edges: ["왼쪽부터", "멈춤"]},
         { type: "h2", text: "비교·논리 연산자" },
         {
           type: "table",
@@ -160,6 +162,7 @@ System.out.println(s1.equals(s2));`,
       summary: "조건은 괄호와 boolean, 블록은 중괄호, 파이썬 elif는 else if",
       blocks: [
         { type: "key", text: "조건은 반드시 boolean, 실행할 문장은 중괄호로 묶는다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "❓", label: "`if (조건)`", sub: "boolean 만"}, {icon: "❓", label: "`else if`"}, {icon: "🔚", label: "`else`"}], edges: ["false", "false"]},
         { type: "h2", text: "기본 모양" },
         {
           type: "code",
@@ -225,6 +228,7 @@ if (t > 0)
       summary: "옛 switch의 break 함정, Java 14+ 화살표 case와 값을 돌려주는 yield",
       blocks: [
         { type: "key", text: "옛 switch 는 break 가 없으면 아래로 흘러내린다. 화살표 case 는 안 흘러내린다" },
+        {type: "figure", kind: "tree", root: {icon: "🔀", label: "switch"}, children: [{icon: "🌊", label: "옛 `case 1:`", sub: "break 없으면 흘러내림", ink: "red"}, {icon: "➡️", label: "`case 1 ->`", sub: "안 흘러내림", ink: "green"}]},
         { type: "h2", text: "옛 switch 문과 fall-through" },
         {
           type: "code",
@@ -310,6 +314,7 @@ System.out.println(point);`,
       summary: "for는 초기식;조건식;증감식, while은 조건 먼저, do-while은 최소 1번",
       blocks: [
         { type: "key", text: "횟수가 정해지면 for, 조건만 있으면 while, 일단 한 번은 do-while" },
+        {type: "figure", kind: "tree", root: {icon: "🔁", label: "반복문 고르기"}, children: [{icon: "🔢", label: "`for`", sub: "횟수가 정해짐"}, {icon: "❓", label: "`while`", sub: "조건만 있음", ink: "blue"}, {icon: "1️⃣", label: "`do-while`", sub: "일단 한 번", ink: "green"}]},
         { type: "h2", text: "for: 세 칸 구조" },
         {
           type: "code",
@@ -384,6 +389,7 @@ do {
       summary: "break는 탈출, continue는 건너뛰기, 라벨로 바깥 반복문까지 제어",
       blocks: [
         { type: "key", text: "break 와 continue 는 가장 가까운 반복문에만 걸린다. 바깥까지는 라벨로" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "🏷️", label: "`outer: for`", sub: "`break outer` → 여기까지 탈출"}, {icon: "🔁", label: "안쪽 `for`", sub: "그냥 `break` → 여기만 탈출"}]},
         { type: "h2", text: "break 와 continue" },
         {
           type: "code",

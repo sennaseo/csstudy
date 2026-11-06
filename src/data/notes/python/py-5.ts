@@ -12,6 +12,7 @@ export const PY5: NoteUnit = {
       summary: "모듈 = 변수·함수를 묶은 파이썬 파일 — 점(.)으로 안의 이름을 꺼내 쓴다",
       blocks: [
         { type: "key", text: "모듈 = 변수·함수를 묶은 .py 파일" },
+        {type: "figure", kind: "tree", root: {icon: "📄", label: "`math.py`", sub: "모듈"}, children: [{icon: "📥", label: "`import math`", leaves: ["`math.pi`"]}, {icon: "🎯", label: "`from math import pi`", leaves: ["`pi`"]}, {icon: "🏷️", label: "`as`", leaves: ["별명 붙이기"]}]},
         { type: "h2", text: "모듈(Module)과 두 가지 가져오기" },
         {
           type: "p",
@@ -112,6 +113,7 @@ help(math.sqrt)`,
       summary: "패키지 = 모듈을 모은 폴더. 내장은 바로 import, 외부는 pip install 먼저",
       blocks: [
         { type: "key", text: "패키지 = 모듈 폴더, 외부 패키지는 pip 로 설치" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "📦", label: "패키지", sub: "폴더"}, {icon: "📄", label: "모듈", sub: "`.py` 파일"}, {icon: "⚙️", label: "함수·변수", sub: "실제 도구"}], caption: "외부 패키지는 `pip install` 로 받아 온다"},
         { type: "h2", text: "표준 라이브러리와 패키지" },
         {
           type: "compare",
@@ -205,6 +207,7 @@ $ pip install requests`,
       summary: "조건이 True 인 블록만 실행 — elif 는 동시가 아니라 위에서부터 순차 검사",
       blocks: [
         { type: "key", text: "위에서부터 차례로 검사, 처음 True 인 블록 하나만" },
+        {type: "figure", kind: "flow", nodes: [{icon: "❓", label: "`if` 조건 A"}, {icon: "❓", label: "`elif` 조건 B"}, {icon: "🔚", label: "`else`", sub: "아무것도 아니면"}], edges: ["거짓이면", "거짓이면"], caption: "처음 참인 블록 하나만 실행"},
         { type: "h2", text: "제어문 3종류" },
         {
           type: "compare",
@@ -296,6 +299,7 @@ else:
       summary: "iterable 의 항목을 순서대로 하나씩 변수에 담아 블록을 실행한다",
       blocks: [
         { type: "key", text: "들어 있는 순서대로 하나씩 꺼내 블록 실행" },
+        {type: "figure", kind: "cycle", nodes: [{icon: "🧺", label: "하나 꺼냄"}, {icon: "⚙️", label: "블록 실행", ink: "blue"}, {icon: "❓", label: "남았나?", ink: "red"}]},
         { type: "h2", text: "기본 구조와 작동 원리" },
         {
           type: "code",
@@ -398,6 +402,7 @@ for elem in elements:
       summary: "조건이 참인 동안 반복 — 종료 조건이 없으면 영원히 돈다",
       blocks: [
         { type: "key", text: "조건이 거짓이 될 때까지 반복, 종료 조건 필수" },
+        {type: "figure", kind: "cycle", nodes: [{icon: "❓", label: "조건 검사", ink: "red"}, {icon: "⚙️", label: "블록 실행", ink: "blue"}, {icon: "✏️", label: "값 바꾸기", sub: "종료 조건으로", ink: "green"}]},
         { type: "h2", text: "while 문 기본 구조" },
         {
           type: "code",
@@ -473,6 +478,7 @@ print('잘했습니다!')`,
       summary: "break 는 즉시 중지, continue 는 다음 바퀴로, pass 는 아무것도 안 함",
       blocks: [
         { type: "key", text: "break 정지, continue 다음 바퀴, pass 그냥 통과" },
+        {type: "figure", kind: "tree", root: {icon: "🔁", label: "반복 중에"}, children: [{icon: "🛑", label: "`break`", sub: "반복 끝", ink: "red"}, {icon: "⏭️", label: "`continue`", sub: "다음 바퀴", ink: "blue"}, {icon: "🫥", label: "`pass`", sub: "아무것도 안 함"}]},
         { type: "h2", text: "세 키워드" },
         {
           type: "p",
@@ -578,6 +584,7 @@ if not found_even:
       summary: "[식 for 변수 in iterable if 조건] — 한 줄로 리스트 만들기, 남용 금지",
       blocks: [
         { type: "key", text: "빈 리스트 + append 4줄을 한 줄로" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📋", label: "빈 리스트 + for + append", sub: "4줄"}, {icon: "✨", label: "`[x*2 for x in nums]`", sub: "1줄", ink: "green"}], edges: ["줄이기"]},
         { type: "h2", text: "구조와 사용 전/후" },
         {
           type: "p",

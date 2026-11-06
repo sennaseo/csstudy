@@ -12,6 +12,7 @@ export const PY4: NoteUnit = {
       summary: "def 로 만들고 이름() 으로 부른다 — 입력은 매개변수, 출력은 return",
       blocks: [
         { type: "key", text: "`def` 로 한 번 만들고, `이름(인자)` 로 몇 번이든 부른다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📥", label: "인자", sub: "입력"}, {icon: "⚙️", label: "함수 본문", ink: "blue"}, {icon: "📤", label: "`return`", sub: "출력", ink: "green"}]},
         {
           type: "tip",
           kind: "analogy",
@@ -93,6 +94,7 @@ export const PY4: NoteUnit = {
       summary: "위치·기본값·키워드·*args·**kwargs — 권장 순서는 위치→기본→가변→가변키워드",
       blocks: [
         { type: "key", text: "정의할 때 빈칸 = 매개변수, 호출할 때 넣는 값 = 인자" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📍", label: "위치 인자"}, {icon: "🎚️", label: "기본값 인자"}, {icon: "📦", label: "`*args`", sub: "가변", ink: "blue"}, {icon: "🗝️", label: "`**kwargs`", sub: "가변 키워드", ink: "red"}], caption: "매개변수는 이 순서로 쓴다"},
         {
           type: "code",
           code: "def add_numbers(x, y):  # x, y 는 매개변수(parameter)\n    result = x + y\n    return result\n\na = 2\nb = 3\nsum_result = add_numbers(a, b)  # a, b 는 인자(argument)\nprint(sum_result)",
@@ -171,6 +173,7 @@ export const PY4: NoteUnit = {
       summary: "자기 자신을 부르되 반드시 종료 조건(base case)으로 수렴해야 한다",
       blocks: [
         { type: "key", text: "같은 문제를 더 작은 입력으로 자기 자신에게 다시 맡긴다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🪆", label: "`fact(3)`", sub: "3 × fact(2)"}, {icon: "🪆", label: "`fact(2)`", sub: "2 × fact(1)"}, {icon: "🪆", label: "`fact(1)`", sub: "= 1 (멈춤)", ink: "red"}, {icon: "🎁", label: "결과 6", sub: "거꾸로 올라오며 곱함", ink: "green"}], edges: ["내려감", "내려감", "값이 올라옴"]},
         {
           type: "tip",
           kind: "analogy",
@@ -243,6 +246,7 @@ export const PY4: NoteUnit = {
       summary: "import 없이 바로 쓰는 함수들 — map 은 하나씩 적용, zip 은 짝 맞추기",
       blocks: [
         { type: "key", text: "`map` 은 요소마다 함수 적용, `zip` 은 앞에서부터 짝짓기" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📋", label: "`['1','2']`"}, {icon: "🏭", label: "`map(int, …)`", sub: "하나씩 변환", ink: "blue"}, {icon: "🔢", label: "`[1, 2]`", ink: "green"}]},
         { type: "h2", text: "자주 쓰는 내장 함수" },
         {
           type: "code",
@@ -336,6 +340,7 @@ export const PY4: NoteUnit = {
       summary: "함수 안은 local, 밖은 global — 이름은 L→E→G→B 순서로 찾는다",
       blocks: [
         { type: "key", text: "이름은 Local → Enclosed → Global → Built-in 순서로 찾는다" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "📚", label: "Built-in", sub: "`print` `len`"}, {icon: "🌍", label: "Global", sub: "파일 맨 바깥"}, {icon: "📦", label: "Enclosed", sub: "감싼 함수"}, {icon: "🔎", label: "Local", sub: "지금 함수 — 여기서부터 찾음"}], caption: "안쪽(Local)부터 바깥으로 찾아 나간다"},
         { type: "h2", text: "local scope 와 global scope" },
         {
           type: "compare",
@@ -425,6 +430,7 @@ export const PY4: NoteUnit = {
       summary: "* 는 여럿을 tuple 로 묶거나 풀어서 인자로, ** 는 dict 를 키워드 인자로",
       blocks: [
         { type: "key", text: "`*` 는 묶기도 풀기도, `**` 는 dict 를 키워드 인자로 풀기" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🔢", label: "1, 2, 3"}, {icon: "📦", label: "`*`", sub: "묶기·풀기", ink: "red"}, {icon: "🧺", label: "`(1, 2, 3)`", ink: "green"}], edges: ["packing", "unpacking"]},
         { type: "h2", text: "Packing: 여러 값을 변수 하나에" },
         {
           type: "code",
@@ -489,6 +495,7 @@ export const PY4: NoteUnit = {
       summary: "이름 없는 한 줄 함수 — map 처럼 함수를 인자로 넘길 때 유용",
       blocks: [
         { type: "key", text: "`lambda 매개변수: 표현식` 한 줄짜리 이름 없는 함수" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🏷️", label: "`def`", sub: "이름 있는 함수"}, {icon: "✂️", label: "줄이기", ink: "blue"}, {icon: "⚡", label: "`lambda x: x*2`", sub: "이름 없는 한 줄", ink: "green"}]},
         {
           type: "tip",
           kind: "analogy",

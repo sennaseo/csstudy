@@ -12,6 +12,7 @@ export const JV1: NoteUnit = {
       summary: ".java를 javac로 번역해 .class를 만들고 JVM이 실행하는 흐름",
       blocks: [
         { type: "key", text: "자바는 한 번 번역(컴파일)해 두고 JVM 위에서 어디서나 실행" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "🧰", label: "JDK", sub: "개발 도구 (`javac`)"}, {icon: "🏃", label: "JRE", sub: "실행 환경 (라이브러리)"}, {icon: "⚙️", label: "JVM", sub: "바이트코드 실행기"}]},
         { type: "h2", text: "세 가지 이름 정리" },
         {
           type: "table",
@@ -82,6 +83,7 @@ public class Hello {
       summary: "모든 코드는 클래스 안, 시작점은 main, 출력은 print·println·printf",
       blocks: [
         { type: "key", text: "자바 프로그램은 클래스 안의 main 메서드에서 시작한다" },
+        {type: "figure", kind: "stack", nested: true, layers: [{icon: "📐", label: "`class Hello`", sub: "파일 이름과 같게"}, {icon: "🚪", label: "`main(String[] args)`", sub: "여기서 시작"}, {icon: "🖨️", label: "`System.out.println`", sub: "화면 출력"}]},
         { type: "h2", text: "기본 뼈대" },
         {
           type: "code",
@@ -154,6 +156,7 @@ System.out.println("합계: " + (3 + 4));`,
       summary: "타입을 먼저 적고 선언, 초기화해야 쓸 수 있음, camelCase와 예약어",
       blocks: [
         { type: "key", text: "자바 변수는 타입이 정해진 상자. 한 번 정한 타입은 못 바꾼다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "📦", label: "선언", sub: "`int age;`"}, {icon: "✏️", label: "초기화", sub: "`age = 20;`", ink: "blue"}, {icon: "🖨️", label: "사용", sub: "`println(age)`", ink: "green"}]},
         { type: "h2", text: "선언 → 초기화 → 사용" },
         {
           type: "code",
@@ -227,6 +230,7 @@ System.out.println(x);`,
       summary: "정수 4·실수 2·문자·논리 기본형 8종과 주소를 담는 참조형",
       blocks: [
         { type: "key", text: "기본형은 값 자체를, 참조형은 값이 있는 곳의 주소를 담는다" },
+        {type: "figure", kind: "refs", vars: [{name: "int n", to: 0}, {name: "String s", to: 1}], objs: [{icon: "🔢", label: "10", sub: "값이 직접 들어감", ink: "blue"}, {icon: "🏠", label: "\"hi\"", sub: "힙의 객체 (주소로)"}], caption: "기본형은 값, 참조형은 주소"},
         { type: "h2", text: "기본형 8가지" },
         {
           type: "table",
@@ -300,6 +304,7 @@ System.out.println((char) (c + 1));`,
       summary: "작은→큰 타입은 자동, 큰→작은 타입은 (타입) 강제, int 승격과 오버플로",
       blocks: [
         { type: "key", text: "작은 그릇에서 큰 그릇은 자동, 큰 그릇에서 작은 그릇은 직접 따른다" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🥛", label: "`byte`"}, {icon: "🥤", label: "`int`"}, {icon: "🪣", label: "`long`"}, {icon: "🛁", label: "`double`", ink: "blue"}], edges: ["자동", "자동", "자동"], caption: "작은 → 큰 그릇은 자동, 반대는 `(int)` 처럼 직접"},
         { type: "h2", text: "자동 형변환 vs 강제 형변환" },
         {
           type: "code",
@@ -381,6 +386,7 @@ System.out.println(1_000_000L * 3000);`,
       summary: "final로 값 고정, 진법·밑줄 리터럴, var로 타입 추론",
       blocks: [
         { type: "key", text: "final 은 값을 잠그고, var 는 타입 적기를 컴파일러에게 맡긴다" },
+        {type: "figure", kind: "tree", root: {icon: "🔐", label: "값·타입 다루기"}, children: [{icon: "🔒", label: "`final`", sub: "값 잠금", ink: "red"}, {icon: "✍️", label: "리터럴", sub: "`10` `'a'` `\"hi\"`"}, {icon: "🤖", label: "`var`", sub: "타입은 컴파일러가", ink: "blue"}]},
         { type: "h2", text: "final: 한 번 넣으면 끝" },
         {
           type: "code",
