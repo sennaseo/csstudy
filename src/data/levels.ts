@@ -81,6 +81,12 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-arch-8": "hard", // DDD: 도메인 중심 설계 의도·기술 교체 대응 판단 ★앵커
   "q-arch-9": "normal", // 무상태: 스케일아웃이 되는 이유 + 스테이트풀 대비
   "q-arch-10": "easy", // 좋은 이름 짓기가 최고의 유지보수 — 한 줄
+  "q-arch-11": "normal", // 결합도 6단계 순서 암기(자스제외공내)
+  "q-arch-12": "normal", // 코드 보고 판별: 객체 통째로 전달 = 스탬프
+  "q-arch-13": "normal", // 코드 보고 판별: 분기 플래그 전달 = 제어 (자료와 구분)
+  "q-arch-14": "normal", // 코드 보고 판별: 전역 변수 공유 = 공통 (내용과 구분)
+  "q-arch-15": "normal", // 코드 보고 판별: 출력→입력 사슬 = 순차적
+  "q-arch-16": "hard", // 코드 보고 판별: 같은 입력 공유 = 교환적 (순차·절차와 구분)
 
   // ─── Java ───
   "q-java-1": "easy", // JVM: 바이트코드 + 통역사 비유 한 줄
@@ -98,6 +104,16 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-java-13": "easy", // 캡슐화: 금고와 창구 비유 정의 하나
   "q-java-14": "normal", // 다형성: 호출 가능 범위(변수 타입) vs 실행 내용(실제 객체) 두 규칙
   "q-java-15": "normal", // 제네릭: TS 제네릭과 같은 빈칸 개념
+  "q-java-16": "hard", // 출력 추적: 생성자 순서 + 부모 생성자 속 동적 바인딩 + 필드 숨김 세 겹
+  "q-java-17": "hard", // 출력 추적: static/인스턴스 블록·생성자 실행 순서, 두 번째 객체
+  "q-java-18": "normal", // 출력 추적: static 메서드 숨김 vs 오버라이딩 두 규칙
+  "q-java-19": "hard", // 출력 추적: 오버로딩은 선언 타입 기준 + null 의 가장 구체적 타입
+  "q-java-20": "normal", // 출력 추적: super 호출 사슬을 따라 계산 + 필드 숨김
+  "q-java-21": "hard", // 출력 추적: return 값 확정 시점과 finally 의 return 덮어쓰기
+  "q-java-22": "hard", // 출력 추적: 문자열 상수 풀 + final 상수 접기 함정
+  "q-java-23": "normal", // 출력 추적: 전위/후위 증감 + 정수 나눗셈
+  "q-java-24": "normal", // 출력 추적: 참조 공유 vs 매개변수 재할당
+  "q-java-25": "normal", // 출력 추적: 재귀 호출 전후 출력 순서
 
   // ─── 운영체제 ───
   "q-os-1": "normal", // 주소 공간 4영역 + 공유로 메모리 아끼는 이유 나열

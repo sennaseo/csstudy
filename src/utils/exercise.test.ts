@@ -189,6 +189,7 @@ for (const q of QUESTIONS) {
 
   let hardSawChoice = false;
   for (const q of QUESTIONS) {
+    if (q.options) continue; // 직접 쓴 보기 문제는 설계상 항상 choice (아래 7번에서 따로 검사)
     for (const level of ["easy", "normal", "hard", null] as const) {
       const key = level ?? "mix";
       for (let i = 0; i < 20; i++) {
@@ -202,6 +203,32 @@ for (const q of QUESTIONS) {
     }
   }
   assert.ok(!hardSawChoice, "hard 레벨에서 choice 가 나오면 안 된다 (빈칸이 항상 성립해야 함)");
+}
+
+// 7) 직접 쓴 보기(options) 문제 — 레벨·forceType 무관하게 항상 choice,
+//    보기 수 = options 수, 정답 1개(= options[0]), qid 는 전부 달라야 한다.
+{
+  const q = {
+    id: "test-options",
+    category: QUESTIONS[0].category,
+    question: "출력은?",
+    answer: "3",
+    quizCode: "console.log(1 + 2)",
+    options: ["3", "12", "undefined", "NaN"],
+  };
+  for (const level of ["easy", "normal", "hard", null] as const) {
+    for (const force of [undefined, "blank", "match"] as const) {
+      const ex = buildExercise(q, level, force);
+      assert.equal(ex.type, "choice");
+      if (ex.type !== "choice") continue;
+      assert.equal(ex.choices.length, q.options.length);
+      const correct = ex.choices.filter((c) => c.correct);
+      assert.equal(correct.length, 1);
+      assert.equal(correct[0].text, "3");
+      assert.equal(correct[0].qid, q.id);
+      assert.equal(new Set(ex.choices.map((c) => c.qid)).size, ex.choices.length, "qid 중복");
+    }
+  }
 }
 
 console.log("✅ exercise 자체 점검 통과");

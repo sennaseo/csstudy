@@ -849,6 +849,12 @@ export function QuestionCard() {
           {showTitle && (
             <h2 className="break-keep text-xl font-bold leading-snug text-ink-900">{q.question}</h2>
           )}
+          {/* "코드 보고 맞히기" 지문. 보기 4개와 한 화면에 들어오게 높이 상한 + 안쪽 스크롤. */}
+          {showTitle && q.quizCode && (
+            <pre className="max-h-[35dvh] overflow-auto rounded-xl bg-ink-900 p-4 font-mono text-[13px] leading-relaxed text-ink-100">
+              <code>{q.quizCode}</code>
+            </pre>
+          )}
 
           {/* 오답 흔들림은 보기 묶음에만 — 제목·시트까지 흔들면 읽기 어렵다. */}
           <div ref={exerciseRef} className={"mt-1 " + (shake ? "shake" : "")}>

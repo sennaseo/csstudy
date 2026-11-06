@@ -45,10 +45,14 @@ export function summaryOf(q: Question): string {
   return first.length > 80 ? first.slice(0, 78) + "…" : first;
 }
 
-/** "같은 카테고리 우선"으로 오답 후보 문제들을 뽑는다. */
+/**
+ * "같은 카테고리 우선"으로 오답 후보 문제들을 뽑는다.
+ * quizCode 문제는 빼둔다 — 코드 없이 질문 글만 보이면 매칭/보기로서 의미가 없다.
+ */
 function distractorsOf(q: Question, count: number): Question[] {
-  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
-  const otherCat = QUESTIONS.filter((x) => x.id !== q.id && x.category !== q.category);
+  const pool = QUESTIONS.filter((x) => x.id !== q.id && !x.quizCode);
+  const sameCat = pool.filter((x) => x.category === q.category);
+  const otherCat = pool.filter((x) => x.category !== q.category);
   return [...shuffle(sameCat), ...shuffle(otherCat)].slice(0, count);
 }
 
@@ -203,6 +207,20 @@ export function buildChoiceExercise(q: Question): ChoiceExercise {
   return { type: "choice", choices: shuffle(choices) };
 }
 
+/**
+ * 작성자가 직접 쓴 보기(q.options)로 객관식을 만든다. [0] 이 정답.
+ * 오답 qid 는 `${id}#1`… 처럼 서로 다르게 — QuestionCard 의 채점·하이라이트·
+ * React key·숫자 단축키가 전부 qid 기준이라 겹치면 안 된다.
+ */
+function buildOptionsExercise(q: Question, options: string[]): ChoiceExercise {
+  const choices = options.map((text, i) => ({
+    qid: i === 0 ? q.id : `${q.id}#${i}`,
+    text,
+    correct: i === 0,
+  }));
+  return { type: "choice", choices: shuffle(choices) };
+}
+
 /** 빈칸 채우기. 키워드/오답 단어가 부족하면 null (→ 다른 유형으로 폴백). */
 export function buildBlankExercise(q: Question): BlankExercise | null {
   const summary = summaryOf(q);
@@ -245,7 +263,7 @@ export function buildOxExercise(q: Question): OxExercise | null {
   if (Math.random() < 0.5) return { type: "ox", statement: summaryOf(q), isTrue: true };
   const twisted = OX_FALSE[q.id];
   if (twisted) return { type: "ox", statement: twisted, isTrue: false };
-  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
+  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category && !x.quizCode);
   const [other] = shuffle(sameCat);
   if (!other) return null;
   return { type: "ox", statement: summaryOf(other), isTrue: false };
@@ -313,6 +331,9 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
  * - forceType 을 주면 그 유형을 우선 시도 (디버깅/특정 모드용).
  */
 export function buildExercise(q: Question, level: Level | null = null, forceType?: ExerciseType): Exercise {
+  // 직접 쓴 보기가 있으면 레벨·forceType 무관하게 항상 객관식.
+  if (q.options) return buildOptionsExercise(q, q.options);
+
   const tryBuild = (t: ExerciseType): Exercise | null => {
     switch (t) {
       case "choice":
