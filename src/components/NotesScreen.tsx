@@ -384,10 +384,11 @@ function NoteBody({ note }: { note: Note }) {
   );
 }
 
-// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green 위에만.
+// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green / ink-900 위에만.
 const COVERS = [
   { cover: "bg-accent", spine: "bg-accent-dim" },
   { cover: "bg-duo-green", spine: "bg-duo-green-dim" },
+  { cover: "bg-ink-900", spine: "bg-ink-700" },
 ] as const;
 
 export function NotesScreen() {
