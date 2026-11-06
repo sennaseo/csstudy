@@ -132,14 +132,23 @@ function NoteArt({ note }: { note: Note }) {
       );
     case "figure": {
       // 그림 속 아이콘 최대 3개. 흐름·순환이면 사이에 화살표.
+      // 아이콘은 고정 크기가 아니라 타일 칸 폭에 따라 줄어든다 — 폰이 좁아도 칸 밖으로 안 나간다.
       const icons = figureIcons(b).slice(0, 3);
       const arrow = b.kind === "flow" || b.kind === "cycle";
       return (
-        <div className="flex items-center justify-center gap-0.5">
+        <div className="flex w-full min-w-0 items-center justify-center gap-[1cqw]">
           {icons.map((ic, i) => (
-            <span key={i} className="flex items-center gap-0.5">
-              {i > 0 && <span className="text-[11px] font-black text-reel">{arrow ? "→" : "·"}</span>}
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl border-2 border-reel/40 bg-white text-xl">{ic}</span>
+            <span key={i} className="contents">
+              {i > 0 && (
+                <span className="shrink-0 font-black leading-none text-reel" style={{ fontSize: "min(8cqw, 11px)" }}>
+                  {arrow ? "→" : "·"}
+                </span>
+              )}
+              {/* 크기를 타일 그림 칸 폭(cqw)에 묶는다 — 아이콘 3개 + 화살표 2개가 칸의 약 90%.
+                  cqw 를 모르는 옛 WebView 는 style 을 무시하고 text-lg(18px)로 떨어진다. */}
+              <span className="shrink-0 text-lg leading-none" style={{ fontSize: "min(24cqw, 30px)" }}>
+                {ic}
+              </span>
             </span>
           ))}
         </div>
@@ -172,7 +181,7 @@ function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: Not
                 aria-label={n.title}
                 className="flex min-w-0 flex-col rounded-[20px] bg-white p-1.5 pb-2.5 text-left shadow-chip transition-transform active:scale-[0.97]"
               >
-                <span className="flex h-[84px] flex-col justify-center overflow-hidden rounded-[14px] bg-reel-tile p-2">
+                <span className="flex h-[84px] flex-col justify-center overflow-hidden rounded-[14px] bg-reel-tile p-1.5 [container-type:inline-size]">
                   <NoteArt note={n} />
                 </span>
                 {/* 번호와 제목을 한 줄 글로 이어 쓴다 — 줄이 넘치면 둘째 줄이 왼쪽 끝에서 시작한다. */}
