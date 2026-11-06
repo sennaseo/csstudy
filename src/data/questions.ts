@@ -850,6 +850,121 @@ function addDays(date: Date, days: number) {
   return result;
 }`,
   },
+  // ─── 구조설계: 결합도·응집도 (정보처리기사 실기식) ───
+  // 결합도(낮을수록 좋음): 자료 < 스탬프 < 제어 < 외부 < 공통 < 내용  (자스제외공내)
+  // 응집도(높을수록 좋음): 우연 < 논리 < 시간 < 절차 < 교환 < 순차 < 기능  (우논시절교순기)
+  {
+    id: "q-arch-11",
+    category: "구조설계",
+    question: "결합도를 약한(좋은) 것부터 강한(나쁜) 것 순서로 바르게 나열한 것은?",
+    options: [
+      "자료 < 스탬프 < 제어 < 외부 < 공통 < 내용",
+      "스탬프 < 자료 < 제어 < 공통 < 외부 < 내용",
+      "자료 < 스탬프 < 외부 < 제어 < 공통 < 내용",
+      "자료 < 제어 < 스탬프 < 외부 < 내용 < 공통",
+    ],
+    answer:
+      "결합도는 두 모듈이 얼마나 단단히 엮였는지다. 이웃끼리 쪽지만 주고받으면 약하고, 남의 집 열쇠를 갖고 드나들면 강하다. 약할수록 좋다. 암기는 '자스제외공내'. ① 자료: 필요한 값 하나씩만 넘긴다. ② 스탬프: 배열이나 객체(자료 구조)를 통째로 넘긴다. ③ 제어: 플래그 같은 제어 신호를 넘겨 상대의 처리 흐름을 정한다. ④ 외부: 바깥의 같은 데이터 형식·프로토콜·장치를 함께 쓴다. ⑤ 공통: 전역 변수를 함께 쓴다. ⑥ 내용: 남의 모듈 내부를 직접 들여다보고 고친다. 뒤로 갈수록 한쪽을 고치면 다른 쪽이 깨질 범위가 넓어진다.",
+  },
+  {
+    id: "q-arch-12",
+    category: "구조설계",
+    question: "ReportPrinter 와 GradeService 사이의 결합도는?",
+    quizCode: `class Student { String name; int kor, eng, math; }
+
+class GradeService {
+    double average(Student s) {
+        return (s.kor + s.eng + s.math) / 3.0;
+    }
+}
+class ReportPrinter {
+    void print(Student s) {
+        double avg = new GradeService().average(s);
+        System.out.println(s.name + " " + avg);
+    }
+}`,
+    options: ["스탬프 결합도", "자료 결합도", "제어 결합도", "공통 결합도"],
+    answer:
+      "점수 세 개만 필요한데 학생 서류철을 통째로 건넨 상황이다. 이렇게 객체·배열·레코드 같은 자료 구조를 통째로 넘기면 스탬프 결합도다. 판별 단서는 넘기는 값의 모양이다. average 는 kor, eng, math 만 쓰는데 Student 객체 전체를 받는다. 그래서 Student 에 필드가 바뀌면 average 와 상관없는 변경에도 영향을 받을 수 있다. average(int kor, int eng, int math) 처럼 필요한 값만 넘기면 한 단계 약한 자료 결합도가 된다. 단순한 값 하나가 아니라서 자료 결합도가 아니고, 흐름을 바꾸는 플래그가 아니라서 제어 결합도도 아니다. 순서 암기: 자스제외공내(자료 < 스탬프 < 제어 < 외부 < 공통 < 내용).",
+  },
+  {
+    id: "q-arch-13",
+    category: "구조설계",
+    question: "Main 과 Printer 사이의 결합도는?",
+    quizCode: `class Printer {
+    void print(String text, boolean upper) {
+        if (upper) System.out.println(text.toUpperCase());
+        else System.out.println(text.toLowerCase());
+    }
+}
+class Main {
+    void run() {
+        new Printer().print("Hello", true);
+    }
+}`,
+    options: ["제어 결합도", "자료 결합도", "스탬프 결합도", "내용 결합도"],
+    answer:
+      "식당 손님이 요리사에게 '불 세게, 소금 먼저' 하고 조리 순서까지 지시하는 상황이다. 넘기는 값이 결과를 만드는 재료가 아니라 상대의 처리 방법을 고르는 스위치면 제어 결합도다. 판별 단서는 받는 쪽 코드에 그 값으로 if 분기하는 부분이 있느냐다. upper 는 boolean 하나라 겉보기엔 자료 결합도 같지만, Printer 안에서 대문자로 찍을지 소문자로 찍을지를 이 플래그가 정한다(제어 플래그). 그러면 호출하는 쪽이 Printer 내부 동작 방식을 알아야 한다. printUpper(), printLower() 처럼 메서드를 나누면 플래그가 사라진다. 순서 암기: 자스제외공내.",
+  },
+  {
+    id: "q-arch-14",
+    category: "구조설계",
+    question: "Admin 과 Menu 사이의 결합도는?",
+    quizCode: `class Config {
+    static int mode = 0;
+}
+class Admin {
+    void login() { Config.mode = 1; }
+}
+class Menu {
+    void show() {
+        if (Config.mode == 1) System.out.println("관리자 메뉴");
+        else System.out.println("일반 메뉴");
+    }
+}`,
+    options: ["공통 결합도", "외부 결합도", "제어 결합도", "내용 결합도"],
+    answer:
+      "사무실 공용 화이트보드에 누구나 적고 지우는 상황이다. Admin 과 Menu 는 서로를 부르지도 않는데, 둘 다 Config.mode 라는 전역 변수(static 필드)를 같이 쓴다. 이렇게 전역 데이터를 공유하면 공통 결합도다. 판별 단서는 값을 매개변수로 주고받지 않고 모두가 보는 한 곳을 통해 엮였다는 점이다. 누가 언제 mode 를 바꿨는지 추적하기 어렵고, mode 를 고치면 그걸 쓰는 모든 클래스를 뒤져야 한다. 내용 결합도와 헷갈리기 쉬운데, 내용 결합도는 한 모듈이 다른 모듈의 내부 값이나 코드를 직접 건드리는 경우다(예: 다른 클래스의 private 해야 할 필드를 메서드를 거치지 않고 바로 고침). 여기선 공용 칸을 같이 쓸 뿐이라 공통이다. 순서 암기: 자스제외공내.",
+  },
+  {
+    id: "q-arch-15",
+    category: "구조설계",
+    question: "run() 메서드의 응집도는?",
+    quizCode: `class OrderJob {
+    String read()       { return "3"; }
+    int parse(String s) { return Integer.parseInt(s); }
+    int price(int qty)  { return qty * 1000; }
+
+    void run() {
+        String raw = read();
+        int qty = parse(raw);
+        int total = price(qty);
+        System.out.println(total);
+    }
+}`,
+    options: ["순차적 응집도", "교환적 응집도", "절차적 응집도", "기능적 응집도"],
+    answer:
+      "공장 컨베이어 벨트처럼 앞 공정에서 나온 물건이 그대로 다음 공정으로 들어간다. read 의 출력 raw 가 parse 의 입력이 되고, parse 의 출력 qty 가 price 의 입력이 된다. 이렇게 앞 단계의 출력이 다음 단계의 입력이면 순차적 응집도다. 판별 단서는 변수 하나가 바로 다음 줄의 인자로 넘어가는 사슬이다. 절차적 응집도는 순서대로 실행만 할 뿐 데이터가 이어지지 않을 때고, 교환적 응집도는 여러 작업이 같은 입력을 나눠 쓸 때다. 응집도는 높을수록 좋고 순서 암기는 '우논시절교순기'(우연 < 논리 < 시간 < 절차 < 교환 < 순차 < 기능). 순차는 기능 바로 아래, 두 번째로 좋은 단계다.",
+  },
+  {
+    id: "q-arch-16",
+    category: "구조설계",
+    question: "run() 메서드의 응집도는?",
+    quizCode: `class ScoreReport {
+    void run(int[] scores) {
+        int sum = 0;
+        for (int s : scores) sum += s;
+
+        int max = 0;
+        for (int s : scores) max = Math.max(max, s);
+
+        System.out.println(sum + " " + max);
+    }
+}`,
+    options: ["교환적 응집도", "순차적 응집도", "절차적 응집도", "시간적 응집도"],
+    answer:
+      "같은 재료(scores)를 두 요리사가 나눠 받아 하나는 합계를, 하나는 최댓값을 만든다. 서로의 결과를 기다리지 않고 같은 입력만 같이 쓴다. 이렇게 동일한 입력(또는 출력)을 쓰는 작업끼리 모여 있으면 교환적 응집도다. 판별 단서는 합계를 구하는 반복문과 최댓값을 구하는 반복문이 둘 다 scores 를 읽지만, sum 이 max 계산에 쓰이지 않는다는 점이다. sum 이 다음 계산의 입력으로 들어갔다면 순차적 응집도였다. 아무 데이터 연관 없이 순서대로 실행만 하면 절차적, 같은 시점(예: 프로그램 시작 시 초기화)에 한다는 이유만으로 묶으면 시간적이다. 응집도 순서 암기는 '우논시절교순기', 교환은 순차 바로 아래다.",
+  },
   {
     id: "q-java-1",
     category: "Java",
@@ -1194,6 +1309,239 @@ List<Integer> nums = new ArrayList<>(); // ✅
 // TS 와 똑같은 생각
 // class Box<T> { item!: T }
 // const [n, setN] = useState<number>(0);`,
+  },
+  // ─── Java 출력 추적 (정보처리기사 실기식: 코드 보고 출력 고르기) ───
+  // quizCode = 앞면 코드, options[0] = 정답. 모든 출력은 JDK 21 로 실제 실행해 확인했다.
+  {
+    id: "q-java-16",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `class Parent {
+    int x = 10;
+    Parent() {
+        System.out.print("P");
+        show();
+    }
+    void show() { System.out.print("p" + x); }
+}
+class Child extends Parent {
+    int x = 20;
+    Child() {
+        System.out.print("C");
+    }
+    void show() { System.out.print("c" + x); }
+}
+public class Test {
+    public static void main(String[] args) {
+        Parent a = new Child();
+        System.out.print(a.x);
+    }
+}`,
+    options: ["Pc0C10", "Pc20C10", "Pp10C10", "Pc0C20"],
+    answer:
+      "집을 지을 때 1층(부모)을 먼저 올리고 2층(자식)을 올린다. 그런데 1층 공사 중에 2층 방 불을 켜 보면 아직 아무것도 없다. 실행 순서대로 따라가 보자. ① new Child() 를 하면 Child 생성자 첫 줄에 숨어 있는 super() 가 먼저 돈다. ② Parent 쪽 필드 x 에 10 이 들어가고 P 를 찍는다. ③ show() 를 부르는데, 실제 객체가 Child 라서 Child 의 show 가 불린다(동적 바인딩). ④ 이때 Child 의 x 는 아직 20 이 들어가기 전이라 기본값 0 이다. 그래서 c0 이 찍힌다. ⑤ 부모 생성자가 끝나면 그제야 Child 의 x 에 20 이 들어가고 C 를 찍는다. ⑥ a.x 는 메서드가 아니라 필드다. 필드는 덮어쓰기가 안 되고 변수 타입(Parent)의 x 를 본다(필드 숨김). 그래서 10. 합치면 Pc0C10. 메서드는 실제 객체를 따라가고, 필드는 변수 타입을 따라간다.",
+  },
+  {
+    id: "q-java-17",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `class A {
+    static { System.out.print("1"); }
+    { System.out.print("2"); }
+    A() { System.out.print("3"); }
+}
+class B extends A {
+    static { System.out.print("4"); }
+    { System.out.print("5"); }
+    B() { System.out.print("6"); }
+}
+public class Test {
+    public static void main(String[] args) {
+        new B();
+        new B();
+    }
+}`,
+    options: ["1423562356", "142356142356", "1234562356", "123456123456"],
+    answer:
+      "가게 개업식은 한 번만 하고, 손님은 올 때마다 맞는다. static 블록이 개업식이고 인스턴스 블록과 생성자가 손님맞이다. ① 처음 B 를 쓰려면 클래스를 메모리에 올려야 한다(클래스 로딩). 부모 A 가 먼저 올라가서 1, 그다음 B 가 올라가서 4. ② 객체를 만들 때는 부모 몫부터 끝낸다. A 의 인스턴스 블록 2, A 생성자 3. ③ 그다음 B 의 인스턴스 블록 5, B 생성자 6. 여기까지 142356. ④ 두 번째 new B() 에서는 클래스가 이미 올라가 있어서 static 블록(1, 4)은 다시 안 돈다. 2356 만 찍힌다. 합치면 1423562356. 순서 공식: 부모 static, 자식 static, 그다음 객체마다 부모(블록, 생성자), 자식(블록, 생성자).",
+  },
+  {
+    id: "q-java-18",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `class A {
+    static String s() { return "A"; }
+    String i() { return "a"; }
+}
+class B extends A {
+    static String s() { return "B"; }
+    String i() { return "b"; }
+}
+public class Test {
+    public static void main(String[] args) {
+        A obj = new B();
+        System.out.print(obj.s() + obj.i());
+    }
+}`,
+    options: ["Ab", "Bb", "Aa", "Ba"],
+    answer:
+      "static 메서드는 반 공용 칠판이고, 일반 메서드는 학생 각자의 공책이다. 칠판은 반 이름표(변수 타입)를 보고 찾아가고, 공책은 실제 학생(객체)을 보고 찾아간다. ① obj.s() 는 static 이라 객체를 안 본다. 변수 타입이 A 라서 A 의 s() 가 불려 A 가 나온다. 자식이 같은 이름을 만들어도 덮어쓰기가 아니라 가리기일 뿐이다(메서드 숨김, hiding). ② obj.i() 는 일반 메서드라 실제 객체 B 의 i() 가 불린다(오버라이딩, 동적 바인딩). b 가 나온다. 합치면 Ab. static 메서드는 원래 obj.s() 가 아니라 A.s() 처럼 클래스 이름으로 부르는 게 맞고, 그렇게 쓰면 헷갈릴 일이 없다.",
+  },
+  {
+    id: "q-java-19",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    static void p(Object o) { System.out.print("O"); }
+    static void p(String s) { System.out.print("S"); }
+
+    public static void main(String[] args) {
+        Object x = "hi";
+        p(x);
+        p("hi");
+        p(null);
+    }
+}`,
+    options: ["OSS", "SSS", "OSO", "SSO"],
+    answer:
+      "택배 기사가 상자 겉면 라벨만 보고 창고를 고른다고 생각하면 된다. 상자 안에 뭐가 들었는지는 안 열어 본다. 오버로딩은 컴파일할 때 변수의 선언 타입(라벨)만 보고 어느 메서드를 부를지 정한다(정적 바인딩). ① p(x): 안에는 문자열이 들어 있지만 라벨이 Object 라서 p(Object) 가 골라진다. O. ② p(\"hi\"): 라벨부터 String 이라 p(String). S. ③ p(null): null 은 Object 에도 String 에도 들어갈 수 있다. 이럴 때 자바는 더 구체적인 쪽(String 이 Object 의 자식)을 고른다. S. 합치면 OSS. 실제 객체를 보고 고르는 건 오버라이딩이고, 오버로딩은 라벨만 본다는 게 핵심이다.",
+  },
+  {
+    id: "q-java-20",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `class A {
+    int v = 1;
+    int get() { return v; }
+}
+class B extends A {
+    int v = 2;
+    int get() { return v + super.get() * 10; }
+}
+class C extends B {
+    int v = 3;
+    int get() { return v + super.get() * 10; }
+}
+public class Test {
+    public static void main(String[] args) {
+        A a = new C();
+        System.out.print(a.get() + " " + a.v);
+    }
+}`,
+    options: ["123 1", "321 1", "123 3", "333 1"],
+    answer:
+      "3층 건물에서 3층이 2층에, 2층이 1층에 계산을 부탁하는 모양이다. ① a.get() 은 실제 객체 C 의 get() 이 불린다(동적 바인딩). ② C 의 get 안에서 v 는 C 자기 필드라 3, super.get() 은 바로 위 B 의 get() 을 부른다. ③ B 의 get 안에서 v 는 B 의 필드라 2, super.get() 은 A 의 get() 을 부른다. ④ A 의 get 은 A 의 v 인 1 을 돌려준다. ⑤ 이제 거꾸로 올라온다. B 는 2 + 1 × 10 = 12, C 는 3 + 12 × 10 = 123. ⑥ a.v 는 필드라서 변수 타입 A 의 v 를 본다(필드 숨김). 1. 합치면 123 1. 메서드 안에서 쓰는 필드는 그 메서드가 적힌 클래스의 필드라는 점도 같이 기억해 두자.",
+  },
+  {
+    id: "q-java-21",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    static int f() {
+        int x = 1;
+        try {
+            x = 2;
+            return x;
+        } finally {
+            x = 3;
+            System.out.print("F");
+        }
+    }
+    static int g() {
+        try { throw new RuntimeException(); }
+        catch (Exception e) { return 1; }
+        finally { return 2; }
+    }
+    public static void main(String[] args) {
+        System.out.print(f());
+        System.out.print(g());
+    }
+}`,
+    options: ["F22", "F32", "2F2", "F21"],
+    answer:
+      "finally 는 퇴근 전 마지막 문단속이다. return 으로 나가려 해도 문단속은 꼭 하고 나간다. ① f() 에서 x 가 2 가 되고 return x 를 만난다. 이 순간 돌려줄 값 2 를 미리 봉투에 담아 둔다. ② 나가기 전에 finally 가 돈다. x 를 3 으로 바꾸고 F 를 찍지만, 봉투 속 2 는 이미 담긴 값이라 안 바뀐다. ③ f() 가 끝나서 main 이 2 를 찍는다. 여기까지 F2. ④ g() 에서 예외가 터져 catch 로 가고 return 1 을 봉투에 담는다. ⑤ 그런데 finally 안에도 return 2 가 있다. finally 의 return 이 봉투를 통째로 바꿔치기한다. 그래서 2. 합치면 F22. finally 에 return 을 쓰면 원래 결과와 예외까지 덮어 버려서 실무에선 쓰지 않는다.",
+  },
+  {
+    id: "q-java-22",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    public static void main(String[] args) {
+        String a = "java";
+        String b = "ja" + "va";
+        String c = "ja";
+        String d = c + "va";
+        final String e = "ja";
+        String f = e + "va";
+        System.out.print((a == b) + " ");
+        System.out.print((a == d) + " ");
+        System.out.print((a == f) + " ");
+        System.out.print(a.equals(d));
+    }
+}`,
+    options: ["true false true true", "true true true true", "false false false true", "true false false true"],
+    answer:
+      "문자열 리터럴은 공용 도서관(문자열 상수 풀)에 한 권만 꽂아 두고 다 같이 빌려 본다. == 는 같은 책(같은 주소)인지 묻고, equals 는 내용이 같은지 묻는다. ① b = \"ja\" + \"va\" 는 둘 다 리터럴이라 컴파일러가 미리 \"java\" 로 합쳐 버린다(컴파일 타임 상수 접기). 도서관의 같은 책이라 a == b 는 true. ② d = c + \"va\" 에서 c 는 그냥 변수라 실행 중에 새 문자열을 만든다. 내용은 같아도 새로 찍은 책이라 a == d 는 false. ③ e 는 final 에 리터럴을 넣어서 컴파일러가 상수로 본다. 그래서 e + \"va\" 도 미리 합쳐져 a == f 는 true. ④ equals 는 내용만 보니 true. 함정은 ③이다. final 이 붙으면 변수끼리 더해도 상수 접기가 된다. 실무에서 문자열 비교는 항상 equals 를 쓴다.",
+  },
+  {
+    id: "q-java-23",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    public static void main(String[] args) {
+        int a = 7, b = 2;
+        int c = a++ / b;
+        int d = --a % b + c;
+        double e = a / b;
+        System.out.print(c + " " + d + " " + e);
+    }
+}`,
+    options: ["3 4 3.0", "3 4 3.5", "4 5 3.0", "4 5 3.5"],
+    answer:
+      "a++ 는 '쓰고 나서 올리기', --a 는 '내리고 나서 쓰기'다. ① c = a++ / b: 지금 값 7 을 먼저 쓰고 a 는 8 이 된다(후위 증가). 7 / 2 는 정수끼리 나눗셈이라 소수점을 버리고 3. ② d = --a % b + c: a 를 먼저 7 로 내리고 쓴다(전위 감소). 7 % 2 는 1, 여기에 c 3 을 더해 4. ③ e = a / b: 7 / 2 를 정수끼리 먼저 계산해서 3 이 나오고, 그 3 을 double 칸에 담으면서 3.0 이 된다. 담는 칸이 double 이어도 계산은 이미 정수로 끝난 뒤다. 3.5 를 원하면 a / 2.0 이나 (double) a / b 처럼 한쪽을 실수로 만들어야 한다. 파이썬의 7 / 2 = 3.5 와 다르고, 파이썬 7 // 2 와 같다고 보면 된다.",
+  },
+  {
+    id: "q-java-24",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    static void change(int[] arr, int n) {
+        arr[0] = 100;
+        n = 100;
+        arr = new int[]{9, 9};
+        arr[1] = 50;
+    }
+    public static void main(String[] args) {
+        int[] a = {1, 2};
+        int[] b = a;
+        int n = 1;
+        b[1] = 20;
+        change(a, n);
+        System.out.print(a[0] + " " + a[1] + " " + n);
+    }
+}`,
+    options: ["100 20 1", "100 50 100", "1 2 1", "100 50 1"],
+    answer:
+      "배열 변수는 사물함 자체가 아니라 사물함 열쇠다. 열쇠를 복사해 주면 같은 사물함을 연다. ① b = a 는 열쇠 복사라서 a 와 b 가 같은 배열을 가리킨다(참조 공유). b[1] = 20 이면 a[1] 도 20. ② change(a, n) 을 부르면 열쇠 사본과 숫자 사본이 넘어간다(값에 의한 전달). ③ arr[0] = 100 은 사본 열쇠로 같은 사물함을 열어 바꿨으니 a[0] 이 100 이 된다. ④ n = 100 은 숫자 사본만 바꿨으니 main 의 n 은 그대로 1. ⑤ arr = new int[]{9, 9} 는 사본 열쇠를 새 사물함 열쇠로 바꿔 쥔 것뿐이다. 그 뒤 arr[1] = 50 은 새 사물함에 들어가고 a 와는 상관없다. 합치면 100 20 1. 파이썬 리스트를 함수에 넘길 때와 똑같이 움직인다.",
+  },
+  {
+    id: "q-java-25",
+    category: "Java",
+    question: "다음 코드의 출력 결과는?",
+    quizCode: `public class Test {
+    static void f(int n) {
+        if (n == 0) return;
+        System.out.print(n);
+        f(n - 1);
+        System.out.print(n);
+    }
+    public static void main(String[] args) {
+        f(3);
+    }
+}`,
+    options: ["321123", "321", "123321", "321321"],
+    answer:
+      "계단을 내려가면서 층수를 한 번 외치고, 다시 올라오면서 또 외치는 모양이다. ① f(3) 이 3 을 찍고 f(2) 를 부른다. 이때 f(3) 은 아래 출력문을 남겨 둔 채 멈춰서 기다린다(호출 스택에 쌓임). ② f(2) 가 2, f(1) 이 1 을 찍고 f(0) 을 부른다. ③ f(0) 은 바로 return 한다. 바닥에 닿았다. ④ 이제 기다리던 순서 거꾸로 돌아온다. f(1) 이 남은 출력으로 1, f(2) 가 2, f(3) 이 3 을 찍는다. 합치면 321123. 재귀 호출 앞의 출력은 내려가는 순서, 뒤의 출력은 올라오는 순서(나중에 들어간 것이 먼저 나옴)로 찍힌다.",
   },
 
   {
@@ -3756,6 +4104,16 @@ export const SUMMARIES: Record<string, string> = {
   "q-java-13": "캡슐화는 필드를 프라이빗으로 숨기고 게터 세터로 연다",
   "q-java-14": "부모 타입에 담아도 실제 실행은 자식 객체의 메서드다",
   "q-java-15": "제네릭은 타입을 빈칸으로 두고 쓰는 쪽이 채워 넣는다",
+  "q-java-16": "부모 생성자에서 부른 오버라이딩 메서드는 아직 0인 자식 필드를 본다",
+  "q-java-17": "static 블록은 처음 한 번만, 인스턴스 블록은 객체마다 부모부터 돈다",
+  "q-java-18": "static 메서드는 변수 타입을 따라가고 일반 메서드는 실제 객체를 따라간다",
+  "q-java-19": "오버로딩은 선언 타입으로 고르고 null 은 더 구체적인 타입이 받는다",
+  "q-java-20": "super.get() 사슬은 위층부터 계산해 내려오고 필드는 변수 타입 것을 쓴다",
+  "q-java-21": "finally 는 return 뒤에도 돌고 그 안의 return 이 결과를 덮어쓴다",
+  "q-java-22": "리터럴과 final 상수끼리 더한 문자열은 컴파일 때 합쳐져 == 가 true 다",
+  "q-java-23": "후위 증가는 쓰고 나서 올리고 정수끼리 나누면 소수점이 버려진다",
+  "q-java-24": "배열은 참조를 복사해 넘기므로 내용 수정은 보이고 재할당은 안 보인다",
+  "q-java-25": "재귀 호출 뒤의 출력은 돌아오면서 역순으로 찍힌다",
   "q-spring-1": "스프링부트는 서버 설정을 미리 해둔 자바 웹 밀키트다",
   "q-spring-2": "레스트 컨트롤러에 매핑을 붙이면 주소와 메서드가 연결된다",
   "q-spring-3": "의존성 주입은 필요한 객체를 스프링이 만들어 꽂아주는 것",
@@ -3790,6 +4148,12 @@ export const SUMMARIES: Record<string, string> = {
   "q-arch-8": "도메인 주도 설계는 코드를 현실 업무 용어에 맞춰 짠다",
   "q-arch-9": "무상태 서버는 아무 노드나 처리해도 돼서 늘리기 쉽다",
   "q-arch-10": "좋은 이름 짓기가 가장 싸고 빠른 유지보수 수단이다",
+  "q-arch-11": "결합도는 자료 스탬프 제어 외부 공통 내용 순으로 강해진다",
+  "q-arch-12": "객체나 배열을 통째로 넘기면 스탬프 결합도다",
+  "q-arch-13": "상대의 처리 흐름을 정하는 플래그를 넘기면 제어 결합도다",
+  "q-arch-14": "전역 변수를 함께 읽고 쓰면 공통 결합도다",
+  "q-arch-15": "앞 작업의 출력이 다음 작업의 입력이면 순차적 응집도다",
+  "q-arch-16": "같은 입력을 나눠 쓰는 작업끼리 모이면 교환적 응집도다",
   "q-interview-1": "기술 답변은 한 줄 정의 특징 내 경험 순으로 쌓는다",
   "q-interview-2": "스프링은 객체를 꽂아주고 공통 관심사를 대신 붙여준다",
   "q-interview-3": "컨트롤러와 서비스를 나누면 로직만 따로 테스트할 수 있다",
