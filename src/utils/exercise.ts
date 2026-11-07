@@ -24,6 +24,7 @@ import type {
 } from "../types";
 import { QUESTIONS, SUMMARIES } from "../data/questions";
 import { OX_FALSE } from "../data/oxFalse";
+import { CHOICE_TEXTS } from "../data/choiceTexts";
 
 // ─── 공용 헬퍼 ────────────────────────────────────────────
 
@@ -275,15 +276,23 @@ export function hideTerms(summary: string): string {
   return out.filter((t) => t !== "").join(" ");
 }
 
+/**
+ * 객관식 보기·짝 맞추기 설명에 쓸 문장.
+ * 손으로 쓴 보기 전용 문장(choiceTexts.ts)이 우선, 없으면 요약에서 주제어만 가린다(새 문제 대비 안전망).
+ */
+export function choiceTextOf(q: Question): string {
+  return CHOICE_TEXTS[q.id] ?? hideTerms(summaryOf(q));
+}
+
 // ─── 유형별 생성기 ────────────────────────────────────────
 
 /** 객관식: 정답 1 + 오답 3 (기존 buildChoices 로직 그대로). */
 export function buildChoiceExercise(q: Question): ChoiceExercise {
   const choices: QuizChoice[] = [
-    { qid: q.id, text: hideTerms(summaryOf(q)), correct: true },
+    { qid: q.id, text: choiceTextOf(q), correct: true },
     ...distractorsOf(q, 3).map((x) => ({
       qid: x.id,
-      text: hideTerms(summaryOf(x)),
+      text: choiceTextOf(x),
       correct: false,
     })),
   ];
@@ -369,7 +378,7 @@ export function buildMatchExercise(q: Question): MatchExercise | null {
   const pool = [q, ...others];
   return {
     type: "match",
-    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: hideTerms(summaryOf(x)) })),
+    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: choiceTextOf(x) })),
   };
 }
 

@@ -25,7 +25,9 @@ import {
   buildChoiceExercise,
   buildMatchExercise,
   hideTerms,
+  choiceTextOf,
 } from "./exercise";
+import { CHOICE_TEXTS } from "../data/choiceTexts";
 
 const CATEGORY_OF = new Map(QUESTIONS.map((q) => [q.id, q.category]));
 /** 요약 → 그 요약을 쓰는 문제의 카테고리들 (같은 문장을 여러 문제가 쓸 수도 있으니 집합) */
@@ -255,19 +257,59 @@ for (const q of QUESTIONS) {
     const masked = hideTerms(s);
     // 가린 뒤에도 문장이 남아 있어야 한다 (○○ 만 덩그러니 남으면 보기로 못 쓴다)
     assert.ok(masked.replace(/○○|[은는]/g, "").trim().length >= 6, `가리고 나니 남는 게 없다: ${q.id} → ${masked}`);
-    // 객관식 보기·짝 맞추기 설명은 가린 문장을 써야 한다
+    // 객관식 보기·짝 맞추기 설명은 보기 전용 문장(없으면 가린 요약)을 써야 한다
+    const want = choiceTextOf(q);
     const choice = buildChoiceExercise(q);
     const mine = choice.choices.find((c) => c.correct)!;
-    assert.equal(mine.text, masked, `객관식 정답 보기는 주제어를 가려야 한다: ${q.id}`);
+    assert.equal(mine.text, want, `객관식 정답 보기는 보기 전용 문장이어야 한다: ${q.id}`);
     const match = buildMatchExercise(q);
     if (match) {
       const pair = match.pairs.find((p) => p.qid === q.id)!;
-      assert.equal(pair.def, masked, `짝 맞추기 설명은 주제어를 가려야 한다: ${q.id}`);
+      assert.equal(pair.def, want, `짝 맞추기 설명은 보기 전용 문장이어야 한다: ${q.id}`);
     }
   }
   // 바로 그 문제: 정답 보기가 "셀렉트"를 그대로 드러내면 안 된다
   const sel = QUESTIONS.find((q) => q.id === "q-state-12")!;
   assert.ok(!hideTerms(summaryOf(sel)).includes("셀렉트"), "q-state-12 보기에 셀렉트가 남았다");
+}
+
+// ─── 보기 전용 문장 검수 ──────────────────────────────────
+// 모든 문제에 보기 전용 문장이 있고, 그 문장에 질문 단어가 섞이지 않았는지.
+// (사용자 제보: "왜 오버헤드인가?" → 보기 "…순수 오버헤드다" 처럼 어미만 달라도 답이 보였다)
+{
+  const PARTICLES = ["으로", "에서", "에게", "까지", "부터", "이란", "인가", "인지", "이고", "라고", "란", "와", "과", "은", "는", "이", "가", "을", "를", "의", "에", "로", "도", "만"];
+  // 질문에 흔히 들어가는 '묻는 말' — 이게 보기에 있어도 정답이 새지는 않는다
+  const STOP = new Set(["무엇", "무슨", "어떤", "어떻게", "언제", "각각", "차이", "이유", "관계", "핵심", "실용적", "다른", "같은", "하나", "가장", "정확히", "대충", "요즘", "아직", "많이", "필요", "방법", "기준", "종류", "역할", "의미", "효과", "의도", "문제", "사용", "만드", "되나", "하나요", "쓰나", "나요", "있나", "그리고", "실제로", "일반", "기본", "다음", "코드"]);
+  const stripP = (w: string) => {
+    for (const p of PARTICLES) if (w.length > p.length + 1 && w.endsWith(p)) return w.slice(0, -p.length);
+    return w;
+  };
+  const leaksOf = (question: string, text: string): string[] => {
+    const hit = new Set<string>();
+    const low = text.toLowerCase();
+    for (const w of question.match(/[A-Za-z][A-Za-z0-9+#-]*/g) ?? [])
+      if (w.length >= 2 && !["vs", "or", "of"].includes(w.toLowerCase()) && low.includes(w.toLowerCase())) hit.add(w);
+    for (const run of question.match(/[가-힣]{2,}/g) ?? []) {
+      const stem = stripP(run);
+      if (stem.length >= 2 && !STOP.has(stem) && text.includes(stem)) hit.add(stem);
+      // 어미만 다른 경우("오버헤드인가" ↔ "오버헤드다")를 잡으려고 세 글자 조각도 본다
+      for (let i = 0; i + 3 <= run.length; i++) {
+        const g = run.slice(i, i + 3);
+        if (!STOP.has(g) && text.includes(g)) hit.add(g);
+      }
+    }
+    return [...hit];
+  };
+  const bad: string[] = [];
+  for (const q of QUESTIONS) {
+    if (q.options || q.quizCode) continue;
+    assert.ok(CHOICE_TEXTS[q.id], `보기 전용 문장(choiceTexts.ts)이 없다: ${q.id}`);
+    const l = leaksOf(q.question, CHOICE_TEXTS[q.id]);
+    if (l.length) bad.push(`${q.id} [${l.join(",")}] ${CHOICE_TEXTS[q.id]}`);
+  }
+  assert.equal(bad.length, 0, `보기 문장에 질문 단어가 섞였다:\n${bad.join("\n")}`);
+  for (const id of Object.keys(CHOICE_TEXTS))
+    assert.ok(QUESTIONS.some((q) => q.id === id), `choiceTexts.ts 에 없는 문제 id: ${id}`);
 }
 
 console.log("✅ exercise 자체 점검 통과");
