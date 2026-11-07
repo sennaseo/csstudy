@@ -192,15 +192,98 @@ function splitAtKeyword(
   };
 }
 
+// ─── 보기에서 주제어 가리기 ───────────────────────────────
+// 요약은 대부분 "셀렉트는 캐시 원본은 두고…"처럼 그 문제의 주제어로 시작한다.
+// 그대로 객관식 보기·짝 맞추기 설명에 쓰면 질문의 "select"와 보기의 "셀렉트는"만
+// 이어 붙여도 정답이 보인다 (내용을 몰라도 맞힘). 그래서 보기로 쓸 때만 주제어를 ○○ 로 가린다.
+// OX·빈칸·타이핑은 문장 자체를 판단하는 문제라 그대로 둔다.
+
+/** 관형형 어미("남겨두는", "하는", "있는")처럼 보이는 줄기 — 주제어가 아니니 가리면 안 된다. */
+const ADNOMINAL_STEM_END = ["하", "되", "히", "두", "주", "있", "없", "쓰", "보", "지", "이", "받", "나", "오", "가", "내", "리"];
+/** 앞 토큰이 이걸로 끝나면 절이 끝난 것 → 바로 뒤 "X는" 은 두 번째 주제어 ("면제하고 언노운은"). */
+const CLAUSE_END = /(고|며|지만|이고|이며)$/;
+/** 목적어 뒤 "결과를 유즈콜백은" — 세 글자 이상 줄기일 때만 (짧으면 동사형일 확률이 높다). */
+const OBJECT_END = /[을를]$/;
+/** 한 글자 줄기는 대부분 "같은", "작은", "넣은" 같은 형용사·동사형. 진짜 한 글자 용어만 예외. */
+const SINGLE_NOUNS = new Set(["키", "빈", "힙", "큐", "락", "탭", "룰", "뷰", "훅", "틱"]);
+const HIDE = "○○";
+
+/** 모든 요약의 맨 앞 주제어 줄기 모음 — "유즈콜백은"처럼 문장 중간에 나와도 용어로 알아본다. */
+let termStems: Set<string> | null = null;
+function knownTermStems(): Set<string> {
+  if (termStems) return termStems;
+  termStems = new Set();
+  for (const q of QUESTIONS) {
+    const t = topicOf(summaryOf(q).split(" "));
+    if (t) termStems.add(t.stem);
+  }
+  return termStems;
+}
+
+/** "X는"/"X 는" 을 줄기·조사로 나눈다. 아니면 null. */
+function topicParts(toks: string[], i: number): { stem: string; from: number } | null {
+  const t = toks[i];
+  if ((t === "은" || t === "는") && i > 0) return { stem: toks[i - 1], from: i - 1 };
+  if (t.length >= 2 && /[은는]$/.test(t)) {
+    const stem = t.slice(0, -1);
+    if (ADNOMINAL_STEM_END.includes(stem.slice(-1)) && /[가-힣]$/.test(stem)) return null;
+    if (/^[가-힣]$/.test(stem) && !SINGLE_NOUNS.has(stem)) return null;
+    return { stem, from: i };
+  }
+  return null;
+}
+
+/** 문장 맨 앞 주제어 (앞 세 토큰 안의 첫 "X는"). "서버 상태는" 처럼 두 토큰이면 둘 다. */
+function topicOf(toks: string[]): { stem: string; start: number; end: number } | null {
+  for (let i = 0; i < Math.min(3, toks.length); i++) {
+    const p = topicParts(toks, i);
+    if (p) return { stem: p.stem, start: 0, end: i };
+  }
+  return null;
+}
+
+/** 객관식 보기·짝 맞추기용: 주제어를 ○○ 로 가린 요약. */
+export function hideTerms(summary: string): string {
+  const toks = summary.split(" ");
+  const top = topicOf(toks);
+  if (!top) return summary;
+  const known = knownTermStems();
+  const out = [...toks];
+  const hide = (i: number) => {
+    const t = toks[i];
+    out[i] = t === "은" || t === "는" ? t : /[은는]$/.test(t) && t.length >= 2 ? HIDE + t.slice(-1) : HIDE;
+  };
+  // ① 맨 앞 주제어 (여러 토큰이면 하나로 합친다)
+  for (let k = top.start; k <= top.end; k++) out[k] = "";
+  const head = toks[top.end];
+  out[top.end] = head === "은" || head === "는" ? HIDE + " " + head : HIDE + head.slice(-1);
+  // ② 뒤쪽의 두 번째 주제어
+  for (let i = top.end + 1; i < toks.length; i++) {
+    const p = topicParts(toks, i);
+    if (!p) continue;
+    const latin = /[A-Za-z=<>!]/.test(p.stem);
+    const prev = toks[p.from - 1] ?? "";
+    const afterClause = CLAUSE_END.test(prev) && p.stem.length >= 2;
+    const afterObject = OBJECT_END.test(prev) && p.stem.length >= 3;
+    // 세 글자 이상 줄기("지씨타임", "셋쿼리데이터")는 동사형만 아니면 거의 다 용어다. "원본은" 같은 두 글자 명사는 남긴다.
+    const longTerm = p.stem.length >= 3;
+    if (latin || known.has(p.stem) || SINGLE_NOUNS.has(p.stem) || p.stem === top.stem || afterClause || afterObject || longTerm) {
+      if (p.from !== i) out[p.from] = HIDE;
+      hide(i);
+    }
+  }
+  return out.filter((t) => t !== "").join(" ");
+}
+
 // ─── 유형별 생성기 ────────────────────────────────────────
 
 /** 객관식: 정답 1 + 오답 3 (기존 buildChoices 로직 그대로). */
 export function buildChoiceExercise(q: Question): ChoiceExercise {
   const choices: QuizChoice[] = [
-    { qid: q.id, text: summaryOf(q), correct: true },
+    { qid: q.id, text: hideTerms(summaryOf(q)), correct: true },
     ...distractorsOf(q, 3).map((x) => ({
       qid: x.id,
-      text: summaryOf(x),
+      text: hideTerms(summaryOf(x)),
       correct: false,
     })),
   ];
@@ -286,7 +369,7 @@ export function buildMatchExercise(q: Question): MatchExercise | null {
   const pool = [q, ...others];
   return {
     type: "match",
-    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: summaryOf(x) })),
+    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: hideTerms(summaryOf(x)) })),
   };
 }
 

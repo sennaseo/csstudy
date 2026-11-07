@@ -22,6 +22,9 @@ import {
   buildTypingExercise,
   buildOxExercise,
   buildExercise,
+  buildChoiceExercise,
+  buildMatchExercise,
+  hideTerms,
 } from "./exercise";
 
 const CATEGORY_OF = new Map(QUESTIONS.map((q) => [q.id, q.category]));
@@ -229,6 +232,42 @@ for (const q of QUESTIONS) {
       assert.equal(new Set(ex.choices.map((c) => c.qid)).size, ex.choices.length, "qid 중복");
     }
   }
+}
+
+// ─── 보기에서 주제어 가리기 ───────────────────────────────
+// 사용자 제보: "select 옵션은?" 문제의 보기가 "셀렉트는 …"으로 시작해 내용을 몰라도 맞혔다.
+{
+  const cases: Array<[string, string]> = [
+    ["셀렉트는 캐시 원본은 두고 필요한 부분만 잘라서 준다", "○○는 캐시 원본은 두고 필요한 부분만 잘라서 준다"],
+    ["프로세스는 메모리를 따로 쓰고 스레드는 같이 쓴다", "○○는 메모리를 따로 쓰고 ○○는 같이 쓴다"],
+    ["HTTPS 는 TLS 봉투로 내용을 암호화한 HTTP 다", "○○ 는 TLS 봉투로 내용을 암호화한 HTTP 다"],
+    ["서버 상태는 남의 창고에서 가져온 복사본이라 갱신이 관건", "○○는 남의 창고에서 가져온 복사본이라 갱신이 관건"],
+    // 주제어가 아닌 "~은/는" (형용사·동사형, 그냥 대조 명사)은 건드리면 안 된다
+    ["멱등성은 같은 요청을 여러 번 보내도 결과가 같은 성질", "○○은 같은 요청을 여러 번 보내도 결과가 같은 성질"],
+    ["비트는 가장 작은 정보 단위고 바이트는 비트 여덟 개", "○○는 가장 작은 정보 단위고 ○○는 비트 여덟 개"],
+    ["좋은 이름 짓기가 가장 싸고 빠른 유지보수 수단이다", "좋은 이름 짓기가 가장 싸고 빠른 유지보수 수단이다"],
+  ];
+  for (const [src, want] of cases) assert.equal(hideTerms(src), want, `주제어 가리기: ${src}`);
+
+  for (const q of QUESTIONS) {
+    if (q.options || q.quizCode) continue;
+    const s = summaryOf(q);
+    const masked = hideTerms(s);
+    // 가린 뒤에도 문장이 남아 있어야 한다 (○○ 만 덩그러니 남으면 보기로 못 쓴다)
+    assert.ok(masked.replace(/○○|[은는]/g, "").trim().length >= 6, `가리고 나니 남는 게 없다: ${q.id} → ${masked}`);
+    // 객관식 보기·짝 맞추기 설명은 가린 문장을 써야 한다
+    const choice = buildChoiceExercise(q);
+    const mine = choice.choices.find((c) => c.correct)!;
+    assert.equal(mine.text, masked, `객관식 정답 보기는 주제어를 가려야 한다: ${q.id}`);
+    const match = buildMatchExercise(q);
+    if (match) {
+      const pair = match.pairs.find((p) => p.qid === q.id)!;
+      assert.equal(pair.def, masked, `짝 맞추기 설명은 주제어를 가려야 한다: ${q.id}`);
+    }
+  }
+  // 바로 그 문제: 정답 보기가 "셀렉트"를 그대로 드러내면 안 된다
+  const sel = QUESTIONS.find((q) => q.id === "q-state-12")!;
+  assert.ok(!hideTerms(summaryOf(sel)).includes("셀렉트"), "q-state-12 보기에 셀렉트가 남았다");
 }
 
 console.log("✅ exercise 자체 점검 통과");
