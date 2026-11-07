@@ -1,8 +1,10 @@
 // =============================================================
 // NotesScreen (공부노트 탭)
 // - 책장 뷰: 과목마다 공책 표지 한 권. 표지를 누르면 그 과목의 목록 뷰.
-// - 목록 뷰: 단원 → 노트 행. 행을 누르면 상세 뷰.
-// - 상세 뷰: 노트 블록(제목·문단·코드·팁·표)을 위에서부터 차례로 그린다.
+// - 목록 뷰: 단원마다 "꼭 볼 N가지" 포스터 한 장 (인스타 인포그래픽 형식).
+//   3열 타일 = 노트 1장 (그림 + 번호·짧은 제목). 타일 그림은 노트 본문의 첫 그림거리(비교·코드·단계·표)를 축소해 자동으로 그린다.
+//   그래서 노트를 새로 써도 그림을 따로 그릴 필요가 없다. 타일 제목은 labels.ts.
+// - 상세 뷰: 화이트보드 판서 스타일 (NoteBoard.tsx).
 //
 // 왜 열린 노트를 스토어가 아닌 로컬 useState 로 두나
 //   "지금 몇 번 노트를 보고 있나"는 앱을 껐다 켜면 잊어도 되는 정보다.
@@ -17,7 +19,10 @@
 import { useState } from "react";
 
 import { NOTE_SUBJECTS } from "../data/notes";
-import type { NoteBlock } from "../data/notes/types";
+import { NOTE_LABELS } from "../data/notes/labels";
+import type { Note, NoteBlock, NoteSubject, NoteUnit } from "../data/notes/types";
+import { NoteBoard } from "./NoteBoard";
+import { figureIcons } from "./NoteFigure";
 import { useBack } from "../utils/useBack";
 
 // 노트 id → { 노트, 같은 단원의 노트 목록 } 을 찾는다. 노트 수가 적어서 매번 훑어도 충분하다.
@@ -25,7 +30,7 @@ function findNote(id: string) {
   for (const s of NOTE_SUBJECTS)
     for (const u of s.units) {
       const i = u.notes.findIndex((n) => n.id === id);
-      if (i >= 0) return { note: u.notes[i], siblings: u.notes, index: i };
+      if (i >= 0) return { note: u.notes[i], unit: u, siblings: u.notes, index: i };
     }
   return null;
 }
@@ -33,189 +38,170 @@ function findNote(id: string) {
 // 화면은 #root 가 스크롤 상자다(TabBar 주석 참고). 화면이 바뀌면 맨 위로 되돌린다.
 const scrollTop = () => document.getElementById("root")?.scrollTo(0, 0);
 
-/** 인라인 `코드` — 백틱으로 쪼개면 홀수 번째 조각이 코드 부분이다.
- *  예) "a `x` b".split("`") → ["a ", "x", " b"] → 1번 조각이 코드 */
-function Inline({ text }: { text: string }) {
-  return (
-    <>
-      {text.split("`").map((part, i) =>
-        i % 2 === 1 ? (
-          <code key={i} className="rounded bg-ink-100 px-1 font-mono text-[0.9em] text-ink-900">
-            {part}
-          </code>
-        ) : (
-          part
-        ),
-      )}
-    </>
-  );
+// ─── "꼭 볼 N가지" 포스터 ───────────────────────────────
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+// 미니 그림 안에선 인라인 코드 표시(백틱)를 지우고 글자만 쓴다.
+const plain = (t: string) => t.split("`").join("");
+
+/** 타일 그림거리 고르기 — 노트 본문에서 처음 나오는 "그림이 되는 블록". 없으면 이모지. */
+function pickArt(note: Note): NoteBlock | null {
+  // 그림(figure)이 있으면 무조건 그게 대표 그림
+  const fig = note.blocks.find((b) => b.type === "figure");
+  if (fig) return fig;
+  for (const b of note.blocks) {
+    if (b.type === "compare" && b.cols.length >= 2) return b;
+    if (b.type === "code") return b;
+    if (b.type === "list" && b.style === "flow") return b;
+    if (b.type === "table") return b;
+  }
+  return null;
 }
 
-// 팁 카드 종류별 색 — 모양은 같고 색만 다르다(HeartWarning 카드 톤).
-const TIP_STYLE = {
-  analogy: { label: "🎈 비유", cls: "border-accent bg-accent-soft text-accent-dim" },
-  warn: { label: "⚠️ 자주 하는 실수", cls: "border-duo-red-dim bg-duo-red-soft text-duo-red-ink" },
-  memo: { label: "📝 내 메모", cls: "border-duo-green-dim bg-duo-green-tint text-duo-green-ink" },
+// 미니 그림 속 회색 줄 — 글자 대신 "내용이 있다"는 느낌만 주는 스켈레톤.
+const Skel = ({ w }: { w: string }) => <span className={"block h-1.5 rounded-full bg-ink-200 " + w} />;
+
+const ART_TONE = {
+  good: "border-duo-green text-duo-green-ink",
+  bad: "border-duo-red text-duo-red-ink",
+  none: "border-reel/40 text-reel-ink",
 } as const;
 
-// compare 열 색 — good=O(초록), bad=X(빨강), 없으면 회색.
-const TONE = {
-  good: { head: "✅ ", cls: "border-duo-green-dim bg-duo-green-tint", title: "text-duo-green-ink" },
-  bad: { head: "❌ ", cls: "border-duo-red-dim bg-duo-red-soft", title: "text-duo-red-ink" },
-  none: { head: "", cls: "border-ink-200 bg-ink-100", title: "text-ink-900" },
-} as const;
-
-/** 블록 하나 그리기 — 블록 종류(type)마다 모양만 다르다. no 는 h2 번호 배지용. */
-function NoteBlockView({ block, no }: { block: NoteBlock; no: number }) {
-  switch (block.type) {
-    case "h2":
-      return (
-        <h2 className="mt-3 flex items-center gap-2 border-b-2 border-ink-200 pb-1.5 text-base font-extrabold text-ink-900">
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-extrabold text-white">
-            {no}
-          </span>
-          <Inline text={block.text} />
-        </h2>
-      );
-    case "key":
-      return (
-        <div className="rounded-2xl bg-accent px-4 py-4 text-center text-base font-extrabold leading-snug text-white [&_code]:bg-white/20 [&_code]:text-white">
-          <Inline text={block.text} />
-        </div>
-      );
-    case "p":
-      return (
-        <p className="text-sm leading-relaxed text-ink-700">
-          <Inline text={block.text} />
-        </p>
-      );
-    case "code":
-      return (
-        <div className="overflow-hidden rounded-xl border border-ink-200">
-          <pre className="overflow-x-auto whitespace-pre bg-ink-100 p-3 font-mono text-xs leading-relaxed text-ink-900">
-            {block.code}
-          </pre>
-          {block.out !== undefined && (
-            <div className="border-t border-ink-200 bg-ink-900 px-3 py-2 font-mono text-xs leading-relaxed text-white">
-              <span className="mb-0.5 block font-sans text-[11px] font-extrabold text-ink-300">▶ 결과</span>
-              <span className="block whitespace-pre-wrap">{block.out}</span>
-            </div>
-          )}
-        </div>
-      );
-    case "list": {
-      if (block.style === "flow")
-        return (
-          <ol className="flex flex-col">
-            {block.items.map((s, i) => (
-              <li key={i} className="flex flex-col items-center">
-                {i > 0 && <span className="text-lg leading-6 text-accent">↓</span>}
-                <div className="flex w-full items-center gap-3 rounded-xl border-2 border-accent bg-accent-soft px-3 py-2.5 text-sm font-bold text-ink-900">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs text-white">
-                    {i + 1}
-                  </span>
-                  <span>
-                    <Inline text={s} />
-                  </span>
-                </div>
-              </li>
-            ))}
-          </ol>
-        );
-      if (block.style === "check")
-        return (
-          <div className="mt-3 rounded-2xl border-2 border-b-4 border-duo-green-dim bg-duo-green-tint px-4 py-3">
-            <span className="mb-1.5 block text-xs font-extrabold text-duo-green-ink">✅ 이것만 기억</span>
-            <ul className="flex flex-col gap-1.5 text-sm leading-relaxed text-ink-700">
-              {block.items.map((it, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="font-extrabold text-duo-green-ink">✓</span>
-                  <span>
-                    <Inline text={it} />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      const items = block.items.map((it, i) => (
-        <li key={i}>
-          <Inline text={it} />
-        </li>
-      ));
-      const cls = "flex flex-col gap-1 pl-5 text-sm leading-relaxed text-ink-700";
-      return block.ordered ? (
-        <ol className={cls + " list-decimal"}>{items}</ol>
-      ) : (
-        <ul className={cls + " list-disc"}>{items}</ul>
-      );
-    }
+/** 타일 안 미니 그림. 실제 노트 내용을 손바닥 크기로 줄여 그린다. */
+function NoteArt({ note }: { note: Note }) {
+  const b = pickArt(note);
+  if (!b) return <span className="self-center text-4xl">{note.emoji}</span>;
+  switch (b.type) {
     case "compare":
       return (
-        <div className={"grid gap-2 " + (block.cols.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
-          {block.cols.map((c, i) => {
-            const t = TONE[c.tone ?? "none"];
-            return (
-              <div key={i} className={"min-w-0 rounded-xl border-2 p-3 " + t.cls}>
-                <div className={"mb-1.5 text-sm font-extrabold " + t.title}>
-                  {t.head}
-                  <Inline text={c.title} />
-                </div>
-                <ul className="flex flex-col gap-1 text-xs leading-relaxed text-ink-700">
-                  {c.items.map((it, j) => (
-                    <li key={j} className="break-words">
-                      <Inline text={it} />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+        // 위아래로 쌓는다 — 3열 타일에서 좌우로 나누면 칸이 좁아 제목이 "정하…"로 잘린다.
+        <div className="flex flex-col gap-1.5">
+          {b.cols.slice(0, 2).map((c, i) => (
+            <div key={i} className={"min-w-0 rounded-md border-2 bg-white px-1.5 py-1 " + ART_TONE[c.tone ?? "none"]}>
+              <span className="block truncate text-[9px] font-black leading-tight">
+                {c.tone === "good" ? "✓ " : c.tone === "bad" ? "✕ " : ""}
+                {plain(c.title)}
+              </span>
+              <span className="mt-1 block">
+                <Skel w="w-3/4" />
+              </span>
+            </div>
+          ))}
         </div>
       );
-    case "tip": {
-      const t = TIP_STYLE[block.kind];
+    case "code": {
+      const lines = b.code.split("\n").filter((l) => l.trim()).slice(0, b.out ? 2 : 3);
+      const out = b.out?.split("\n")[0];
       return (
-        <div className={"rounded-2xl border-2 border-b-4 px-4 py-3 text-sm leading-relaxed " + t.cls}>
-          <span className="mb-1 block text-xs font-extrabold">{t.label}</span>
-          <Inline text={block.text} />
+        <div className="overflow-hidden rounded-lg bg-reel-ink px-1.5 py-1.5 font-mono text-[8px] leading-[1.45] text-[#C9C9FF]">
+          {lines.map((l, i) => (
+            <span key={i} className="block truncate whitespace-pre">
+              {l}
+            </span>
+          ))}
+          {out !== undefined && <span className="block truncate text-[#7FE3A0]">▶ {out}</span>}
         </div>
       );
     }
-    case "table":
+    case "list":
       return (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm text-ink-700">
-            <thead>
-              <tr>
-                {block.head.map((h, i) => (
-                  <th key={i} className="border-b-2 border-ink-200 px-2 py-1.5 font-extrabold text-ink-900">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {block.rows.map((row, r) => (
-                <tr key={r}>
-                  {row.map((c, i) => (
-                    <td key={i} className="border-b border-ink-200 px-2 py-1.5">
-                      <Inline text={c} />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="flex flex-col gap-1">
+          {b.items.slice(0, 3).map((it, i) => (
+            <span key={i} className="flex min-w-0 items-center gap-1 rounded-md border border-reel/40 bg-white px-1 py-0.5">
+              <span className="flex h-3 w-3 shrink-0 items-center justify-center rounded-full bg-reel text-[7px] font-black text-white">
+                {i + 1}
+              </span>
+              <span className="truncate text-[8px] font-bold text-reel-ink">{plain(it)}</span>
+            </span>
+          ))}
         </div>
       );
+    case "table":
+      return (
+        <div className="overflow-hidden rounded-md border border-ink-200 bg-white text-[8px] leading-tight">
+          {[b.head, ...b.rows.slice(0, 2)].map((row, r) => (
+            <div key={r} className={"grid grid-cols-2 " + (r === 0 ? "bg-reel font-black text-white" : "border-t border-ink-200 text-ink-700")}>
+              {row.slice(0, 2).map((c, i) => (
+                <span key={i} className="truncate px-1 py-0.5">
+                  {plain(c)}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    case "figure": {
+      // 그림 속 아이콘 최대 3개. 흐름·순환이면 사이에 화살표.
+      // 아이콘은 고정 크기가 아니라 타일 칸 폭에 따라 줄어든다 — 폰이 좁아도 칸 밖으로 안 나간다.
+      const icons = figureIcons(b).slice(0, 3);
+      const arrow = b.kind === "flow" || b.kind === "cycle";
+      return (
+        <div className="flex w-full min-w-0 items-center justify-center gap-[1cqw]">
+          {icons.map((ic, i) => (
+            <span key={i} className="contents">
+              {i > 0 && (
+                <span className="shrink-0 font-black leading-none text-reel" style={{ fontSize: "min(8cqw, 11px)" }}>
+                  {arrow ? "→" : "·"}
+                </span>
+              )}
+              {/* 크기를 타일 그림 칸 폭(cqw)에 묶는다 — 아이콘 3개 + 화살표 2개가 칸의 약 90%.
+                  cqw 를 모르는 옛 WebView 는 style 을 무시하고 text-lg(18px)로 떨어진다. */}
+              <span className="shrink-0 text-lg leading-none" style={{ fontSize: "min(24cqw, 30px)" }}>
+                {ic}
+              </span>
+            </span>
+          ))}
+        </div>
+      );
+    }
+    default:
+      return <span className="self-center text-4xl">{note.emoji}</span>;
   }
 }
 
-// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green 위에만.
+/** 단원 하나 = 포스터 한 장. 키커(단원명) + 큰 제목(꼭 볼 N가지) + 3열 타일. */
+function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: NoteUnit; onOpen: (id: string) => void }) {
+  return (
+    <section className="rounded-[28px] bg-gradient-to-b from-[#F6F6FC] to-reel-bg px-2.5 pb-3 pt-5">
+      <p className="px-1.5 text-sm font-black tracking-tight text-reel">
+        {subject.emoji} {unit.title}
+      </p>
+      <h3 className="px-1.5 text-[34px] font-black leading-[1.15] tracking-tighter text-reel-ink">
+        {unit.notes.length === 0 ? "준비 중" : `꼭 볼 ${unit.notes.length}가지`}
+      </h3>
+      {unit.notes.length > 0 && (
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {unit.notes.map((n, i) => {
+            const label = NOTE_LABELS[n.id] ?? n.title;
+            return (
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => onOpen(n.id)}
+                aria-label={n.title}
+                className="flex min-w-0 flex-col rounded-[20px] bg-white p-1.5 pb-2.5 text-left shadow-chip transition-transform active:scale-[0.97]"
+              >
+                <span className="flex h-[84px] flex-col justify-center overflow-hidden rounded-[14px] bg-reel-tile p-1.5 [container-type:inline-size]">
+                  <NoteArt note={n} />
+                </span>
+                {/* 번호와 제목을 한 줄 글로 이어 쓴다 — 줄이 넘치면 둘째 줄이 왼쪽 끝에서 시작한다. */}
+                <span className="mt-2 break-keep px-1 text-[14px] font-black leading-tight tracking-tight text-reel-ink [overflow-wrap:anywhere]">
+                  <span className="text-[13px] text-reel">{pad2(i + 1)}</span> {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green / ink-900 위에만.
 const COVERS = [
   { cover: "bg-accent", spine: "bg-accent-dim" },
   { cover: "bg-duo-green", spine: "bg-duo-green-dim" },
+  { cover: "bg-ink-900", spine: "bg-ink-700" },
 ] as const;
 
 export function NotesScreen() {
@@ -240,7 +226,7 @@ export function NotesScreen() {
 
   // ─── 상세 뷰 ───────────────────────────────
   if (found) {
-    const { note, siblings, index } = found;
+    const { note, unit, siblings, index } = found;
     const prev = siblings[index - 1];
     const next = siblings[index + 1];
     // 이전/다음은 "목록 → 다른 노트"가 아니라 같은 자리에서 내용만 바꾸는 것이라
@@ -256,21 +242,7 @@ export function NotesScreen() {
         >
           ← 목록
         </button>
-        <article className="flex flex-col gap-3 rounded-2xl border border-ink-200 bg-white p-5">
-          <h1 className="text-xl font-extrabold text-ink-900">
-            {note.emoji} {note.title}
-          </h1>
-          <p className="text-sm text-ink-500">
-            <Inline text={note.summary} />
-          </p>
-          {(() => {
-            // h2 번호는 노트 안에서 몇 번째 h2 인가
-            let h = 0;
-            return note.blocks.map((b, i) => (
-              <NoteBlockView key={i} block={b} no={b.type === "h2" ? ++h : 0} />
-            ));
-          })()}
-        </article>
+        <NoteBoard note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} />
         {(prev || next) && (
           <div className="flex gap-2">
             {prev ? (
@@ -356,37 +328,7 @@ export function NotesScreen() {
           <span className="text-xs font-bold text-ink-400">총 {total}장</span>
         </div>
         {s.units.map((u) => (
-          <div key={u.id} className="flex flex-col gap-1.5">
-            <h4 className="px-1 text-xs font-extrabold text-ink-500">{u.title}</h4>
-            {u.notes.length === 0 ? (
-              // 빈 단원도 보여준다 — 커리큘럼 전체 지도가 보여야 "어디까지 왔나"가 읽힌다.
-              <p className="rounded-2xl border border-dashed border-ink-200 px-4 py-3 text-xs text-ink-400">
-                준비 중
-              </p>
-            ) : (
-              // 행 스타일은 마이 탭(MyScreen) 행과 같다 — 행 전체가 버튼.
-              <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
-                {u.notes.map((n) => (
-                  <button
-                    key={n.id}
-                    type="button"
-                    onClick={() => open(n.id)}
-                    className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
-                  >
-                    <span className="min-w-0">
-                      <span className="block text-sm font-extrabold text-ink-900">
-                        {n.emoji} {n.title}
-                      </span>
-                      <span className="block text-xs text-ink-500">
-                        <Inline text={n.summary} />
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <UnitPoster key={u.id} subject={s} unit={u} onOpen={open} />
         ))}
       </section>
     </>

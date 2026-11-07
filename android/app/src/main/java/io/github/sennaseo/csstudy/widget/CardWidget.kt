@@ -9,16 +9,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.Composable
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
+import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
@@ -34,15 +39,19 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 // day/night 한 쌍을 받는 팩토리는 glance.color 쪽에 있고, 그게 돌려주는 타입은 glance.unit 쪽이다.
 // 이름이 같아서 헷갈리지만 둘 다 있어야 한다.
 import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
+import io.github.sennaseo.csstudy.R
 import org.json.JSONObject
+import java.util.TimeZone
 import kotlin.random.Random
 
 // ── 카드 데이터 ──────────────────────────────────────────────────────────
@@ -95,33 +104,60 @@ fun stepIndex(size: Int, current: Int, delta: Int): Int =
 // Glance의 기본 상태 저장소는 위젯 인스턴스(glanceId)마다 파일이 따로 생긴다.
 // 그래서 홈에 두 개를 놓으면 서로 다른 카드를 보게 되는 게 공짜로 된다.
 val KEY_INDEX = intPreferencesKey("cardIndex")
+// KEY_INDEX 를 마지막으로 정한 날(로컬 기준 epoch day). 이 날이 오늘이 아니면 하루치만큼 건너뛴 카드를 보여준다.
+val KEY_DAY = longPreferencesKey("cardDay")
+
+// ── 매일 다른 카드 ──────────────────────────────────────────────────────
+// 오늘이 며칠째인지 (기기 시간대 기준). java.time 은 API 26+ 라 minSdk 24 에선 직접 계산한다.
+fun todayEpochDay(nowMillis: Long = System.currentTimeMillis()): Long {
+    val offset = TimeZone.getDefault().getOffset(nowMillis)
+    return Math.floorDiv(nowMillis + offset, 86_400_000L)
+}
+
+// 화면에 보여줄 카드 번호. 저장은 안 하고 계산만 한다 — 그래서 그리는 쪽에 쓰기 경쟁이 없다.
+//  - 오늘 정한 카드면 그대로.
+//  - 날이 바뀌었으면 저장된 카드에서 (1 + 날짜×37 mod (n-1)) 칸 건너뛴다.
+//    건너뛰는 칸이 1..n-1 이라 전날 카드와 절대 같지 않고, 37 이 119 와 서로소라
+//    며칠 동안 안 눌러도 날마다 다른 카드가 나온다. 순차 +1 이 아니라서 같은 분야가 줄줄이 나오지도 않는다.
+fun dailyIndex(size: Int, storedIndex: Int, storedDay: Long?, today: Long): Int {
+    if (size <= 0) return 0
+    val base = storedIndex.coerceIn(0, size - 1)
+    if (storedDay == null || storedDay == today || size == 1) return base
+    val jump = 1 + Math.floorMod(today * 37, (size - 1).toLong()).toInt()
+    return stepIndex(size, base, jump)
+}
 
 // ── 색 ──────────────────────────────────────────────────────────────────
-// 앱의 "손그림 스케치" 팔레트. Glance엔 CSS가 없으니 라이트/다크 색을 직접 한 쌍씩 준다.
+// 앱(tailwind.config.js)과 같은 팔레트: 흰 카드 + 잉크 회색 + 도메인색 칩.
+// Glance엔 CSS가 없으니 라이트/다크 색을 직접 한 쌍씩 준다.
 private fun duo(light: Long, dark: Long) =
     ColorProvider(day = Color(light), night = Color(dark))
 
-private val CardBg = duo(0xFFFFFDF8, 0xFF23221E)
-private val PaperBg = duo(0xFFFBFAF7, 0xFF1B1A17)
-private val Ink = duo(0xFF1B1A17, 0xFFF3F1EA)
-private val InkSoft = duo(0xFF56534A, 0xFFB9B4A8)
-// 화살표나 "37/120" 처럼, 있는 줄은 알지만 굳이 읽지는 않는 것들. 배경보다 아주 조금만 진하다.
-private val InkFaint = duo(0xFFB5B0A4, 0xFF5C5850)
+private val CardBg = duo(0xFFFFFFFF, 0xFF1F2937)
+private val Ink = duo(0xFF111827, 0xFFF9FAFB)      // ink-900 — 용어
+private val InkBody = duo(0xFF1F2937, 0xFFE5E7EB)  // ink-700 — 정의
+private val InkSoft = duo(0xFF4B5563, 0xFFC7CCD4)  // ink-500 — 비유
+private val InkFaint = duo(0xFF6B7280, 0xFF9CA3AF) // ink-400 — 카운터·화살표
+private val Track = duo(0xFFE5E7EB, 0xFF374151)    // ink-200 — 진행바 바탕
+private val NoteBg = duo(0xFFF3F4F6, 0xFF111827)   // ink-100 — 비유 상자
 
-// 도메인 5색. 책장에 꽂힌 책등 색처럼, 왼쪽 띠 한 줄만 보고도 무슨 분야인지 알게 한다.
-private val DomainBackend = duo(0xFF2B7A57, 0xFF7FD1A6)
-private val DomainFrontend = duo(0xFFD2691E, 0xFFF2A96B)
-private val DomainDatabase = duo(0xFF3B5BDB, 0xFF8DA2F0)
-private val DomainInfra = duo(0xFF6D4FB3, 0xFFB9A6EA)
-private val DomainCS = duo(0xFFB8323F, 0xFFEF8B95)
+// 도메인 5색. 진한 색(ink)은 칩 글자·진행바, 옅은 색(soft)은 칩 바탕.
+// 칩 하나만 보고도 무슨 분야인지 알게 한다.
+data class DomainPalette(val ink: ColorProvider, val soft: ColorProvider)
 
-fun domainColor(domain: String): ColorProvider = when (domain) {
-    "백엔드" -> DomainBackend
-    "프론트엔드" -> DomainFrontend
-    "데이터베이스" -> DomainDatabase
-    "인프라" -> DomainInfra
-    "CS" -> DomainCS
-    else -> DomainDatabase
+private val PalBackend = DomainPalette(duo(0xFF15803D, 0xFF86EFAC), duo(0xFFDCFCE7, 0xFF14532D))
+private val PalFrontend = DomainPalette(duo(0xFFC2410C, 0xFFFDBA74), duo(0xFFFFEDD5, 0xFF7C2D12))
+private val PalDatabase = DomainPalette(duo(0xFF1D4ED8, 0xFF93C5FD), duo(0xFFEFF4FF, 0xFF1E3A8A))
+private val PalInfra = DomainPalette(duo(0xFF6D28D9, 0xFFC4B5FD), duo(0xFFEDE9FE, 0xFF4C1D95))
+private val PalCS = DomainPalette(duo(0xFFB91C1C, 0xFFFCA5A5), duo(0xFFFEE2E2, 0xFF7F1D1D))
+
+fun domainPalette(domain: String): DomainPalette = when (domain) {
+    "백엔드" -> PalBackend
+    "프론트엔드" -> PalFrontend
+    "데이터베이스" -> PalDatabase
+    "인프라" -> PalInfra
+    "CS" -> PalCS
+    else -> PalDatabase
 }
 
 class CardWidget : GlanceAppWidget() {
@@ -138,10 +174,13 @@ class CardWidget : GlanceAppWidget() {
         // 그리는 도중에 뽑으면 런처가 다시 그릴 때마다 다른 카드가 나온다.
         updateAppWidgetState(context, id) { prefs ->
             if (prefs[KEY_INDEX] == null) prefs[KEY_INDEX] = Random.nextInt(cards.size)
+            // 업데이트 전부터 있던 위젯은 날짜가 비어 있다. 오늘 날짜를 박아서 내일부터 바뀌게 한다.
+            if (prefs[KEY_DAY] == null) prefs[KEY_DAY] = todayEpochDay()
         }
         provideContent {
             val prefs: Preferences = currentState()
-            val index = (prefs[KEY_INDEX] ?: 0).coerceIn(0, cards.size - 1)
+            // 날짜는 그릴 때마다 새로 읽는다. 런처가 주기 업데이트로 다시 그리면 자정을 넘긴 순간 다음 카드가 나온다.
+            val index = dailyIndex(cards.size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], todayEpochDay())
             CardBody(cards[index], index, cards.size)
         }
     }
@@ -152,111 +191,150 @@ private fun CardBody(card: Card, index: Int, total: Int) {
     // 키가 클수록 글자를 더 풀어 준다. 전부 >= 비교라서, 표에 없는 낯선 크기가 와도
     // 어느 문턱도 못 넘고 가장 작은 S 로 안전하게 떨어진다.
     val h = LocalSize.current.height
-    val termLines = if (h >= 240.dp) 2 else 1
-    val oneLinerLines = if (h >= 240.dp) 3 else 2
+    val large = h >= 240.dp
+    val medium = h >= 170.dp
+    val termLines = if (large) 2 else 1
+    val oneLinerLines = if (large) 3 else 2
+    // S 에선 비유 상자를 아예 뺀다. 한 줄짜리 상자는 잘린 글만 보여서 오히려 지저분하다.
     val exampleLines = when {
-        h >= 240.dp -> 8
-        h >= 170.dp -> 4
-        else -> 2
+        large -> 5
+        medium -> 2
+        else -> 0
     }
+    val pal = domainPalette(card.domain)
 
-    Column(
+    // 카드가 위젯 칸 전체를 채운다. appWidgetBackground 를 달아야 안드로이드 12+ 런처가
+    // 이걸 "위젯 배경"으로 알고 모서리를 시스템 반경에 맞춰 깎아 준다.
+    Box(
         modifier = GlanceModifier
             .fillMaxSize()
-            .background(PaperBg)
-            .padding(4.dp)
+            .appWidgetBackground()
+            .background(CardBg)
+            .cornerRadius(24.dp),
     ) {
-        Row(
-            modifier = GlanceModifier
-                .fillMaxSize()
-                .background(CardBg)
-                .cornerRadius(16.dp),
-        ) {
-            // 도메인 책등.
+        // Box 는 FrameLayout 으로 번역돼서 자식이 겹쳐 쌓인다.
+        // 아래층에 좌/우 히트존을 깔고 위층에 글을 얹는데, 위층엔 clickable 을 걸지 않는다.
+        // 클릭 없는 뷰는 터치를 삼키지 않으니, 글자 위를 눌러도 손가락이 아래층까지 통과한다.
+
+        // [아래층] 왼쪽 절반이 이전, 오른쪽 절반이 다음. 작은 버튼을 조준할 필요가 없다.
+        Row(modifier = GlanceModifier.fillMaxSize()) {
             Box(
                 modifier = GlanceModifier
-                    .width(5.dp)
+                    .defaultWeight()
                     .fillMaxHeight()
-                    .background(domainColor(card.domain)),
-            ) {}
-
-            // Box 는 FrameLayout 으로 번역돼서 자식이 겹쳐 쌓인다.
-            // 아래층에 좌/우 히트존을 깔고 위층에 글을 얹는데, 위층엔 clickable 을 걸지 않는다.
-            // 클릭 없는 뷰는 터치를 삼키지 않으니, 글자 위를 눌러도 손가락이 아래층까지 통과한다.
-            Box(
-                modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
+                    .padding(start = 5.dp)
+                    .clickable(actionRunCallback<PrevAction>()),
+                contentAlignment = Alignment.CenterStart,
             ) {
-                // [아래층] 왼쪽 절반이 이전, 오른쪽 절반이 다음. 작은 버튼을 조준할 필요가 없다.
-                Row(modifier = GlanceModifier.fillMaxSize()) {
-                    Box(
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .fillMaxHeight()
-                            .padding(start = 6.dp)
-                            .clickable(actionRunCallback<PrevAction>()),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Text(text = "‹", style = TextStyle(color = InkFaint, fontSize = 22.sp))
-                    }
-                    Box(
-                        modifier = GlanceModifier
-                            .defaultWeight()
-                            .fillMaxHeight()
-                            .padding(end = 6.dp)
-                            .clickable(actionRunCallback<NextAction>()),
-                        contentAlignment = Alignment.CenterEnd,
-                    ) {
-                        Text(text = "›", style = TextStyle(color = InkFaint, fontSize = 22.sp))
-                    }
-                }
+                Text(text = "‹", style = TextStyle(color = InkFaint, fontSize = 20.sp, fontWeight = FontWeight.Bold))
+            }
+            Box(
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .fillMaxHeight()
+                    .padding(end = 5.dp)
+                    .clickable(actionRunCallback<NextAction>()),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text(text = "›", style = TextStyle(color = InkFaint, fontSize = 20.sp, fontWeight = FontWeight.Bold))
+            }
+        }
 
-                // [위층] 내용. 여기나 안쪽 Text 에 clickable 이 붙는 순간 좌/우 넘기기가 죽는다.
-                Column(
+        // [위층] 내용. 여기나 안쪽 Text 에 clickable 이 붙는 순간 좌/우 넘기기가 죽는다.
+        Column(modifier = GlanceModifier.fillMaxSize()) {
+            // 글 묶음이 남는 높이를 전부 먹는다. 글이 넘치면 여기서 잘리고,
+            // 아래 진행바는 항상 제자리에 남는다.
+            Column(
+                modifier = GlanceModifier
+                    .defaultWeight()
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 12.dp),
+            ) {
+                // 헤더 줄만 예외. 이 띠에서만 터치를 삼켜서 앱으로 들어간다.
+                Row(
                     modifier = GlanceModifier
-                        .fillMaxSize()
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                        .fillMaxWidth()
+                        .clickable(actionRunCallback<OpenAppAction>()),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // 헤더 줄만 예외. 이 띠에서만 터치를 삼켜서 앱으로 들어간다.
-                    Row(
+                    // 도메인 칩 — 옅은 바탕에 진한 글자. 앱의 태그 칩과 같은 모양.
+                    Box(
                         modifier = GlanceModifier
-                            .fillMaxWidth()
-                            .clickable(actionRunCallback<OpenAppAction>()),
-                        verticalAlignment = Alignment.CenterVertically,
+                            .background(pal.soft)
+                            .cornerRadius(12.dp)
+                            .padding(horizontal = 9.dp, vertical = 3.dp),
                     ) {
                         Text(
                             text = domainEmoji(card.domain) + " " + card.domain,
-                            style = TextStyle(
-                                color = domainColor(card.domain),
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                            ),
-                        )
-                        Spacer(modifier = GlanceModifier.defaultWeight())
-                        Text(
-                            text = "${index + 1}/$total ↗",
-                            style = TextStyle(color = InkFaint, fontSize = 11.sp),
+                            style = TextStyle(color = pal.ink, fontSize = 12.sp, fontWeight = FontWeight.Bold),
                         )
                     }
-
-                    Spacer(modifier = GlanceModifier.height(6.dp))
+                    Spacer(modifier = GlanceModifier.defaultWeight())
                     Text(
-                        text = card.term,
-                        style = TextStyle(color = Ink, fontSize = 18.sp, fontWeight = FontWeight.Bold),
-                        maxLines = termLines,
+                        text = "${index + 1} / $total",
+                        style = TextStyle(color = InkFaint, fontSize = 11.sp, fontWeight = FontWeight.Medium),
                     )
-                    Spacer(modifier = GlanceModifier.height(4.dp))
-                    Text(
-                        text = card.oneLiner,
-                        style = TextStyle(color = Ink, fontSize = 15.sp, fontWeight = FontWeight.Medium),
-                        maxLines = oneLinerLines,
-                    )
-                    Spacer(modifier = GlanceModifier.height(6.dp))
-                    Text(
-                        text = card.example,
-                        style = TextStyle(color = InkSoft, fontSize = 14.sp, fontWeight = FontWeight.Normal),
-                        maxLines = exampleLines,
+                    Spacer(modifier = GlanceModifier.width(6.dp))
+                    // 마스코트 먼지요정. 앱에서 보던 얼굴이 홈 화면에도 있으면 "그 앱"이라는 게 바로 보이고,
+                    // 헤더를 누르면 앱이 열린다는 단서도 된다.
+                    Image(
+                        provider = ImageProvider(R.drawable.widget_mascot),
+                        contentDescription = "앱 열기",
+                        modifier = GlanceModifier.size(if (medium) 28.dp else 22.dp),
                     )
                 }
+
+                Spacer(modifier = GlanceModifier.height(if (medium) 8.dp else 4.dp))
+                // 용어는 카드의 주인공이라 가운데에 둔다. fillMaxWidth 가 있어야 가운데 기준이 카드 폭이 된다.
+                Text(
+                    text = card.term,
+                    modifier = GlanceModifier.fillMaxWidth(),
+                    style = TextStyle(
+                        color = Ink,
+                        fontSize = if (medium) 21.sp else 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    ),
+                    maxLines = termLines,
+                )
+                Spacer(modifier = GlanceModifier.height(2.dp))
+                Text(
+                    text = card.oneLiner,
+                    style = TextStyle(color = InkBody, fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                    maxLines = oneLinerLines,
+                )
+
+                if (exampleLines > 0) {
+                    Spacer(modifier = GlanceModifier.height(8.dp))
+                    // 비유는 회색 쪽지 상자에. 정의(사실)와 비유(이해를 돕는 말)를 눈으로 갈라 준다.
+                    Box(
+                        modifier = GlanceModifier
+                            .fillMaxWidth()
+                            .background(NoteBg)
+                            .cornerRadius(12.dp)
+                            .padding(horizontal = 10.dp, vertical = 7.dp),
+                    ) {
+                        Text(
+                            text = "💡 " + card.example,
+                            style = TextStyle(color = InkSoft, fontSize = 13.sp, fontWeight = FontWeight.Normal),
+                            maxLines = exampleLines,
+                        )
+                    }
+                }
+            }
+
+            // 바닥: 120장 중 어디쯤인지 도메인색 진행바로. 숫자를 안 읽어도 감이 온다.
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 20.dp, top = 6.dp, bottom = 10.dp),
+            ) {
+                LinearProgressIndicator(
+                    progress = (index + 1).toFloat() / total.coerceAtLeast(1),
+                    modifier = GlanceModifier.fillMaxWidth().height(3.dp),
+                    color = pal.ink,
+                    backgroundColor = Track,
+                )
             }
         }
     }
@@ -267,7 +345,11 @@ class PrevAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val size = loadCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
-            prefs[KEY_INDEX] = stepIndex(size, prefs[KEY_INDEX] ?: 0, -1)
+            // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
+            val today = todayEpochDay()
+            val shown = dailyIndex(size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], today)
+            prefs[KEY_INDEX] = stepIndex(size, shown, -1)
+            prefs[KEY_DAY] = today
         }
         CardWidget().update(context, glanceId)
     }
@@ -277,7 +359,11 @@ class NextAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         val size = loadCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
-            prefs[KEY_INDEX] = stepIndex(size, prefs[KEY_INDEX] ?: 0, 1)
+            // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
+            val today = todayEpochDay()
+            val shown = dailyIndex(size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], today)
+            prefs[KEY_INDEX] = stepIndex(size, shown, 1)
+            prefs[KEY_DAY] = today
         }
         CardWidget().update(context, glanceId)
     }

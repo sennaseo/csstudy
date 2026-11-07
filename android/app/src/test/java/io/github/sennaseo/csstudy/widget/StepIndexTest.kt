@@ -1,6 +1,8 @@
 package io.github.sennaseo.csstudy.widget
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StepIndexTest {
@@ -44,5 +46,41 @@ class StepIndexTest {
             val back = stepIndex(size, next, -1)
             assertEquals("다음-이전 왕복 후 원래 자리로 돌아오지 않았다: current=$current", current, back)
         }
+    }
+
+    // ── 매일 다른 카드 ──
+
+    @Test
+    fun `같은 날이면 저장된 카드를 그대로 보여준다`() {
+        assertEquals(42, dailyIndex(120, 42, 20000L, 20000L))
+    }
+
+    @Test
+    fun `날짜가 비어 있으면 저장된 카드를 그대로 보여준다`() {
+        assertEquals(42, dailyIndex(120, 42, null, 20000L))
+    }
+
+    // 며칠을 안 눌러도 매일 전날과 다른 카드가 나와야 한다.
+    @Test
+    fun `날이 바뀌면 매일 전날과 다른 카드가 나온다`() {
+        val stored = 10
+        val storedDay = 20000L
+        var prev = stored
+        for (day in storedDay + 1..storedDay + 400) {
+            val shown = dailyIndex(120, stored, storedDay, day)
+            assertTrue("범위를 벗어났다: day=$day shown=$shown", shown in 0 until 120)
+            assertNotEquals("전날과 같은 카드다: day=$day", prev, shown)
+            prev = shown
+        }
+    }
+
+    @Test
+    fun `카드가 한 장이면 날이 바뀌어도 제자리다`() {
+        assertEquals(0, dailyIndex(1, 0, 1L, 2L))
+    }
+
+    @Test
+    fun `카드가 0장이어도 터지지 않는다`() {
+        assertEquals(0, dailyIndex(0, 5, 1L, 2L))
     }
 }

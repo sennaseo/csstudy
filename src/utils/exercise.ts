@@ -24,6 +24,7 @@ import type {
 } from "../types";
 import { QUESTIONS, SUMMARIES } from "../data/questions";
 import { OX_FALSE } from "../data/oxFalse";
+import { CHOICE_TEXTS } from "../data/choiceTexts";
 
 // ─── 공용 헬퍼 ────────────────────────────────────────────
 
@@ -45,10 +46,14 @@ export function summaryOf(q: Question): string {
   return first.length > 80 ? first.slice(0, 78) + "…" : first;
 }
 
-/** "같은 카테고리 우선"으로 오답 후보 문제들을 뽑는다. */
+/**
+ * "같은 카테고리 우선"으로 오답 후보 문제들을 뽑는다.
+ * quizCode 문제는 빼둔다 — 코드 없이 질문 글만 보이면 매칭/보기로서 의미가 없다.
+ */
 function distractorsOf(q: Question, count: number): Question[] {
-  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
-  const otherCat = QUESTIONS.filter((x) => x.id !== q.id && x.category !== q.category);
+  const pool = QUESTIONS.filter((x) => x.id !== q.id && !x.quizCode);
+  const sameCat = pool.filter((x) => x.category === q.category);
+  const otherCat = pool.filter((x) => x.category !== q.category);
   return [...shuffle(sameCat), ...shuffle(otherCat)].slice(0, count);
 }
 
@@ -175,6 +180,37 @@ export function keywordOf(summary: string, latinOnly = false): string | null {
   return korean.sort((a, b) => b.length - a.length)[0] ?? null;
 }
 
+/**
+ * "직접 써서 설명하기"에서 보여줄 핵심 단어 (최대 4개, 요약에 나온 순서대로).
+ * 채점용이 아니라 힌트다 — 내가 쓴 답에 이 단어들이 들어갔는지 칩으로 보여준다.
+ */
+/** 핵심 단어로 보여주면 어색한 부사·대명사류. */
+const TERM_STOP = new Set(["아무", "결국", "직접", "전부", "그대로", "다시", "바로", "먼저", "따로", "각자", "만들기", "자체", "모두", "그것", "그걸"]);
+/** 동사 줄기 끝 글자 — "판단하(는)", "놔주(는)", "만드(는)", "나눠", "가져" 같은 조각을 거른다. */
+const STEM_END = new Set(["하", "해", "주", "줘", "드", "눠", "워", "져", "쳐", "되", "돼", "두", "내", "써", "봐"]);
+
+export function keyTermsOf(summary: string): string[] {
+  const out: string[] = [];
+  for (const t of splitToTokens(summary)) {
+    let term: string | null = null;
+    if (/^[A-Za-z][A-Za-z0-9.+-]*$/.test(t) && /[A-Za-z]{2,}/.test(t) && !LATIN_STOPWORDS.has(t.toLowerCase())) term = t;
+    else if (isPureKorean(t)) {
+      const k = stripParticle(t);
+      if (k !== t) {
+        // 조사가 붙어 있었으면 명사다 ("목록에서" → 목록). "록"처럼 어미와 겹치는 글자도 살린다.
+        if (isGoodLength(k)) term = k;
+      } else if (t.endsWith("다") && t.length >= 3 && !looksLikeVerbForm(t.slice(0, -1))) {
+        term = t.slice(0, -1); // "이름표다" → 이름표 ("실행된다"는 "실행된" 이라 걸러진다)
+      } else if (isGoodLength(k) && !looksLikeVerbForm(k)) term = k;
+    }
+    // 동사 조각은 "판단하는", "처리해도"처럼 뒤에 ~는/~도가 붙어 있거나 "나눠"처럼 짧다. "메서드"는 살린다.
+    if (term && /[가-힣]$/.test(term) && STEM_END.has(term.slice(-1)) && (/[는은도서]$/.test(t) || term.length <= 2)) term = null;
+    if (term && TERM_STOP.has(term)) term = null;
+    if (term && !out.includes(term)) out.push(term);
+  }
+  return out.slice(0, 4);
+}
+
 /** 요약을 "빈칸 앞 / 정답 / 빈칸 뒤"로 자른다. 키워드가 없으면 null. */
 function splitAtKeyword(
   summary: string,
@@ -188,18 +224,123 @@ function splitAtKeyword(
   };
 }
 
+// ─── 보기에서 주제어 가리기 ───────────────────────────────
+// 요약은 대부분 "셀렉트는 캐시 원본은 두고…"처럼 그 문제의 주제어로 시작한다.
+// 그대로 객관식 보기·짝 맞추기 설명에 쓰면 질문의 "select"와 보기의 "셀렉트는"만
+// 이어 붙여도 정답이 보인다 (내용을 몰라도 맞힘). 그래서 보기로 쓸 때만 주제어를 ○○ 로 가린다.
+// OX·빈칸·타이핑은 문장 자체를 판단하는 문제라 그대로 둔다.
+
+/** 관형형 어미("남겨두는", "하는", "있는")처럼 보이는 줄기 — 주제어가 아니니 가리면 안 된다. */
+const ADNOMINAL_STEM_END = ["하", "되", "히", "두", "주", "있", "없", "쓰", "보", "지", "이", "받", "나", "오", "가", "내", "리"];
+/** 앞 토큰이 이걸로 끝나면 절이 끝난 것 → 바로 뒤 "X는" 은 두 번째 주제어 ("면제하고 언노운은"). */
+const CLAUSE_END = /(고|며|지만|이고|이며)$/;
+/** 목적어 뒤 "결과를 유즈콜백은" — 세 글자 이상 줄기일 때만 (짧으면 동사형일 확률이 높다). */
+const OBJECT_END = /[을를]$/;
+/** 한 글자 줄기는 대부분 "같은", "작은", "넣은" 같은 형용사·동사형. 진짜 한 글자 용어만 예외. */
+const SINGLE_NOUNS = new Set(["키", "빈", "힙", "큐", "락", "탭", "룰", "뷰", "훅", "틱"]);
+const HIDE = "○○";
+
+/** 모든 요약의 맨 앞 주제어 줄기 모음 — "유즈콜백은"처럼 문장 중간에 나와도 용어로 알아본다. */
+let termStems: Set<string> | null = null;
+function knownTermStems(): Set<string> {
+  if (termStems) return termStems;
+  termStems = new Set();
+  for (const q of QUESTIONS) {
+    const t = topicOf(summaryOf(q).split(" "));
+    if (t) termStems.add(t.stem);
+  }
+  return termStems;
+}
+
+/** "X는"/"X 는" 을 줄기·조사로 나눈다. 아니면 null. */
+function topicParts(toks: string[], i: number): { stem: string; from: number } | null {
+  const t = toks[i];
+  if ((t === "은" || t === "는") && i > 0) return { stem: toks[i - 1], from: i - 1 };
+  if (t.length >= 2 && /[은는]$/.test(t)) {
+    const stem = t.slice(0, -1);
+    if (ADNOMINAL_STEM_END.includes(stem.slice(-1)) && /[가-힣]$/.test(stem)) return null;
+    if (/^[가-힣]$/.test(stem) && !SINGLE_NOUNS.has(stem)) return null;
+    return { stem, from: i };
+  }
+  return null;
+}
+
+/** 문장 맨 앞 주제어 (앞 세 토큰 안의 첫 "X는"). "서버 상태는" 처럼 두 토큰이면 둘 다. */
+function topicOf(toks: string[]): { stem: string; start: number; end: number } | null {
+  for (let i = 0; i < Math.min(3, toks.length); i++) {
+    const p = topicParts(toks, i);
+    if (p) return { stem: p.stem, start: 0, end: i };
+  }
+  return null;
+}
+
+/** 객관식 보기·짝 맞추기용: 주제어를 ○○ 로 가린 요약. */
+export function hideTerms(summary: string): string {
+  const toks = summary.split(" ");
+  const top = topicOf(toks);
+  if (!top) return summary;
+  const known = knownTermStems();
+  const out = [...toks];
+  const hide = (i: number) => {
+    const t = toks[i];
+    out[i] = t === "은" || t === "는" ? t : /[은는]$/.test(t) && t.length >= 2 ? HIDE + t.slice(-1) : HIDE;
+  };
+  // ① 맨 앞 주제어 (여러 토큰이면 하나로 합친다)
+  for (let k = top.start; k <= top.end; k++) out[k] = "";
+  const head = toks[top.end];
+  out[top.end] = head === "은" || head === "는" ? HIDE + " " + head : HIDE + head.slice(-1);
+  // ② 뒤쪽의 두 번째 주제어
+  for (let i = top.end + 1; i < toks.length; i++) {
+    const p = topicParts(toks, i);
+    if (!p) continue;
+    const latin = /[A-Za-z=<>!]/.test(p.stem);
+    const prev = toks[p.from - 1] ?? "";
+    const afterClause = CLAUSE_END.test(prev) && p.stem.length >= 2;
+    const afterObject = OBJECT_END.test(prev) && p.stem.length >= 3;
+    // 세 글자 이상 줄기("지씨타임", "셋쿼리데이터")는 동사형만 아니면 거의 다 용어다. "원본은" 같은 두 글자 명사는 남긴다.
+    const longTerm = p.stem.length >= 3;
+    if (latin || known.has(p.stem) || SINGLE_NOUNS.has(p.stem) || p.stem === top.stem || afterClause || afterObject || longTerm) {
+      if (p.from !== i) out[p.from] = HIDE;
+      hide(i);
+    }
+  }
+  return out.filter((t) => t !== "").join(" ");
+}
+
+/**
+ * 객관식 보기·짝 맞추기 설명에 쓸 문장.
+ * 손으로 쓴 보기 전용 문장(choiceTexts.ts)이 우선, 없으면 요약에서 주제어만 가린다(새 문제 대비 안전망).
+ */
+export function choiceTextOf(q: Question): string {
+  return CHOICE_TEXTS[q.id] ?? hideTerms(summaryOf(q));
+}
+
 // ─── 유형별 생성기 ────────────────────────────────────────
 
 /** 객관식: 정답 1 + 오답 3 (기존 buildChoices 로직 그대로). */
 export function buildChoiceExercise(q: Question): ChoiceExercise {
   const choices: QuizChoice[] = [
-    { qid: q.id, text: summaryOf(q), correct: true },
+    { qid: q.id, text: choiceTextOf(q), correct: true },
     ...distractorsOf(q, 3).map((x) => ({
       qid: x.id,
-      text: summaryOf(x),
+      text: choiceTextOf(x),
       correct: false,
     })),
   ];
+  return { type: "choice", choices: shuffle(choices) };
+}
+
+/**
+ * 작성자가 직접 쓴 보기(q.options)로 객관식을 만든다. [0] 이 정답.
+ * 오답 qid 는 `${id}#1`… 처럼 서로 다르게 — QuestionCard 의 채점·하이라이트·
+ * React key·숫자 단축키가 전부 qid 기준이라 겹치면 안 된다.
+ */
+function buildOptionsExercise(q: Question, options: string[]): ChoiceExercise {
+  const choices = options.map((text, i) => ({
+    qid: i === 0 ? q.id : `${q.id}#${i}`,
+    text,
+    correct: i === 0,
+  }));
   return { type: "choice", choices: shuffle(choices) };
 }
 
@@ -245,7 +386,7 @@ export function buildOxExercise(q: Question): OxExercise | null {
   if (Math.random() < 0.5) return { type: "ox", statement: summaryOf(q), isTrue: true };
   const twisted = OX_FALSE[q.id];
   if (twisted) return { type: "ox", statement: twisted, isTrue: false };
-  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category);
+  const sameCat = QUESTIONS.filter((x) => x.id !== q.id && x.category === q.category && !x.quizCode);
   const [other] = shuffle(sameCat);
   if (!other) return null;
   return { type: "ox", statement: summaryOf(other), isTrue: false };
@@ -268,7 +409,7 @@ export function buildMatchExercise(q: Question): MatchExercise | null {
   const pool = [q, ...others];
   return {
     type: "match",
-    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: summaryOf(x) })),
+    pairs: pool.map((x) => ({ qid: x.id, term: x.question, def: choiceTextOf(x) })),
   };
 }
 
@@ -313,6 +454,9 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
  * - forceType 을 주면 그 유형을 우선 시도 (디버깅/특정 모드용).
  */
 export function buildExercise(q: Question, level: Level | null = null, forceType?: ExerciseType): Exercise {
+  // 직접 쓴 보기가 있으면 레벨·forceType 무관하게 항상 객관식.
+  if (q.options) return buildOptionsExercise(q, q.options);
+
   const tryBuild = (t: ExerciseType): Exercise | null => {
     switch (t) {
       case "choice":

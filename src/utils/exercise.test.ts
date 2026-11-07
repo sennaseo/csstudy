@@ -22,7 +22,13 @@ import {
   buildTypingExercise,
   buildOxExercise,
   buildExercise,
+  buildChoiceExercise,
+  buildMatchExercise,
+  hideTerms,
+  choiceTextOf,
+  keyTermsOf,
 } from "./exercise";
+import { CHOICE_TEXTS } from "../data/choiceTexts";
 
 const CATEGORY_OF = new Map(QUESTIONS.map((q) => [q.id, q.category]));
 /** 요약 → 그 요약을 쓰는 문제의 카테고리들 (같은 문장을 여러 문제가 쓸 수도 있으니 집합) */
@@ -189,6 +195,7 @@ for (const q of QUESTIONS) {
 
   let hardSawChoice = false;
   for (const q of QUESTIONS) {
+    if (q.options) continue; // 직접 쓴 보기 문제는 설계상 항상 choice (아래 7번에서 따로 검사)
     for (const level of ["easy", "normal", "hard", null] as const) {
       const key = level ?? "mix";
       for (let i = 0; i < 20; i++) {
@@ -202,6 +209,118 @@ for (const q of QUESTIONS) {
     }
   }
   assert.ok(!hardSawChoice, "hard 레벨에서 choice 가 나오면 안 된다 (빈칸이 항상 성립해야 함)");
+}
+
+// 7) 직접 쓴 보기(options) 문제 — 레벨·forceType 무관하게 항상 choice,
+//    보기 수 = options 수, 정답 1개(= options[0]), qid 는 전부 달라야 한다.
+{
+  const q = {
+    id: "test-options",
+    category: QUESTIONS[0].category,
+    question: "출력은?",
+    answer: "3",
+    quizCode: "console.log(1 + 2)",
+    options: ["3", "12", "undefined", "NaN"],
+  };
+  for (const level of ["easy", "normal", "hard", null] as const) {
+    for (const force of [undefined, "blank", "match"] as const) {
+      const ex = buildExercise(q, level, force);
+      assert.equal(ex.type, "choice");
+      if (ex.type !== "choice") continue;
+      assert.equal(ex.choices.length, q.options.length);
+      const correct = ex.choices.filter((c) => c.correct);
+      assert.equal(correct.length, 1);
+      assert.equal(correct[0].text, "3");
+      assert.equal(correct[0].qid, q.id);
+      assert.equal(new Set(ex.choices.map((c) => c.qid)).size, ex.choices.length, "qid 중복");
+    }
+  }
+}
+
+// ─── 보기에서 주제어 가리기 ───────────────────────────────
+// 사용자 제보: "select 옵션은?" 문제의 보기가 "셀렉트는 …"으로 시작해 내용을 몰라도 맞혔다.
+{
+  const cases: Array<[string, string]> = [
+    ["셀렉트는 캐시 원본은 두고 필요한 부분만 잘라서 준다", "○○는 캐시 원본은 두고 필요한 부분만 잘라서 준다"],
+    ["프로세스는 메모리를 따로 쓰고 스레드는 같이 쓴다", "○○는 메모리를 따로 쓰고 ○○는 같이 쓴다"],
+    ["HTTPS 는 TLS 봉투로 내용을 암호화한 HTTP 다", "○○ 는 TLS 봉투로 내용을 암호화한 HTTP 다"],
+    ["서버 상태는 남의 창고에서 가져온 복사본이라 갱신이 관건", "○○는 남의 창고에서 가져온 복사본이라 갱신이 관건"],
+    // 주제어가 아닌 "~은/는" (형용사·동사형, 그냥 대조 명사)은 건드리면 안 된다
+    ["멱등성은 같은 요청을 여러 번 보내도 결과가 같은 성질", "○○은 같은 요청을 여러 번 보내도 결과가 같은 성질"],
+    ["비트는 가장 작은 정보 단위고 바이트는 비트 여덟 개", "○○는 가장 작은 정보 단위고 ○○는 비트 여덟 개"],
+    ["좋은 이름 짓기가 가장 싸고 빠른 유지보수 수단이다", "좋은 이름 짓기가 가장 싸고 빠른 유지보수 수단이다"],
+  ];
+  for (const [src, want] of cases) assert.equal(hideTerms(src), want, `주제어 가리기: ${src}`);
+
+  for (const q of QUESTIONS) {
+    if (q.options || q.quizCode) continue;
+    const s = summaryOf(q);
+    const masked = hideTerms(s);
+    // 가린 뒤에도 문장이 남아 있어야 한다 (○○ 만 덩그러니 남으면 보기로 못 쓴다)
+    assert.ok(masked.replace(/○○|[은는]/g, "").trim().length >= 6, `가리고 나니 남는 게 없다: ${q.id} → ${masked}`);
+    // 객관식 보기·짝 맞추기 설명은 보기 전용 문장(없으면 가린 요약)을 써야 한다
+    const want = choiceTextOf(q);
+    const choice = buildChoiceExercise(q);
+    const mine = choice.choices.find((c) => c.correct)!;
+    assert.equal(mine.text, want, `객관식 정답 보기는 보기 전용 문장이어야 한다: ${q.id}`);
+    const match = buildMatchExercise(q);
+    if (match) {
+      const pair = match.pairs.find((p) => p.qid === q.id)!;
+      assert.equal(pair.def, want, `짝 맞추기 설명은 보기 전용 문장이어야 한다: ${q.id}`);
+    }
+  }
+  // 바로 그 문제: 정답 보기가 "셀렉트"를 그대로 드러내면 안 된다
+  const sel = QUESTIONS.find((q) => q.id === "q-state-12")!;
+  assert.ok(!hideTerms(summaryOf(sel)).includes("셀렉트"), "q-state-12 보기에 셀렉트가 남았다");
+}
+
+// ─── 직접 써서 설명하기: 핵심 단어 힌트 ───────────────────
+{
+  const t = keyTermsOf("키는 목록에서 어떤 항목이 그대로인지 알려주는 이름표다");
+  assert.ok(t.includes("목록") && t.includes("이름표"), `핵심 단어에 명사가 빠졌다: ${t}`);
+  const u = keyTermsOf("AI 가 코드를 써줄수록 판단하는 사람의 가치가 오른다");
+  assert.ok(!u.some((w) => w.startsWith("판단하")), `동사 조각이 핵심 단어로 나왔다: ${u}`);
+  assert.ok(keyTermsOf("트랜잭셔널은 메서드 안 DB 작업을 한 묶음으로 처리한다").includes("메서드"), "메서드가 빠졌다");
+  for (const q of QUESTIONS) assert.ok(keyTermsOf(summaryOf(q)).length >= 1, `핵심 단어가 하나도 없다: ${q.id}`);
+}
+
+// ─── 보기 전용 문장 검수 ──────────────────────────────────
+// 모든 문제에 보기 전용 문장이 있고, 그 문장에 질문 단어가 섞이지 않았는지.
+// (사용자 제보: "왜 오버헤드인가?" → 보기 "…순수 오버헤드다" 처럼 어미만 달라도 답이 보였다)
+{
+  const PARTICLES = ["으로", "에서", "에게", "까지", "부터", "이란", "인가", "인지", "이고", "라고", "란", "와", "과", "은", "는", "이", "가", "을", "를", "의", "에", "로", "도", "만"];
+  // 질문에 흔히 들어가는 '묻는 말' — 이게 보기에 있어도 정답이 새지는 않는다
+  const STOP = new Set(["무엇", "무슨", "어떤", "어떻게", "언제", "각각", "차이", "이유", "관계", "핵심", "실용적", "다른", "같은", "하나", "가장", "정확히", "대충", "요즘", "아직", "많이", "필요", "방법", "기준", "종류", "역할", "의미", "효과", "의도", "문제", "사용", "만드", "되나", "하나요", "쓰나", "나요", "있나", "그리고", "실제로", "일반", "기본", "다음", "코드"]);
+  const stripP = (w: string) => {
+    for (const p of PARTICLES) if (w.length > p.length + 1 && w.endsWith(p)) return w.slice(0, -p.length);
+    return w;
+  };
+  const leaksOf = (question: string, text: string): string[] => {
+    const hit = new Set<string>();
+    const low = text.toLowerCase();
+    for (const w of question.match(/[A-Za-z][A-Za-z0-9+#-]*/g) ?? [])
+      if (w.length >= 2 && !["vs", "or", "of"].includes(w.toLowerCase()) && low.includes(w.toLowerCase())) hit.add(w);
+    for (const run of question.match(/[가-힣]{2,}/g) ?? []) {
+      const stem = stripP(run);
+      if (stem.length >= 2 && !STOP.has(stem) && text.includes(stem)) hit.add(stem);
+      // 어미만 다른 경우("오버헤드인가" ↔ "오버헤드다")를 잡으려고 세 글자 조각도 본다
+      for (let i = 0; i + 3 <= run.length; i++) {
+        const g = run.slice(i, i + 3);
+        if (!STOP.has(g) && text.includes(g)) hit.add(g);
+      }
+    }
+    return [...hit];
+  };
+  const bad: string[] = [];
+  for (const q of QUESTIONS) {
+    if (q.options || q.quizCode) continue;
+    assert.ok(CHOICE_TEXTS[q.id], `보기 전용 문장(choiceTexts.ts)이 없다: ${q.id}`);
+    const l = leaksOf(q.question, CHOICE_TEXTS[q.id]);
+    if (l.length) bad.push(`${q.id} [${l.join(",")}] ${CHOICE_TEXTS[q.id]}`);
+  }
+  assert.equal(bad.length, 0, `보기 문장에 질문 단어가 섞였다:\n${bad.join("\n")}`);
+  for (const id of Object.keys(CHOICE_TEXTS))
+    assert.ok(QUESTIONS.some((q) => q.id === id), `choiceTexts.ts 에 없는 문제 id: ${id}`);
 }
 
 console.log("✅ exercise 자체 점검 통과");

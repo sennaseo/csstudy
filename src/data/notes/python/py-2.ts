@@ -12,6 +12,7 @@ export const PY2: NoteUnit = {
       summary: "값이 되는 조각(표현식)을 상자(변수)에 담는 법과 재할당의 함정",
       blocks: [
         { type: "key", text: "변수는 값을 담는 상자가 아니라 값이 있는 방의 번호표" },
+        {type: "figure", kind: "refs", vars: [{name: "number", to: 0}, {name: "double", to: 1}], objs: [{icon: "🔢", label: "5", sub: "재할당 후", ink: "blue"}, {icon: "🔢", label: "20", sub: "계산 끝난 값"}], caption: "변수는 값이 있는 방을 가리키는 번호표"},
         { type: "h2", text: "표현식 = 값이 되는 조각" },
         {
           type: "p",
@@ -91,6 +92,7 @@ print(double)`,
       summary: "파이썬 자료형 5갈래 분류, 산술 연산자 8개와 우선순위",
       blocks: [
         { type: "key", text: "타입이 할 수 있는 연산을 정한다" },
+        {type: "figure", kind: "tree", root: {icon: "🗺️", label: "파이썬 자료형"}, children: [{icon: "🔢", label: "숫자", leaves: ["`int`", "`float`"]}, {icon: "📏", label: "시퀀스", leaves: ["`str`", "`list`", "`tuple`"]}, {icon: "🧺", label: "비시퀀스", leaves: ["`dict`", "`set`"]}, {icon: "⚪", label: "기타", leaves: ["`bool`", "`None`"]}]},
         { type: "h2", text: "자료형이 하는 일" },
         {
           type: "compare",
@@ -194,6 +196,7 @@ print(6 / 2)`,
       summary: "진수 표기, 실수의 유한 정밀도와 부동소수점 에러, Decimal 해결책",
       blocks: [
         { type: "key", text: "float 은 언제나 가장 가까운 근삿값" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🧮", label: "`0.1 + 0.2`"}, {icon: "💾", label: "2진수 근삿값", sub: "딱 떨어지지 않음", ink: "red"}, {icon: "😱", label: "`0.300…04`", ink: "red"}], edges: ["저장", "출력"], caption: "정확한 돈 계산은 `decimal` 로"},
         { type: "h2", text: "int: 진수 표기" },
         {
           type: "table",
@@ -290,6 +293,7 @@ print(number)`,
       summary: "시퀀스 5가지 특징, 따옴표 규칙, 이스케이프 시퀀스, f-string",
       blocks: [
         { type: "key", text: "str 은 글자가 순서대로 줄 선 불변 시퀀스" },
+        {type: "figure", kind: "flow", nodes: [{icon: "🅷", label: "h", sub: "[0]"}, {icon: "🅸", label: "i", sub: "[1]"}, {icon: "❗", label: "!", sub: "[2]"}], caption: "str = 글자가 순서대로 줄 선 시퀀스 (못 고침)"},
         { type: "h2", text: "Sequence Types 의 5가지 특징" },
         {
           type: "table",
@@ -392,6 +396,7 @@ print(f'Debugging {bugs} {counts}')`,
       summary: "양수·음수 인덱스, [start:end:step] 규칙, 뒤집기 [::-1]",
       blocks: [
         { type: "key", text: "끝 번호는 안 들어간다, step 이 음수면 거꾸로" },
+        {type: "figure", kind: "stack", layers: [{icon: "🔤", label: "p y t h o n", sub: "글자"}, {icon: "➡️", label: "0 1 2 3 4 5", sub: "앞에서 셀 때", ink: "blue"}, {icon: "⬅️", label: "-6 … -2 -1", sub: "뒤에서 셀 때", ink: "red"}], caption: "`s[1:4]` → 1, 2, 3번만 (끝 번호 4는 빠짐)"},
         { type: "h2", text: "인덱스: 값의 위치 번호" },
         {
           type: "table",
@@ -479,6 +484,7 @@ print(my_str)`,
       summary: "PEP 8 핵심 규칙, 주석의 목적, Python Tutor, 구글링·AI 활용 자세",
       blocks: [
         { type: "key", text: "같은 규칙으로 써야 서로 읽힌다" },
+        {type: "figure", kind: "tree", root: {icon: "📘", label: "읽히는 코드"}, children: [{icon: "📏", label: "PEP 8", sub: "같은 규칙"}, {icon: "💬", label: "주석", sub: "왜를 적기"}, {icon: "🧰", label: "도구", sub: "포매터·린터"}]},
         { type: "h2", text: "Style Guide (PEP 8)" },
         {
           type: "p",
