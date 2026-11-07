@@ -180,6 +180,37 @@ export function keywordOf(summary: string, latinOnly = false): string | null {
   return korean.sort((a, b) => b.length - a.length)[0] ?? null;
 }
 
+/**
+ * "직접 써서 설명하기"에서 보여줄 핵심 단어 (최대 4개, 요약에 나온 순서대로).
+ * 채점용이 아니라 힌트다 — 내가 쓴 답에 이 단어들이 들어갔는지 칩으로 보여준다.
+ */
+/** 핵심 단어로 보여주면 어색한 부사·대명사류. */
+const TERM_STOP = new Set(["아무", "결국", "직접", "전부", "그대로", "다시", "바로", "먼저", "따로", "각자", "만들기", "자체", "모두", "그것", "그걸"]);
+/** 동사 줄기 끝 글자 — "판단하(는)", "놔주(는)", "만드(는)", "나눠", "가져" 같은 조각을 거른다. */
+const STEM_END = new Set(["하", "해", "주", "줘", "드", "눠", "워", "져", "쳐", "되", "돼", "두", "내", "써", "봐"]);
+
+export function keyTermsOf(summary: string): string[] {
+  const out: string[] = [];
+  for (const t of splitToTokens(summary)) {
+    let term: string | null = null;
+    if (/^[A-Za-z][A-Za-z0-9.+-]*$/.test(t) && /[A-Za-z]{2,}/.test(t) && !LATIN_STOPWORDS.has(t.toLowerCase())) term = t;
+    else if (isPureKorean(t)) {
+      const k = stripParticle(t);
+      if (k !== t) {
+        // 조사가 붙어 있었으면 명사다 ("목록에서" → 목록). "록"처럼 어미와 겹치는 글자도 살린다.
+        if (isGoodLength(k)) term = k;
+      } else if (t.endsWith("다") && t.length >= 3 && !looksLikeVerbForm(t.slice(0, -1))) {
+        term = t.slice(0, -1); // "이름표다" → 이름표 ("실행된다"는 "실행된" 이라 걸러진다)
+      } else if (isGoodLength(k) && !looksLikeVerbForm(k)) term = k;
+    }
+    // 동사 조각은 "판단하는", "처리해도"처럼 뒤에 ~는/~도가 붙어 있거나 "나눠"처럼 짧다. "메서드"는 살린다.
+    if (term && /[가-힣]$/.test(term) && STEM_END.has(term.slice(-1)) && (/[는은도서]$/.test(t) || term.length <= 2)) term = null;
+    if (term && TERM_STOP.has(term)) term = null;
+    if (term && !out.includes(term)) out.push(term);
+  }
+  return out.slice(0, 4);
+}
+
 /** 요약을 "빈칸 앞 / 정답 / 빈칸 뒤"로 자른다. 키워드가 없으면 null. */
 function splitAtKeyword(
   summary: string,

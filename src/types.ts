@@ -152,7 +152,8 @@ export interface TypingExercise {
   answer: string;
 }
 
-/** 말하기(셀프 설명): 소리내어 설명한 뒤 정답을 보고 스스로 평가. */
+/** 직접 써서 설명하기(셀프 설명): 내 말로 쓴 뒤 정답과 비교해 스스로 평가.
+ *  예전 "소리 내어 말하기"의 자리라 유형 이름은 speak 그대로 둔다(저장된 기록 호환). */
 export interface SpeakExercise {
   type: "speak";
 }

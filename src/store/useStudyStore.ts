@@ -168,7 +168,7 @@ function drawNewBuddy(owned: Record<string, BuddyRecord>): BuddyCharacter | null
 }
 
 // ─── Store 본체 ───────────────────────────────────────────
-// 문제 → 출제 형태(객관식/빈칸/OX/타이핑/말하기/매칭) 변환은
+// 문제 → 출제 형태(객관식/빈칸/OX/타이핑/서술/매칭) 변환은
 // utils/exercise.ts 의 buildExercise 가 담당한다 (랜덤 믹스).
 
 /** 획득/진화 알림 — UI 가 모달로 보여주고 clearReward 로 닫는다. */
@@ -219,7 +219,7 @@ export interface LessonResult {
 interface StudyState extends PersistedState {
   currentQuestion: Question | null;
   isAnswerVisible: boolean;
-  /** 현재 문제의 출제 형태 (객관식/빈칸/OX/타이핑/말하기/매칭 중 랜덤). */
+  /** 현재 문제의 출제 형태 (객관식/빈칸/OX/타이핑/서술/매칭 중 랜덤). */
   exercise: Exercise | null;
   /** (객관식 전용) 사용자가 고른 보기의 출처 qid. 아직 안 골랐으면 null. */
   selectedQid: string | null;
@@ -270,7 +270,7 @@ interface StudyState extends PersistedState {
   answerQuiz: (qid: string) => void;
   /**
    * (전 유형 공통) 채점 확정 — 콤보/하트/최고기록 갱신까지 한 번에.
-   * 빈칸·OX·타이핑·말하기·매칭 UI 가 "맞았는지" 판단해서 이걸 부른다.
+   * 빈칸·OX·타이핑·서술·매칭 UI 가 "맞았는지" 판단해서 이걸 부른다.
    */
   gradeExercise: (correct: boolean, selectedQid?: string | null) => void;
   /** 결과만 기록한다(XP·캐릭터·일일카운트). 다음 문제로 넘기지 않는다. */

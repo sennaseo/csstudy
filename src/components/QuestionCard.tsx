@@ -42,7 +42,7 @@ import type {
 } from "../types";
 import { CATEGORY_EMOJI } from "../data/questions";
 import { findCharacter, stageOf } from "../data/characters";
-import { gradeTyping, shuffle } from "../utils/exercise";
+import { gradeTyping, keyTermsOf, shuffle, summaryOf } from "../utils/exercise";
 import { intervalOf } from "../utils/srs";
 import { Confetti } from "./Confetti";
 import { playSound, isMuted, toggleMute, vibrate } from "../utils/sound";
@@ -126,7 +126,7 @@ const PROMPT_BY_TYPE: Record<string, string> = {
   blank: "빈칸에 들어갈 말을 고르세요",
   ox: "맞으면 O, 틀리면 X",
   typing: "빈칸의 용어를 입력하세요",
-  speak: "소리 내어 설명해보세요",
+  speak: "내 말로 직접 써서 설명해보세요",
   match: "질문과 설명을 짝지으세요",
 };
 
@@ -141,7 +141,7 @@ const KEY_HINT_BY_TYPE: Record<string, string> = {
  *  "위에서 답을 제출해주세요" 같은 빈 안내 대신, 그 유형에서 진짜 필요한 팁을 준다. */
 const SUBMIT_HINT_BY_TYPE: Record<string, string> = {
   typing: "⌨️ 입력하고 Enter — 오타 1글자는 봐줘요",
-  speak: "🎤 입으로 설명해본 뒤 정답을 열어 비교해요",
+  speak: "✍️ 직접 써본 뒤 정답과 나란히 비교해요",
   match: "🔗 4쌍을 모두 연결하면 자동으로 채점돼요",
 };
 
@@ -433,47 +433,102 @@ function TypingView({
   );
 }
 
-// ─── ⑤ 말하기 (셀프 설명) ──────────────────────────────────
+// ─── ⑤ 직접 써서 설명하기 (셀프 설명) ─────────────────────
+// 예전엔 "입으로 소리 내어 설명"이었는데, 지하철·도서관에선 못 하고 말한 걸 남겨 둘 수도 없었다.
+// 그래서 입력창에 내 말로 직접 쓰게 바꿨다. 유형 이름(speak)은 저장된 기록과 맞추려고 그대로 둔다.
+
+/** 너무 짧으면 "설명"이 아니다 — 단어 하나 쓰고 정답만 열어보는 걸 막는 최소 글자 수. */
+const MIN_WRITE = 8;
 
 function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) => void }) {
   const graded = useStudyStore((s) => s.graded);
+  const [text, setText] = useState("");
   const [revealed, setRevealed] = useState(false); // 정답을 열어봤는지
+  const enough = text.trim().length >= MIN_WRITE;
 
   if (graded) return null; // 채점 후에는 하단 피드백 시트가 정답을 보여준다
 
+  // 정답 요약의 핵심 단어가 내 답에 들어갔는지 — 채점이 아니라 스스로 평가할 때 보는 힌트.
+  const terms = keyTermsOf(summaryOf(q));
+  const lower = text.toLowerCase();
+  const hit = terms.filter((t) => lower.includes(t.toLowerCase()));
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-2xl bg-accent-soft p-4 text-sm font-semibold leading-relaxed text-ink-700">
-        🎤 면접이라고 생각하고 <b>입으로 소리 내어</b> 설명해보세요.
-        <br />
-        말로 설명이 되면 진짜 아는 것! 다 말했으면 정답을 열어 비교해요.
-      </div>
-
       {!revealed ? (
-        <button
-          onClick={() => {
-            playSound("click");
-            setRevealed(true);
-          }}
-          // speak 유형의 "확인" 버튼 = Primary CTA (초록).
-          className="btn-3d min-h-14 w-full rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-4 text-base font-extrabold text-white hover:brightness-105"
-        >
-          다 말했어요 — 정답 확인 🔍
-        </button>
+        <>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            // 입력 중 키(Enter, 숫자, O/X)가 화면 전체 단축키로 새지 않게 막는다. 줄바꿈은 그대로 된다.
+            onKeyDown={(e) => e.stopPropagation()}
+            rows={5}
+            autoFocus
+            placeholder="면접관에게 설명하듯 내 말로 써 보세요. 한두 문장이면 충분해요."
+            className="w-full resize-y rounded-2xl border-2 border-ink-200 bg-white p-4 text-base leading-relaxed text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-accent"
+          />
+          <button
+            onClick={() => {
+              playSound("click");
+              setRevealed(true);
+            }}
+            disabled={!enough}
+            // "확인" 버튼 = Primary CTA (초록). 덜 썼으면 진짜 회색.
+            className={
+              "btn-3d min-h-14 w-full rounded-xl border-b-4 px-4 text-base font-extrabold " +
+              (enough
+                ? "border-duo-green-dim bg-duo-green text-white hover:brightness-105"
+                : "border-ink-300 bg-ink-200 text-ink-400")
+            }
+          >
+            {enough ? "다 썼어요 — 정답과 비교 🔍" : `조금 더 써 보세요 (${text.trim().length}/${MIN_WRITE}자)`}
+          </button>
+        </>
       ) : (
         <>
-          <div className="rounded-2xl border border-ink-200 bg-white p-4 text-[15px] leading-relaxed text-ink-700">
-            {q.answer}
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-extrabold text-ink-500">✍️ 내가 쓴 답</span>
+            <div className="whitespace-pre-wrap rounded-2xl border border-ink-200 bg-ink-100 p-4 text-[15px] leading-relaxed text-ink-900">
+              {text}
+            </div>
           </div>
+          <div className="flex flex-col gap-1.5">
+            <span className="px-1 text-xs font-extrabold text-duo-green-ink">✅ 모범 답안</span>
+            <div className="rounded-2xl border border-duo-green-dim bg-duo-green-tint p-4 text-[15px] leading-relaxed text-ink-700">
+              {q.answer}
+            </div>
+          </div>
+          {terms.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 px-1">
+              <span className="text-xs font-extrabold text-ink-500">
+                핵심 단어 {hit.length}/{terms.length}
+              </span>
+              {terms.map((t) => {
+                const ok = hit.includes(t);
+                return (
+                  <span
+                    key={t}
+                    className={
+                      "rounded-full px-2.5 py-0.5 text-xs font-bold " +
+                      (ok ? "bg-duo-green-soft text-duo-green-ink" : "bg-ink-100 text-ink-500")
+                    }
+                  >
+                    {ok ? "✓ " : ""}
+                    {t}
+                  </span>
+                );
+              })}
+            </div>
+          )}
           <p className="text-center text-xs font-bold text-ink-500">
-            내 설명, 핵심을 짚었나요? (솔직하게! 그래야 복습 큐가 똑똑해져요)
+            내 설명, 핵심을 짚었나요? (단어가 달라도 뜻이 맞으면 맞은 거예요)
           </p>
           <div className="sticky bottom-0 flex gap-3 bg-paper py-2">
             <button
               onClick={() => onGrade(true)}
               className="btn-3d min-h-12 flex-1 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-2 text-sm font-extrabold text-white hover:brightness-105"
             >
-              ✓ 맞게 설명했어요
+              ✓ 맞게 썼어요
             </button>
             {/* "아직 헷갈려요"는 잘못이 아니다 — 빨강 대신 중립 흰 버튼. */}
             <button

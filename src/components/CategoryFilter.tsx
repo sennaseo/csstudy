@@ -57,7 +57,7 @@ const CHIP_COLORS: Record<string, [string, string]> = {
   Java: ["bg-duo-bee/10 text-duo-bee-ink hover:bg-duo-bee/25", "bg-duo-bee-dim text-ink-900"],
   SpringBoot: ["bg-white text-duo-bee-ink border-duo-bee/50 hover:bg-duo-bee/10", "bg-duo-bee text-ink-900"],
 
-  // ─ 빨간 펜 첨삭 ─ 개념(CS)과 말하기 훈련(기술면접)
+  // ─ 빨간 펜 첨삭 ─ 개념(CS)과 설명 훈련(기술면접)
   CS: ["bg-duo-red-soft text-duo-red-ink hover:bg-duo-red-soft/70", "bg-duo-red-dim text-white"],
   기술면접: ["bg-white text-duo-red-ink border-duo-red/40 hover:bg-duo-red-soft/50", "bg-duo-red-ink text-white"],
 };

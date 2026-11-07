@@ -26,6 +26,7 @@ import {
   buildMatchExercise,
   hideTerms,
   choiceTextOf,
+  keyTermsOf,
 } from "./exercise";
 import { CHOICE_TEXTS } from "../data/choiceTexts";
 
@@ -271,6 +272,16 @@ for (const q of QUESTIONS) {
   // 바로 그 문제: 정답 보기가 "셀렉트"를 그대로 드러내면 안 된다
   const sel = QUESTIONS.find((q) => q.id === "q-state-12")!;
   assert.ok(!hideTerms(summaryOf(sel)).includes("셀렉트"), "q-state-12 보기에 셀렉트가 남았다");
+}
+
+// ─── 직접 써서 설명하기: 핵심 단어 힌트 ───────────────────
+{
+  const t = keyTermsOf("키는 목록에서 어떤 항목이 그대로인지 알려주는 이름표다");
+  assert.ok(t.includes("목록") && t.includes("이름표"), `핵심 단어에 명사가 빠졌다: ${t}`);
+  const u = keyTermsOf("AI 가 코드를 써줄수록 판단하는 사람의 가치가 오른다");
+  assert.ok(!u.some((w) => w.startsWith("판단하")), `동사 조각이 핵심 단어로 나왔다: ${u}`);
+  assert.ok(keyTermsOf("트랜잭셔널은 메서드 안 DB 작업을 한 묶음으로 처리한다").includes("메서드"), "메서드가 빠졌다");
+  for (const q of QUESTIONS) assert.ok(keyTermsOf(summaryOf(q)).length >= 1, `핵심 단어가 하나도 없다: ${q.id}`);
 }
 
 // ─── 보기 전용 문장 검수 ──────────────────────────────────
