@@ -242,7 +242,7 @@ export function NotesScreen() {
         >
           ← 목록
         </button>
-        <NoteBoard note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} />
+        <NoteBoard note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} onOpenNote={(id) => open(id)} />
         {(prev || next) && (
           <div className="flex gap-2">
             {prev ? (

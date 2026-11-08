@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import { NOTE_SUBJECTS } from "./index";
 import { NOTE_LABELS } from "./labels";
+import { NOTE_ALIASES, splitConcepts, conceptOf } from "./concepts";
 
 const seen = new Set<string>();
 let count = 0;
@@ -60,5 +61,21 @@ for (const subject of NOTE_SUBJECTS) {
 
 // 라벨 쪽에만 남은 고아 id 도 잡는다 (노트를 지우고 라벨을 안 지운 경우)
 for (const id of Object.keys(NOTE_LABELS)) assert.ok(seen.has(id), `labels.ts 에 없는 노트 id: ${id}`);
+
+// 개념 사전: 별칭이 가리키는 노트가 실제로 있어야 한다
+for (const id of Object.keys(NOTE_ALIASES)) assert.ok(seen.has(id), `concepts.ts 에 없는 노트 id: ${id}`);
+// 낱말 자르기: 영문 개념은 더 긴 단어 속에서 걸리면 안 된다 (HashMap 속 Map)
+{
+  const segs = splitConcepts("HashMap 과 Map 은 다르다", new Set());
+  const names = segs.filter((s) => s.concept).map((s) => s.concept);
+  assert.deepEqual(names, ["HashMap", "Map"], `개념 자르기: ${JSON.stringify(names)}`);
+  // 한글 개념은 앞 글자가 한글이면 안 걸린다 ("다형성" 속 "형성" 같은 오탐 방지 규칙)
+  assert.ok(!splitConcepts("배열을 쓴다", new Set(["배열"])).some((s) => s.concept), "skip 에 든 개념이 링크됐다");
+  // 카드 + 노트 둘 다 있는 개념은 둘 다 나온다
+  const c = conceptOf("재귀");
+  assert.ok(c?.card && c.notes.length >= 1, "재귀는 단어장 카드와 노트를 둘 다 가져야 한다");
+  // 지금 노트 자신은 이동 대상에서 빠진다
+  assert.ok(!conceptOf("HashMap", "n-jv-7-5")?.notes.some((n) => n.note.id === "n-jv-7-5"), "자기 노트로 가는 링크");
+}
 
 console.log(`notes ${count}장 점검 통과`);
