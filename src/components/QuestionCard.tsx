@@ -37,13 +37,14 @@ import type {
   ChoiceExercise,
   CodeExercise,
   MatchExercise,
+  OrderExercise,
   OxExercise,
   Question,
   TypingExercise,
 } from "../types";
 import { CATEGORY_EMOJI } from "../data/questions";
 import { findCharacter, stageOf } from "../data/characters";
-import { gradeTyping, keyTermsOf, shuffle, summaryOf } from "../utils/exercise";
+import { gradeOrder, gradeTyping, keyTermsOf, shuffle, summaryOf } from "../utils/exercise";
 import { intervalOf } from "../utils/srs";
 import { Confetti } from "./Confetti";
 import { playSound, isMuted, toggleMute, vibrate } from "../utils/sound";
@@ -131,6 +132,7 @@ const PROMPT_BY_TYPE: Record<string, string> = {
   speak: "내 말로 직접 써서 설명해보세요",
   match: "질문과 설명을 짝지으세요",
   code: "이 내용을 코드로 잘 나타낸 것을 고르세요",
+  order: "코드 줄을 올바른 순서로 쌓으세요",
 };
 
 /** 하단 키보드 단축키 안내 — 물리 키보드가 있는 sm 이상에서만 보인다. */
@@ -147,6 +149,7 @@ const SUBMIT_HINT_BY_TYPE: Record<string, string> = {
   speak: "✍️ 직접 써본 뒤 정답과 나란히 비교해요",
   match: "🔗 4쌍을 모두 연결하면 자동으로 채점돼요",
   code: "🔍 칸을 눌러 고르고, 돋보기로 코드 전체를 봐요",
+  order: "🧩 아래 줄을 눌러 위로 쌓아요 — 괄호와 들여쓰기가 단서",
 };
 
 /** 문장 카드(빈칸·타이핑·OX·매칭 공통) — 흰 카드 + 얇은 테두리. */
@@ -700,6 +703,107 @@ function CodeView({ ex, onGrade }: { ex: CodeExercise; onGrade: (correct: boolea
   );
 }
 
+// ─── ⑧ 코드 순서 맞추기 ────────────────────────────────────
+// 섞인 코드 줄을 아래(줄 더미)에서 눌러 위(코드 판)에 차례로 쌓는다. 쌓인 줄을 누르면 다시 내려간다.
+// 휴대폰에서 끌어다 놓기는 손가락이 코드를 가려서, 누르기로 했다.
+
+function OrderView({ ex, onGrade }: { ex: OrderExercise; onGrade: (correct: boolean) => void }) {
+  const graded = useStudyStore((s) => s.graded);
+  const [placed, setPlaced] = useState<number[]>([]); // 쌓은 줄 id 순서
+  const byId = new Map(ex.shuffled.map((it) => [it.id, it.text]));
+  const answer = placed.map((id) => byId.get(id)!);
+  const full = placed.length === ex.lines.length;
+  const correct = graded && gradeOrder(answer, ex.lines);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* 코드 판 — 쌓인 줄 + 남은 빈 줄 자리 */}
+      <div className="rounded-2xl bg-ink-900 p-3 font-mono text-[12.5px] leading-relaxed">
+        {ex.lines.map((_, i) => {
+          const id = placed[i];
+          const text = id === undefined ? null : byId.get(id)!;
+          const ok = graded && text !== null && text.trim() === ex.lines[i].trim();
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={graded || id === undefined}
+              onClick={() => setPlaced((p) => p.filter((x) => x !== id))}
+              className={
+                "flex w-full items-start gap-2 rounded-md px-1.5 py-1 text-left " +
+                (text === null
+                  ? "border border-dashed border-ink-700"
+                  : graded
+                  ? ok
+                    ? "bg-duo-green/25"
+                    : "bg-duo-red/30"
+                  : "active:bg-white/10")
+              }
+            >
+              <span className="w-5 shrink-0 select-none text-right text-ink-500">{i + 1}</span>
+              <span className="min-w-0 whitespace-pre-wrap break-all text-ink-100">{text ?? " "}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 줄 더미 — 아직 안 쓴 줄 */}
+      {!graded && (
+        <div className="flex flex-col gap-2">
+          {ex.shuffled
+            .filter((it) => !placed.includes(it.id))
+            .map((it) => (
+              <button
+                key={it.id}
+                type="button"
+                onClick={() => {
+                  playSound("click");
+                  setPlaced((p) => [...p, it.id]);
+                }}
+                className="btn-3d rounded-xl border-2 border-b-4 border-ink-200 bg-white px-3 py-2 text-left font-mono text-[12.5px] text-ink-900 active:translate-y-0.5"
+              >
+                <span className="whitespace-pre-wrap break-all">{it.text.trim()}</span>
+              </button>
+            ))}
+        </div>
+      )}
+
+      {graded && !correct && (
+        <div className="flex flex-col gap-1.5">
+          <span className="px-1 text-xs font-extrabold text-duo-green-ink">✅ 정답 순서</span>
+          <pre className="overflow-x-auto rounded-2xl border border-duo-green-dim bg-duo-green-tint p-3 font-mono text-[12.5px] leading-relaxed text-ink-900">
+            {ex.lines.join("\n")}
+          </pre>
+        </div>
+      )}
+
+      {!graded && (
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setPlaced([])}
+            disabled={placed.length === 0}
+            className="min-h-12 rounded-full border-2 border-ink-200 bg-white px-5 text-sm font-extrabold text-ink-700 disabled:text-ink-300"
+          >
+            ↺ 다시
+          </button>
+          <button
+            type="button"
+            onClick={() => onGrade(gradeOrder(answer, ex.lines))}
+            disabled={!full}
+            className={
+              "min-h-12 flex-1 rounded-full text-base font-extrabold transition-transform active:scale-[0.98] " +
+              (full ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+            }
+          >
+            확인
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── ⑥ 선 연결하기 (매칭) ──────────────────────────────────
 
 // 왜 2열을 버렸나 — 360px 2열은 셀 폭 141px라 27자짜리 요약도 3줄이 된다.
@@ -975,6 +1079,8 @@ export function QuestionCard() {
         return <MatchView ex={exercise} onGrade={handleGrade} />;
       case "code":
         return <CodeView ex={exercise} onGrade={handleGrade} />;
+      case "order":
+        return <OrderView ex={exercise} onGrade={handleGrade} />;
     }
   };
 
@@ -1196,6 +1302,8 @@ export function QuestionCard() {
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">중간에 실수가 있었어요 — 해설로 확인해요</p>
                   : exercise.type === "code"
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">초록 칸이 정답 — 🔍 로 주석까지 보며 확인해요</p>
+                  : exercise.type === "order"
+                  ? <p className="mt-0.5 text-base font-semibold text-ink-700">빨간 줄이 자리가 틀렸어요 — 정답 순서를 확인해요</p>
                   : correctShort && (
                       <p className="mt-0.5 line-clamp-2 break-keep text-base font-semibold text-ink-700">
                         정답은 「{correctShort}」이에요

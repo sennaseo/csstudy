@@ -111,7 +111,7 @@ export interface QuizChoice {
 // → switch(ex.type) 하면 TS 가 각 분기에서 필요한 필드를 자동으로 좁혀준다.
 
 /** 출제 가능한 유형들. */
-export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match" | "code";
+export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match" | "code" | "order";
 
 /** 객관식: 보기 4개 중 맞는 설명 고르기 (기존 방식). */
 export interface ChoiceExercise {
@@ -182,7 +182,18 @@ export interface CodeExercise {
   options: { qid: string; code: string; full: string; correct: boolean }[];
 }
 
+/**
+ * 코드 순서 맞추기: 예시 코드의 한 덩어리(4~7줄)를 섞어 두고, 줄을 눌러 올바른 순서로 쌓는다.
+ * lines = 정답 순서. 같은 줄(예: "}")이 여러 번 나와도 글자가 같으면 어느 쪽을 써도 맞다.
+ */
+export interface OrderExercise {
+  type: "order";
+  lines: string[];
+  shuffled: { id: number; text: string }[];
+}
+
 export type Exercise =
+  | OrderExercise
   | CodeExercise
   | ChoiceExercise
   | BlankExercise

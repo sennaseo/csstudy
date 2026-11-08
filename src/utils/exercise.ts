@@ -14,6 +14,7 @@ import type {
   BlankExercise,
   ChoiceExercise,
   CodeExercise,
+  OrderExercise,
   Exercise,
   ExerciseType,
   Level,
@@ -516,6 +517,45 @@ export function buildCodeExercise(q: Question): CodeExercise | null {
   };
 }
 
+// ─── 코드 순서 맞추기 ──────────────────────────────────────
+
+/**
+ * 순서를 맞출 코드 덩어리 고르기 — 빈 줄로 나뉜 덩어리 중 4~7줄이면서 괄호·들여쓰기 단서가 있는 것.
+ * 없으면 null (→ 다른 유형으로 폴백).
+ */
+export function orderChunkOf(code: string): string[] | null {
+  const blocks = stripComments(code)
+    .split(/\n\s*\n/)
+    .map((b) => b.split("\n").filter((l) => l.trim() !== ""));
+  // 순서에 단서가 있는 덩어리만 — 여는/닫는 괄호나 들여쓰기 줄이 2개 이상.
+  // ("a == b;" / "a.equals(b);" 처럼 바꿔 놔도 말이 되는 줄만 있으면 정답이 하나로 안 정해진다)
+  const structured = (b: string[]) => {
+    const base = Math.min(...b.map((l) => l.length - l.trimStart().length));
+    return b.filter((l) => /[{}()[\]]\s*;?$/.test(l.trim()) || /^[)}\]]/.test(l.trim()) || l.length - l.trimStart().length > base).length >= 2;
+  };
+  const chunk = blocks.find((b) => b.length >= 4 && b.length <= 7 && structured(b));
+  if (!chunk || new Set(chunk).size < 3) return null;
+  // 덩어리 전체에 공통으로 붙은 들여쓰기는 걷어낸다 (클래스 안 메서드를 잘라 왔을 때)
+  const base = Math.min(...chunk.map((l) => l.length - l.trimStart().length));
+  return chunk.map((l) => l.slice(base));
+}
+
+export function buildOrderExercise(q: Question): OrderExercise | null {
+  if (!q.code || q.quizCode || q.options || q.category === "기술면접") return null;
+  const lines = orderChunkOf(q.code);
+  if (!lines) return null;
+  const items = lines.map((text, id) => ({ id, text }));
+  let shuffled = shuffle(items);
+  // 섞었는데 우연히 정답 순서 그대로면 한 번 더 — 처음부터 맞춰져 있으면 문제가 아니다
+  for (let k = 0; k < 5 && shuffled.every((it, i) => it.text === lines[i]); k++) shuffled = shuffle(items);
+  return { type: "order", lines, shuffled };
+}
+
+/** 순서 채점 — 같은 글자의 줄은 서로 바꿔 써도 맞다. 앞뒤 공백(들여쓰기)은 비교에서 뺀다. */
+export function gradeOrder(answer: string[], lines: string[]): boolean {
+  return answer.length === lines.length && answer.every((t, i) => t.trim() === lines[i].trim());
+}
+
 // ─── 랜덤 믹스 진입점 ─────────────────────────────────────
 
 /**
@@ -533,6 +573,7 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
     { type: "speak", weight: 10 },
     { type: "match", weight: 8 },
     { type: "code", weight: 10 },
+    { type: "order", weight: 8 },
   ],
   easy: [
     { type: "choice", weight: 60 },
@@ -541,6 +582,7 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
   normal: [
     { type: "blank", weight: 50 },
     { type: "code", weight: 20 },
+    { type: "order", weight: 15 },
     { type: "match", weight: 15 },
     { type: "choice", weight: 15 },
   ],
@@ -548,6 +590,7 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
     { type: "typing", weight: 40 },
     { type: "blank", weight: 30 },
     { type: "speak", weight: 30 },
+    { type: "order", weight: 20 },
   ],
 };
 
@@ -578,6 +621,8 @@ export function buildExercise(q: Question, level: Level | null = null, forceType
         return buildMatchExercise(q);
       case "code":
         return buildCodeExercise(q);
+      case "order":
+        return buildOrderExercise(q);
     }
   };
 

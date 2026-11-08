@@ -29,6 +29,8 @@ import {
   keyTermsOf,
   stripComments,
   buildCodeExercise,
+  buildOrderExercise,
+  gradeOrder,
 } from "./exercise";
 import { CHOICE_TEXTS } from "../data/choiceTexts";
 
@@ -190,9 +192,9 @@ for (const q of QUESTIONS) {
 {
   const ALLOWED: Record<Level | "mix", Set<ExerciseType>> = {
     easy: new Set(["choice", "ox"]),
-    normal: new Set(["blank", "match", "choice", "code"]),
-    hard: new Set(["typing", "blank", "speak"]),
-    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match", "code"]),
+    normal: new Set(["blank", "match", "choice", "code", "order"]),
+    hard: new Set(["typing", "blank", "speak", "order"]),
+    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match", "code", "order"]),
   };
 
   let hardSawChoice = false;
@@ -295,6 +297,22 @@ for (const q of QUESTIONS) {
     assert.notEqual(q.category, "기술면접", "기술면접 예시는 코드 고르기에서 뺀다");
   }
   assert.ok(built >= 100, `코드 고르기 출제 가능 문제가 너무 적다: ${built}`);
+}
+
+// ─── 코드 순서 맞추기 ──────────────────────────────────────
+{
+  assert.ok(gradeOrder(["a", "}", "}"], ["a", "}", "}"]), "같은 글자 줄은 바꿔 써도 맞다");
+  assert.ok(gradeOrder(["  a"], ["a"]), "들여쓰기 차이는 봐준다");
+  assert.ok(!gradeOrder(["b", "a"], ["a", "b"]), "순서가 다르면 틀림");
+  let n = 0;
+  for (const q of QUESTIONS) {
+    const ex = buildOrderExercise(q);
+    if (!ex) continue;
+    n++;
+    assert.ok(ex.lines.length >= 4 && ex.lines.length <= 7, `순서 문제 줄 수: ${q.id}`);
+    assert.deepEqual([...ex.shuffled].sort((a, b) => a.id - b.id).map((x) => x.text), ex.lines, `섞은 줄이 원래 줄과 다르다: ${q.id}`);
+  }
+  assert.ok(n >= 60, `순서 맞추기 출제 가능 문제가 너무 적다: ${n}`);
 }
 
 // ─── 직접 써서 설명하기: 핵심 단어 힌트 ───────────────────
