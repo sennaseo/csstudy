@@ -31,6 +31,7 @@ import {
   buildCodeExercise,
   buildOrderExercise,
   gradeOrder,
+  buildFillExercise,
 } from "./exercise";
 import { CHOICE_TEXTS } from "../data/choiceTexts";
 
@@ -192,9 +193,9 @@ for (const q of QUESTIONS) {
 {
   const ALLOWED: Record<Level | "mix", Set<ExerciseType>> = {
     easy: new Set(["choice", "ox"]),
-    normal: new Set(["blank", "match", "choice", "code", "order"]),
+    normal: new Set(["blank", "match", "choice", "code", "order", "fill"]),
     hard: new Set(["typing", "blank", "speak", "order"]),
-    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match", "code", "order"]),
+    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match", "code", "order", "fill"]),
   };
 
   let hardSawChoice = false;
@@ -313,6 +314,26 @@ for (const q of QUESTIONS) {
     assert.deepEqual([...ex.shuffled].sort((a, b) => a.id - b.id).map((x) => x.text), ex.lines, `섞은 줄이 원래 줄과 다르다: ${q.id}`);
   }
   assert.ok(n >= 60, `순서 맞추기 출제 가능 문제가 너무 적다: ${n}`);
+}
+
+// ─── 코드 빈칸 채우기 ──────────────────────────────────────
+{
+  let n = 0;
+  for (const q of QUESTIONS) {
+    const ex = buildFillExercise(q);
+    if (!ex) continue;
+    n++;
+    const blanks = ex.lines.flat().filter((p) => typeof p !== "string");
+    assert.ok(blanks.length >= 2 && blanks.length <= 3, `빈칸은 2~3개: ${q.id}`);
+    assert.equal(blanks.length, ex.answers.length, `빈칸 수와 정답 수: ${q.id}`);
+    for (const a of ex.answers) assert.ok(ex.bank.includes(a), `키보드에 정답이 없다: ${q.id} ${a}`);
+    assert.equal(new Set(ex.bank).size, ex.bank.length, `키보드 토큰 중복: ${q.id}`);
+    // 정답 글자가 빈칸 밖 코드에 그대로 보이면 안 된다
+    const visible = ex.lines.flat().filter((p): p is string => typeof p === "string").join(" ");
+    for (const a of ex.answers)
+      assert.ok(!new RegExp(`(^|[^A-Za-z0-9_@])${a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^A-Za-z0-9_]|$)`).test(visible), `정답이 코드에 그대로 보인다: ${q.id} ${a}`);
+  }
+  assert.ok(n >= 60, `코드 빈칸 출제 가능 문제가 너무 적다: ${n}`);
 }
 
 // ─── 직접 써서 설명하기: 핵심 단어 힌트 ───────────────────

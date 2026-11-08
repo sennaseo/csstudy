@@ -36,6 +36,7 @@ import type {
   BlankExercise,
   ChoiceExercise,
   CodeExercise,
+  FillExercise,
   MatchExercise,
   OrderExercise,
   OxExercise,
@@ -133,6 +134,7 @@ const PROMPT_BY_TYPE: Record<string, string> = {
   match: "질문과 설명을 짝지으세요",
   code: "이 내용을 코드로 잘 나타낸 것을 고르세요",
   order: "코드 줄을 올바른 순서로 쌓으세요",
+  fill: "빈칸에 들어갈 코드 조각을 채우세요",
 };
 
 /** 하단 키보드 단축키 안내 — 물리 키보드가 있는 sm 이상에서만 보인다. */
@@ -150,6 +152,7 @@ const SUBMIT_HINT_BY_TYPE: Record<string, string> = {
   match: "🔗 4쌍을 모두 연결하면 자동으로 채점돼요",
   code: "🔍 칸을 눌러 고르고, 돋보기로 코드 전체를 봐요",
   order: "🧩 아래 줄을 눌러 위로 쌓아요 — 괄호와 들여쓰기가 단서",
+  fill: "⌨️ 토큰을 누르면 앞 빈칸부터 채워져요 — 채운 칸을 누르면 비워져요",
 };
 
 /** 문장 카드(빈칸·타이핑·OX·매칭 공통) — 흰 카드 + 얇은 테두리. */
@@ -804,6 +807,130 @@ function OrderView({ ex, onGrade }: { ex: OrderExercise; onGrade: (correct: bool
   );
 }
 
+// ─── ⑨ 코드 빈칸 채우기 (토큰 키보드) ──────────────────────
+// 어두운 코드 판의 빈칸을, 아래 파란 토큰 키보드로 채운다. 지금 채울 칸은 밝게 빛난다.
+// 토큰을 누르면 첫 빈 칸에 들어가고, 채운 칸을 누르면 비워진다. ⌫ = 마지막 채운 칸 지우기, ↺ = 전부 비우기.
+
+function FillView({ ex, onGrade }: { ex: FillExercise; onGrade: (correct: boolean) => void }) {
+  const graded = useStudyStore((s) => s.graded);
+  const [filled, setFilled] = useState<(string | null)[]>(() => ex.answers.map(() => null));
+  const [order, setOrder] = useState<number[]>([]); // 채운 순서 (⌫ 용)
+  const nextEmpty = filled.findIndex((f) => f === null);
+  const full = nextEmpty === -1;
+
+  const put = (tok: string) => {
+    if (graded || full) return;
+    playSound("click");
+    setFilled((f) => f.map((x, i) => (i === nextEmpty ? tok : x)));
+    setOrder((o) => [...o, nextEmpty]);
+  };
+  const clear = (i: number) => {
+    if (graded) return;
+    setFilled((f) => f.map((x, j) => (j === i ? null : x)));
+    setOrder((o) => o.filter((j) => j !== i));
+  };
+  const backspace = () => {
+    const last = order[order.length - 1];
+    if (last !== undefined) clear(last);
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* 코드 판 */}
+      <div className="overflow-x-auto rounded-2xl bg-[#0F1A33] p-4 font-mono text-[13px] leading-[2.1] text-[#E6EAF5]">
+        {ex.lines.map((line, li) => (
+          <div key={li} className="whitespace-pre">
+            {line.map((part, pi) => {
+              if (typeof part === "string") return <span key={pi}>{part}</span>;
+              const i = part.blank;
+              const v = filled[i];
+              const ok = graded && v === ex.answers[i];
+              const width = `${Math.max(ex.answers[i].length, 3) + 1.5}ch`;
+              return (
+                <button
+                  key={pi}
+                  type="button"
+                  onClick={() => clear(i)}
+                  disabled={graded || v === null}
+                  style={{ minWidth: width }}
+                  className={
+                    "mx-0.5 inline-block rounded-md border-2 px-1 text-center align-middle leading-6 " +
+                    (graded
+                      ? ok
+                        ? "border-duo-green bg-duo-green/25 text-[#B9F5C8]"
+                        : "border-duo-red bg-duo-red/25 text-[#FFC2BE]"
+                      : v !== null
+                      ? "border-[#4B6CF0] bg-[#2B44A8] text-white"
+                      : i === nextEmpty
+                      ? "border-[#8EA2F8] bg-[#8EA2F8]/15"
+                      : "border-[#3A4A78]")
+                  }
+                >
+                  {v ?? " "}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* 틀린 칸의 정답 */}
+      {graded && filled.some((v, i) => v !== ex.answers[i]) && (
+        <p className="px-1 font-mono text-[13px] text-duo-green-ink">
+          ✅ 정답: {ex.answers.map((a, i) => `${i + 1}) ${a}`).join("   ")}
+        </p>
+      )}
+
+      {/* 토큰 키보드 */}
+      {!graded && (
+        <div className="flex flex-col gap-3 rounded-2xl bg-[#0B1430] p-3">
+          <div className="flex items-center justify-end gap-2">
+            <button type="button" onClick={() => { setFilled(ex.answers.map(() => null)); setOrder([]); }} aria-label="전부 비우기" className="flex h-9 w-9 items-center justify-center rounded-lg text-lg text-[#C9D3F0] active:bg-white/10">
+              ↺
+            </button>
+            <button type="button" onClick={backspace} aria-label="마지막 칸 지우기" className="flex h-9 w-11 items-center justify-center rounded-lg border-2 border-[#C9D3F0] text-sm font-black text-[#C9D3F0] active:bg-white/10">
+              ⌫
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            {ex.bank.map((tok) => {
+              const used = filled.includes(tok);
+              return (
+                <button
+                  key={tok}
+                  type="button"
+                  onClick={() => put(tok)}
+                  disabled={used || full}
+                  className={
+                    "min-h-11 rounded-lg px-3.5 font-mono text-[14px] transition-transform active:scale-95 " +
+                    (used ? "bg-[#1E2A55] text-[#55618A]" : "bg-[#2F4BB8] text-white")
+                  }
+                >
+                  {tok}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!graded && (
+        <button
+          type="button"
+          onClick={() => onGrade(filled.every((v, i) => v === ex.answers[i]))}
+          disabled={!full}
+          className={
+            "min-h-12 w-full rounded-full text-base font-extrabold transition-transform active:scale-[0.98] " +
+            (full ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+          }
+        >
+          확인
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── ⑥ 선 연결하기 (매칭) ──────────────────────────────────
 
 // 왜 2열을 버렸나 — 360px 2열은 셀 폭 141px라 27자짜리 요약도 3줄이 된다.
@@ -1081,6 +1208,8 @@ export function QuestionCard() {
         return <CodeView ex={exercise} onGrade={handleGrade} />;
       case "order":
         return <OrderView ex={exercise} onGrade={handleGrade} />;
+      case "fill":
+        return <FillView ex={exercise} onGrade={handleGrade} />;
     }
   };
 
@@ -1302,6 +1431,8 @@ export function QuestionCard() {
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">중간에 실수가 있었어요 — 해설로 확인해요</p>
                   : exercise.type === "code"
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">초록 칸이 정답 — 🔍 로 주석까지 보며 확인해요</p>
+                  : exercise.type === "fill"
+                  ? <p className="mt-0.5 text-base font-semibold text-ink-700">정답은 「{exercise.answers.join(" · ")}」이에요</p>
                   : exercise.type === "order"
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">빨간 줄이 자리가 틀렸어요 — 정답 순서를 확인해요</p>
                   : correctShort && (

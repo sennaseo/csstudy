@@ -14,6 +14,7 @@ import type {
   BlankExercise,
   ChoiceExercise,
   CodeExercise,
+  FillExercise,
   OrderExercise,
   Exercise,
   ExerciseType,
@@ -556,6 +557,110 @@ export function gradeOrder(answer: string[], lines: string[]): boolean {
   return answer.length === lines.length && answer.every((t, i) => t.trim() === lines[i].trim());
 }
 
+// ─── 코드 빈칸 채우기 (토큰 키보드) ────────────────────────
+
+/** 뚫을 만한 키워드 — 문법의 뼈대라 "이 자리에 뭐가 와야 하나"를 물을 가치가 있다. */
+const FILL_KEYWORDS = new Set([
+  "return", "new", "extends", "implements", "static", "final", "public", "private", "protected", "abstract",
+  "interface", "class", "this", "super", "null", "void", "throws", "throw", "try", "catch", "finally",
+  "async", "await", "yield", "import", "from", "def", "lambda", "None", "True", "False", "self", "const", "let",
+  "export", "default", "typeof", "instanceof", "in", "is", "not", "and", "or", "elif", "while", "for", "break",
+  "continue", "switch", "case", "SELECT", "FROM", "WHERE", "JOIN", "GROUP", "HAVING", "ORDER", "INSERT", "UPDATE", "DELETE",
+]);
+/** 너무 흔해서 뚫어도 배울 게 없는 것 */
+const FILL_SKIP = new Set(["int", "String", "var", "print", "println", "System", "out", "console", "log", "i", "x", "a", "b"]);
+
+type Tok = { text: string; start: number; score: number; kind: "anno" | "call" | "kw" | "id" };
+
+/** 한 줄에서 뚫을 후보 토큰 찾기 — 문자열('…', "…") 안은 건너뛴다. */
+function fillCandidates(line: string): Tok[] {
+  const out: Tok[] = [];
+  const masked = line.replace(/(["'`])(?:\\.|(?!\1).)*\1/g, (m) => " ".repeat(m.length)); // 문자열 자리를 공백으로
+  const re = /@?[A-Za-z_][A-Za-z0-9_]*/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(masked))) {
+    const text = m[0];
+    const bare = text.replace(/^@/, "");
+    if (bare.length < 2 || FILL_SKIP.has(bare)) continue;
+    const after = masked.slice(m.index + text.length).trimStart();
+    // 속성 이름(h.name)은 아무 이름이나 올 수 있어 추측밖에 안 된다 → 낮은 점수(뚫지 않음)
+    let score = 1;
+    let kind: Tok["kind"] = "id";
+    if (text.startsWith("@")) [score, kind] = [3, "anno"]; // 어노테이션
+    else if (after.startsWith("(")) {
+      // "String user(" 처럼 앞에 타입이 붙어 있으면 호출이 아니라 선언 — 이름은 아무거나 올 수 있어 뚫지 않는다
+      const prevWord = /([A-Za-z_][A-Za-z0-9_<>\[\]]*)\s+$/.exec(masked.slice(0, m.index))?.[1];
+      if (prevWord && !FILL_KEYWORDS.has(prevWord)) [score, kind] = [1, "id"];
+      else [score, kind] = [3, "call"]; // 메서드·함수 호출
+    }
+    else if (FILL_KEYWORDS.has(bare)) [score, kind] = [2, "kw"];
+    out.push({ text, start: m.index, score, kind });
+  }
+  return out;
+}
+
+export function buildFillExercise(q: Question): FillExercise | null {
+  if (!q.code || q.quizCode || q.options || q.category === "기술면접") return null;
+  const blocks = stripComments(q.code)
+    .split(/\n\s*\n/)
+    .map((b) => b.split("\n").filter((l) => l.trim() !== ""))
+    .filter((b) => b.length >= 2 && b.length <= 8);
+  // 점수 2 이상 후보가 가장 많은 덩어리
+  let best: { lines: string[]; cands: (Tok & { line: number })[] } | null = null;
+  for (const raw of blocks) {
+    // 공통 들여쓰기는 걷어낸다 (클래스 안 메서드를 잘라 왔을 때)
+    const base = Math.min(...raw.map((l) => l.length - l.trimStart().length));
+    const b = raw.map((l) => l.slice(base));
+    const all = b.flatMap((l, line) => fillCandidates(l).map((t) => ({ ...t, line })));
+    // 같은 글자가 덩어리 안 다른 곳에 또 나오면 뚫어도 바로 옆에 답이 보인다 → 후보에서 뺀다
+    const count = new Map<string, number>();
+    for (const t of all) count.set(t.text, (count.get(t.text) ?? 0) + 1);
+    const cands = all.filter((t) => t.score >= 2 && count.get(t.text) === 1);
+    if (new Set(cands.map((c) => c.text)).size >= 2 && (!best || cands.length > best.cands.length)) best = { lines: b, cands };
+  }
+  if (!best) return null;
+  // 빈칸 2~3개 — 같은 글자는 한 번만, 점수 높은 것 먼저(같으면 무작위), 되도록 다른 줄에서
+  const picked: (Tok & { line: number })[] = [];
+  const usedLines = new Set<number>();
+  const ranked = shuffle(best.cands).sort((x, y) => y.score - x.score);
+  for (const pass of [true, false])
+    for (const c of ranked) {
+      if (picked.length >= 3) break;
+      if (picked.some((p) => p.text === c.text || (p.line === c.line && p.start === c.start))) continue;
+      if (pass && usedLines.has(c.line)) continue;
+      picked.push(c);
+      usedLines.add(c.line);
+    }
+  if (picked.length < 2) return null;
+  // 코드에 나오는 순서대로 빈칸 번호를 매긴다
+  picked.sort((x, y) => x.line - y.line || x.start - y.start);
+  const answers = picked.map((p) => p.text);
+  const lines = best.lines.map((l, li) => {
+    const parts: Array<string | { blank: number }> = [];
+    let pos = 0;
+    picked.forEach((p, bi) => {
+      if (p.line !== li) return;
+      parts.push(l.slice(pos, p.start));
+      parts.push({ blank: bi });
+      pos = p.start + p.text.length;
+    });
+    parts.push(l.slice(pos));
+    return parts.filter((x) => x !== "");
+  });
+  // 키보드: 정답 + 헷갈리는 토큰(같은 분야 다른 코드의 키워드·호출) 4개
+  // 정답과 같은 종류(어노테이션·호출·키워드)에서만 고른다 — 종류가 다르면 한눈에 오답이라 헷갈리지 않는다
+  const kinds = new Set(picked.map((p) => p.kind));
+  const others = shuffle(QUESTIONS.filter((x) => x.id !== q.id && x.code && x.category === q.category && x.category !== "기술면접"));
+  const decoys: string[] = [];
+  for (const x of others) {
+    for (const l of stripComments(x.code!).split("\n"))
+      for (const t of fillCandidates(l))
+        if (kinds.has(t.kind) && t.score >= 2 && !answers.includes(t.text) && !decoys.includes(t.text) && decoys.length < 4) decoys.push(t.text);
+    if (decoys.length >= 4) break;
+  }
+  return { type: "fill", lines, answers, bank: shuffle([...answers, ...decoys]) };
+}
+
 // ─── 랜덤 믹스 진입점 ─────────────────────────────────────
 
 /**
@@ -574,6 +679,7 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
     { type: "match", weight: 8 },
     { type: "code", weight: 10 },
     { type: "order", weight: 8 },
+    { type: "fill", weight: 10 },
   ],
   easy: [
     { type: "choice", weight: 60 },
@@ -583,6 +689,7 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
     { type: "blank", weight: 50 },
     { type: "code", weight: 20 },
     { type: "order", weight: 15 },
+    { type: "fill", weight: 20 },
     { type: "match", weight: 15 },
     { type: "choice", weight: 15 },
   ],
@@ -623,6 +730,8 @@ export function buildExercise(q: Question, level: Level | null = null, forceType
         return buildCodeExercise(q);
       case "order":
         return buildOrderExercise(q);
+      case "fill":
+        return buildFillExercise(q);
     }
   };
 

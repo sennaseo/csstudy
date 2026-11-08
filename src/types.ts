@@ -111,7 +111,7 @@ export interface QuizChoice {
 // → switch(ex.type) 하면 TS 가 각 분기에서 필요한 필드를 자동으로 좁혀준다.
 
 /** 출제 가능한 유형들. */
-export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match" | "code" | "order";
+export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match" | "code" | "order" | "fill";
 
 /** 객관식: 보기 4개 중 맞는 설명 고르기 (기존 방식). */
 export interface ChoiceExercise {
@@ -192,7 +192,19 @@ export interface OrderExercise {
   shuffled: { id: number; text: string }[];
 }
 
+/**
+ * 코드 빈칸 채우기: 코드 몇 줄에서 식별자·키워드 2~3개를 뚫고, 아래 토큰 키보드로 채운다.
+ * lines = 줄마다 [글자 조각 | 빈칸 번호] 배열. answers[i] = i번 빈칸의 정답. bank = 키보드 토큰(정답 + 헷갈리는 것).
+ */
+export interface FillExercise {
+  type: "fill";
+  lines: Array<Array<string | { blank: number }>>;
+  answers: string[];
+  bank: string[];
+}
+
 export type Exercise =
+  | FillExercise
   | OrderExercise
   | CodeExercise
   | ChoiceExercise
