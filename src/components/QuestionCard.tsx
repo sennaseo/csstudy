@@ -35,6 +35,7 @@ import { useStudyStore } from "../store/useStudyStore";
 import type {
   BlankExercise,
   ChoiceExercise,
+  CodeExercise,
   MatchExercise,
   OxExercise,
   Question,
@@ -46,6 +47,7 @@ import { gradeTyping, keyTermsOf, shuffle, summaryOf } from "../utils/exercise";
 import { intervalOf } from "../utils/srs";
 import { Confetti } from "./Confetti";
 import { playSound, isMuted, toggleMute, vibrate } from "../utils/sound";
+import { useBack } from "../utils/useBack";
 
 // ─── XP 표시값 — 스토어의 XP_BY_STATUS 와 같은 값을 쓴다 ───
 // ⚠️ 스토어의 XP_BY_STATUS 가 export 가 아니라서 지금은 여기 상수로 둔다.
@@ -128,6 +130,7 @@ const PROMPT_BY_TYPE: Record<string, string> = {
   typing: "빈칸의 용어를 입력하세요",
   speak: "내 말로 직접 써서 설명해보세요",
   match: "질문과 설명을 짝지으세요",
+  code: "이 내용을 코드로 잘 나타낸 것을 고르세요",
 };
 
 /** 하단 키보드 단축키 안내 — 물리 키보드가 있는 sm 이상에서만 보인다. */
@@ -143,6 +146,7 @@ const SUBMIT_HINT_BY_TYPE: Record<string, string> = {
   typing: "⌨️ 입력하고 Enter — 오타 1글자는 봐줘요",
   speak: "✍️ 직접 써본 뒤 정답과 나란히 비교해요",
   match: "🔗 4쌍을 모두 연결하면 자동으로 채점돼요",
+  code: "🔍 칸을 눌러 고르고, 돋보기로 코드 전체를 봐요",
 };
 
 /** 문장 카드(빈칸·타이핑·OX·매칭 공통) — 흰 카드 + 얇은 테두리. */
@@ -544,6 +548,158 @@ function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) =>
   );
 }
 
+// ─── ⑦ 코드 고르기 ─────────────────────────────────────────
+// 2×2 칸마다 코드 미리보기(앞 몇 줄 + 아래 흐림). 칸을 누르면 고르고, 🔍 를 누르면 모달로 전체 코드.
+// 고를 때는 주석을 뺀 코드, 채점 뒤엔 주석까지 든 원본을 모달에서 볼 수 있다(주석이 곧 해설).
+
+/** 코드 전체 보기 모달 — 줄 번호가 붙은 어두운 코드 판. */
+function CodeModal({
+  code,
+  title,
+  onClose,
+  onPick,
+}: {
+  code: string;
+  title: string;
+  onClose: () => void;
+  onPick?: () => void;
+}) {
+  useBack(onClose, true);
+  const lines = code.split("\n");
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end sm:items-center sm:justify-center" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" aria-label="닫기" onClick={onClose} className="absolute inset-0 bg-ink-900/50" />
+      <div className="relative mx-auto flex max-h-[85dvh] w-full max-w-xl animate-slide-up flex-col gap-3 rounded-t-3xl bg-white p-4 shadow-sheet sm:rounded-3xl">
+        <div className="flex items-center justify-between px-1">
+          <span className="text-sm font-extrabold text-ink-700">{title}</span>
+          <button onClick={onClose} aria-label="닫기" className="rounded-full bg-ink-100 px-3 py-1 text-xs font-bold text-ink-500">
+            닫기 ✕
+          </button>
+        </div>
+        <div className="min-h-0 overflow-auto rounded-2xl bg-ink-900 py-3">
+          <pre className="font-mono text-[12.5px] leading-relaxed text-ink-100">
+            {lines.map((l, i) => (
+              <div key={i} className="flex">
+                <span className="w-9 shrink-0 select-none pr-3 text-right text-ink-500">{i + 1}</span>
+                <span className="whitespace-pre pr-4">{l || " "}</span>
+              </div>
+            ))}
+          </pre>
+        </div>
+        {onPick && (
+          <button
+            onClick={onPick}
+            className="min-h-12 rounded-full bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-base font-extrabold text-white shadow-card active:scale-[0.98]"
+          >
+            이 코드 고르기
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CodeView({ ex, onGrade }: { ex: CodeExercise; onGrade: (correct: boolean) => void }) {
+  const graded = useStudyStore((s) => s.graded);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [zoom, setZoom] = useState<number | null>(null); // 모달로 연 칸 번호
+
+  const submit = () => {
+    const opt = ex.options.find((o) => o.qid === picked);
+    if (!opt || graded) return;
+    onGrade(opt.correct);
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3">
+        {ex.options.map((o, i) => {
+          const isPicked = picked === o.qid;
+          const tone = graded
+            ? o.correct
+              ? "ring-[3px] ring-duo-green"
+              : isPicked
+              ? "ring-[3px] ring-duo-red"
+              : "opacity-60"
+            : isPicked
+            ? "ring-[3px] ring-[#8EA2F8]"
+            : "ring-1 ring-ink-200";
+          return (
+            <div key={o.qid} className={"relative rounded-2xl bg-white shadow-card transition-all " + tone}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (graded) return setZoom(i);
+                  playSound("click");
+                  setPicked(o.qid);
+                }}
+                aria-pressed={isPicked}
+                aria-label={`${i + 1}번 코드 ${graded ? "보기" : "고르기"}`}
+                className="block h-44 w-full overflow-hidden rounded-2xl p-3 pt-8 text-left"
+              >
+                <pre className="whitespace-pre font-mono text-[9.5px] leading-[1.45] text-ink-700">{o.code}</pre>
+                {/* 아래로 갈수록 흐려져서 "더 있다"는 느낌 — 전체는 돋보기로 */}
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-12 rounded-b-2xl bg-gradient-to-t from-white to-transparent" />
+              </button>
+              <span
+                className={
+                  "pointer-events-none absolute left-2.5 top-2 flex h-6 w-6 items-center justify-center rounded-full text-xs font-extrabold " +
+                  (graded && o.correct
+                    ? "bg-duo-green text-white"
+                    : graded && isPicked
+                    ? "bg-duo-red text-white"
+                    : isPicked
+                    ? "bg-[#8EA2F8] text-white"
+                    : "bg-ink-100 text-ink-500")
+                }
+              >
+                {graded && o.correct ? "✓" : graded && isPicked ? "✕" : i + 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoom(i)}
+                aria-label={`${i + 1}번 코드 전체 보기`}
+                className="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-ink-100 text-sm active:bg-ink-200"
+              >
+                🔍
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {!graded && (
+        <button
+          onClick={submit}
+          disabled={!picked}
+          className={
+            "min-h-14 w-full rounded-full text-lg font-extrabold transition-transform active:scale-[0.98] " +
+            (picked ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+          }
+        >
+          확인
+        </button>
+      )}
+
+      {zoom !== null && (
+        <CodeModal
+          title={`${zoom + 1}번 코드${graded ? (ex.options[zoom].correct ? " — 정답 (주석 포함)" : " — 주석 포함") : ""}`}
+          code={graded ? ex.options[zoom].full : ex.options[zoom].code}
+          onClose={() => setZoom(null)}
+          onPick={
+            graded
+              ? undefined
+              : () => {
+                  setPicked(ex.options[zoom].qid);
+                  setZoom(null);
+                }
+          }
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── ⑥ 선 연결하기 (매칭) ──────────────────────────────────
 
 // 왜 2열을 버렸나 — 360px 2열은 셀 폭 141px라 27자짜리 요약도 3줄이 된다.
@@ -817,6 +973,8 @@ export function QuestionCard() {
         return <SpeakView q={q} onGrade={handleGrade} />;
       case "match":
         return <MatchView ex={exercise} onGrade={handleGrade} />;
+      case "code":
+        return <CodeView ex={exercise} onGrade={handleGrade} />;
     }
   };
 
@@ -1036,6 +1194,8 @@ export function QuestionCard() {
                     )
                   : exercise.type === "match"
                   ? <p className="mt-0.5 text-base font-semibold text-ink-700">중간에 실수가 있었어요 — 해설로 확인해요</p>
+                  : exercise.type === "code"
+                  ? <p className="mt-0.5 text-base font-semibold text-ink-700">초록 칸이 정답 — 🔍 로 주석까지 보며 확인해요</p>
                   : correctShort && (
                       <p className="mt-0.5 line-clamp-2 break-keep text-base font-semibold text-ink-700">
                         정답은 「{correctShort}」이에요

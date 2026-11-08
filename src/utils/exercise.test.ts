@@ -27,6 +27,8 @@ import {
   hideTerms,
   choiceTextOf,
   keyTermsOf,
+  stripComments,
+  buildCodeExercise,
 } from "./exercise";
 import { CHOICE_TEXTS } from "../data/choiceTexts";
 
@@ -188,9 +190,9 @@ for (const q of QUESTIONS) {
 {
   const ALLOWED: Record<Level | "mix", Set<ExerciseType>> = {
     easy: new Set(["choice", "ox"]),
-    normal: new Set(["blank", "match", "choice"]),
+    normal: new Set(["blank", "match", "choice", "code"]),
     hard: new Set(["typing", "blank", "speak"]),
-    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match"]),
+    mix: new Set(["choice", "blank", "ox", "typing", "speak", "match", "code"]),
   };
 
   let hardSawChoice = false;
@@ -272,6 +274,27 @@ for (const q of QUESTIONS) {
   // 바로 그 문제: 정답 보기가 "셀렉트"를 그대로 드러내면 안 된다
   const sel = QUESTIONS.find((q) => q.id === "q-state-12")!;
   assert.ok(!hideTerms(summaryOf(sel)).includes("셀렉트"), "q-state-12 보기에 셀렉트가 남았다");
+}
+
+// ─── 코드 고르기 ──────────────────────────────────────────
+{
+  // 주석은 빠지고 코드는 남는다 — 문자열 안의 // (URL) 와 # 는 건드리지 않는다
+  assert.equal(stripComments("a = 1 // 정답 힌트\n// 줄 주석\nb = 2"), "a = 1\nb = 2");
+  assert.equal(stripComments('fetch("http://x.com/a") // 호출'), 'fetch("http://x.com/a")');
+  assert.equal(stripComments("x = 1  # 파이썬 주석\ns = '# 문자열'"), "x = 1\ns = '# 문자열'");
+  assert.equal(stripComments("SELECT 1; -- SQL 주석\n/* 블록\n주석 */ SELECT 2;"), "SELECT 1;\nSELECT 2;");
+  let built = 0;
+  for (const q of QUESTIONS) {
+    const ex = buildCodeExercise(q);
+    if (!ex) continue;
+    built++;
+    assert.equal(ex.options.length, 4, `코드 보기는 4개: ${q.id}`);
+    assert.equal(ex.options.filter((o) => o.correct).length, 1, `정답 코드는 1개: ${q.id}`);
+    assert.equal(new Set(ex.options.map((o) => o.code)).size, 4, `같은 코드가 두 칸에: ${q.id}`);
+    assert.equal(ex.options.find((o) => o.correct)!.qid, q.id, `정답 칸이 이 문제 코드가 아니다: ${q.id}`);
+    assert.notEqual(q.category, "기술면접", "기술면접 예시는 코드 고르기에서 뺀다");
+  }
+  assert.ok(built >= 100, `코드 고르기 출제 가능 문제가 너무 적다: ${built}`);
 }
 
 // ─── 직접 써서 설명하기: 핵심 단어 힌트 ───────────────────

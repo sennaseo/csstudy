@@ -111,7 +111,7 @@ export interface QuizChoice {
 // → switch(ex.type) 하면 TS 가 각 분기에서 필요한 필드를 자동으로 좁혀준다.
 
 /** 출제 가능한 유형들. */
-export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match";
+export type ExerciseType = "choice" | "blank" | "ox" | "typing" | "speak" | "match" | "code";
 
 /** 객관식: 보기 4개 중 맞는 설명 고르기 (기존 방식). */
 export interface ChoiceExercise {
@@ -172,7 +172,18 @@ export interface MatchExercise {
 }
 
 /** 모든 유형의 합집합 — 스토어가 들고 있는 "현재 출제 형태". */
+/**
+ * 코드 고르기: 문제 내용을 코드로 잘 나타낸 것을 4칸 중에서 고른다.
+ * code = 고를 때 보여주는 코드(주석을 뺀 것 — 주석에 답이 적혀 있는 경우가 많다),
+ * full = 채점 뒤 모달에서 보여주는 원본(주석 포함).
+ */
+export interface CodeExercise {
+  type: "code";
+  options: { qid: string; code: string; full: string; correct: boolean }[];
+}
+
 export type Exercise =
+  | CodeExercise
   | ChoiceExercise
   | BlankExercise
   | OxExercise

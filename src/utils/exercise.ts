@@ -13,6 +13,7 @@
 import type {
   BlankExercise,
   ChoiceExercise,
+  CodeExercise,
   Exercise,
   ExerciseType,
   Level,
@@ -413,6 +414,108 @@ export function buildMatchExercise(q: Question): MatchExercise | null {
   };
 }
 
+// ─── 코드 고르기 ──────────────────────────────────────────
+
+/**
+ * 코드에서 주석을 걷어낸다 — 예시 코드 주석에 "// Controller = 홀: HTTP 만 안다" 처럼
+ * 답이 그대로 적혀 있어서, 그대로 보여주면 코드를 안 읽고 주석만 보고 고른다.
+ * 지우는 것: // 줄 주석 (단 "http://" 같은 : 바로 뒤는 제외), /* 블록 *\/, "# " 파이썬 주석, "-- " SQL 주석.
+ * 문자열('…', "…", `…`) 안은 건드리지 않는다. 주석만 있던 줄은 줄째로 빠진다.
+ */
+export function stripComments(code: string): string {
+  const out: string[] = [];
+  let inBlock = false;
+  for (const line of code.split("\n")) {
+    let res = "";
+    let quote: string | null = null;
+    let i = 0;
+    let hadComment = false;
+    while (i < line.length) {
+      const ch = line[i];
+      const two = line.slice(i, i + 2);
+      if (inBlock) {
+        if (two === "*/") {
+          inBlock = false;
+          i += 2;
+          // 줄 맨 앞의 블록 주석이었다면 뒤따르는 공백도 같이 지운다 ("/* … */ SELECT" → "SELECT")
+          if (res.trim() === "") while (line[i] === " ") i++;
+        } else i++;
+        hadComment = true;
+        continue;
+      }
+      if (quote) {
+        res += ch;
+        if (ch === "\\") {
+          res += line[i + 1] ?? "";
+          i += 2;
+          continue;
+        }
+        if (ch === quote) quote = null;
+        i++;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === "`") {
+        quote = ch;
+        res += ch;
+        i++;
+        continue;
+      }
+      if (two === "/*") {
+        inBlock = true;
+        hadComment = true;
+        i += 2;
+        continue;
+      }
+      const prev = line[i - 1] ?? " ";
+      if ((two === "//" && prev !== ":") || (two === "# " && /\s/.test(prev)) || (two === "--" && line[i + 2] === " " && /\s/.test(prev))) {
+        hadComment = true;
+        break;
+      }
+      res += ch;
+      i++;
+    }
+    const trimmed = res.replace(/\s+$/, "");
+    if (hadComment && trimmed.trim() === "") continue; // 주석만 있던 줄
+    out.push(trimmed);
+  }
+  // 빈 줄이 겹치면 하나로, 앞뒤 빈 줄은 없앤다
+  return out
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/** 코드 고르기 재료가 되는 문제인가 — 기술면접 예시는 코드가 아니라 말하기 대본이라 뺀다. */
+function hasPickableCode(q: Question): boolean {
+  if (!q.code || q.quizCode || q.options || q.category === "기술면접") return false;
+  return stripComments(q.code).split("\n").length >= 2;
+}
+
+/** 코드 고르기: 이 문제의 예시 코드 1 + 같은 분야 다른 문제의 코드 3. 재료가 모자라면 null. */
+export function buildCodeExercise(q: Question): CodeExercise | null {
+  if (!hasPickableCode(q)) return null;
+  const mine = stripComments(q.code!);
+  const pool = QUESTIONS.filter((x) => x.id !== q.id && hasPickableCode(x));
+  const ordered = [...shuffle(pool.filter((x) => x.category === q.category)), ...shuffle(pool.filter((x) => x.category !== q.category))];
+  const picked: Question[] = [];
+  const seenCode = new Set([mine]);
+  for (const x of ordered) {
+    const c = stripComments(x.code!);
+    if (seenCode.has(c)) continue;
+    seenCode.add(c);
+    picked.push(x);
+    if (picked.length === 3) break;
+  }
+  if (picked.length < 3) return null;
+  return {
+    type: "code",
+    options: shuffle([
+      { qid: q.id, code: mine, full: q.code!, correct: true },
+      ...picked.map((x) => ({ qid: x.id, code: stripComments(x.code!), full: x.code!, correct: false })),
+    ]),
+  };
+}
+
 // ─── 랜덤 믹스 진입점 ─────────────────────────────────────
 
 /**
@@ -429,15 +532,17 @@ const WEIGHTS_BY_LEVEL: Record<Level | "mix", Array<{ type: ExerciseType; weight
     { type: "typing", weight: 12 },
     { type: "speak", weight: 10 },
     { type: "match", weight: 8 },
+    { type: "code", weight: 10 },
   ],
   easy: [
     { type: "choice", weight: 60 },
     { type: "ox", weight: 40 },
   ],
   normal: [
-    { type: "blank", weight: 60 },
-    { type: "match", weight: 20 },
-    { type: "choice", weight: 20 },
+    { type: "blank", weight: 50 },
+    { type: "code", weight: 20 },
+    { type: "match", weight: 15 },
+    { type: "choice", weight: 15 },
   ],
   hard: [
     { type: "typing", weight: 40 },
@@ -471,6 +576,8 @@ export function buildExercise(q: Question, level: Level | null = null, forceType
         return { type: "speak" };
       case "match":
         return buildMatchExercise(q);
+      case "code":
+        return buildCodeExercise(q);
     }
   };
 
