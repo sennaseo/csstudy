@@ -15,6 +15,7 @@
 //   카드들은 각자 스토어를 직접 읽어서 어디에 놓아도 그대로 동작한다.
 // =============================================================
 
+import { useState } from "react";
 import { PRACTICE_LINE } from "../data/memes";
 import { TRACKS } from "../data/tracks";
 import { useStudyStore } from "../store/useStudyStore";
@@ -22,6 +23,7 @@ import { Buddy } from "./Buddy";
 import { DailyMemeCard } from "./DailyMemeCard";
 import { MissionCard } from "./MissionCard";
 import { QuestCard } from "./QuestCard";
+import { ReviewZone } from "./ReviewZone";
 import { LEVELS, TrackPicker } from "./TrackPicker";
 
 export function HomeScreen() {
@@ -85,12 +87,15 @@ function PracticeCard() {
  *  행 전체가 버튼: 작은 "복습 ›" 글자만 누르게 하면 과녁이 너무 좁다. */
 function ReviewRow() {
   const reviewCount = useStudyStore((s) => s.getReviewCount());
-  const startReview = useStudyStore((s) => s.startReview);
+  // 바로 풀기 대신 "무엇을 틀렸나" 목록(복습 존)을 먼저 보여준다. 거기서 복습 시작.
+  const [open, setOpen] = useState(false);
   if (reviewCount === 0) return null;
   return (
+    <>
+    {open && <ReviewZone onClose={() => setOpen(false)} />}
     <button
       type="button"
-      onClick={startReview}
+      onClick={() => setOpen(true)}
       title="잊기 전에 다시 보기"
       className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border border-ink-200 bg-white px-4 py-3 text-left transition-colors active:bg-ink-100"
     >
@@ -100,7 +105,8 @@ function ReviewRow() {
         </span>
         <span className="block text-sm text-ink-500">잊기 전에 다시 보기</span>
       </span>
-      <span className="shrink-0 text-sm font-bold text-duo-green-ink">복습 ›</span>
+      <span className="shrink-0 text-sm font-bold text-duo-green-ink">목록 ›</span>
     </button>
+    </>
   );
 }

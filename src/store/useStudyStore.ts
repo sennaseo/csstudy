@@ -334,7 +334,7 @@ const STATUS_PRIORITY: Record<ReviewStatus, number> = {
  * - 모름/헷갈림은 항상 포함.
  * - '이해함'도 망각곡선 간격(1→3→7→14→30일)이 지나 만기(due)면 포함.
  */
-function reviewPoolOf(records: Record<string, QuestionRecord>): Question[] {
+export function reviewPoolOf(records: Record<string, QuestionRecord>): Question[] {
   const now = Date.now();
   return QUESTIONS.filter((q) => {
     const r = records[q.id];
