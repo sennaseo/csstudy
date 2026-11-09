@@ -77,7 +77,7 @@ function PracticeCard() {
       <span className="mt-auto flex items-end justify-between gap-1 pt-1.5">
         {/* 작은 손글씨 양념 — 밈은 퀘스트 카드가 메인이라 여기선 이미지·효과선 없이 한 줄만 */}
         <span className="whitespace-nowrap font-display text-sm text-ink-500">{PRACTICE_LINE}</span>
-        <span className="shrink-0 text-sm font-bold text-duo-green-ink">해보기 →</span>
+        <span className="shrink-0 text-sm font-bold text-accent-dim">해보기 →</span>
       </span>
     </button>
   );
@@ -105,7 +105,7 @@ function ReviewRow() {
         </span>
         <span className="block text-sm text-ink-500">잊기 전에 다시 보기</span>
       </span>
-      <span className="shrink-0 text-sm font-bold text-duo-green-ink">목록 ›</span>
+      <span className="shrink-0 text-sm font-bold text-accent-dim">목록 ›</span>
     </button>
     </>
   );

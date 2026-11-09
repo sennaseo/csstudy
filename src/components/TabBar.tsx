@@ -70,7 +70,7 @@ export function TabBar() {
                 aria-current={active ? "page" : undefined}
                 className={
                   "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 text-xs font-bold transition-colors "
-                  + (active ? "text-duo-green-ink" : "text-ink-400 hover:text-ink-700")
+                  + (active ? "text-accent-dim" : "text-ink-400 hover:text-ink-700")
                 }
               >
                 <svg

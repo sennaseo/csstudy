@@ -74,14 +74,14 @@ export function MissionCard() {
       {/* 하단 행 — mt-auto 로 카드 바닥에 붙인다(옆 실무 카드와 줄 맞춤) */}
       <span className="mt-auto flex items-end justify-between gap-1 pt-1.5">
         {done ? (
-          <span className="break-keep text-xs font-bold text-duo-green-ink">
+          <span className="break-keep text-xs font-bold text-accent-dim">
             {paid ? "✓ 완료 · XP 받음" : "✓ 달성 · 다음 문제를 풀면 XP 지급"}
           </span>
         ) : (
           <>
             <span className="text-xs font-bold text-duo-bee-ink">버디 XP +{MISSION_XP}</span>
             {/* "도전 →" 은 글자일 뿐 — 진짜 버튼은 카드 전체 하나(버튼 안 버튼 금지) */}
-            <span className="shrink-0 text-sm font-bold text-duo-green-ink">도전 →</span>
+            <span className="shrink-0 text-sm font-bold text-accent-dim">도전 →</span>
           </>
         )}
       </span>

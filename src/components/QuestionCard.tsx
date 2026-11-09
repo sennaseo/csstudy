@@ -433,7 +433,7 @@ function TypingView({
             // 비활성은 opacity 가 아니라 "진짜 회색"으로 갈아끼운다.
             (graded || input.trim() === ""
               ? "border-ink-300 bg-ink-200 text-ink-400"
-              : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
+              : "border-accent-dim bg-accent text-white hover:brightness-105")
           }
         >
           확인
@@ -487,7 +487,7 @@ function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) =>
             className={
               "btn-3d min-h-14 w-full rounded-xl border-b-4 px-4 text-base font-extrabold " +
               (enough
-                ? "border-duo-green-dim bg-duo-green text-white hover:brightness-105"
+                ? "border-accent-dim bg-accent text-white hover:brightness-105"
                 : "border-ink-300 bg-ink-200 text-ink-400")
             }
           >
@@ -536,7 +536,7 @@ function SpeakView({ q, onGrade }: { q: Question; onGrade: (correct: boolean) =>
           <div className="sticky bottom-0 flex gap-3 bg-paper py-2">
             <button
               onClick={() => onGrade(true)}
-              className="btn-3d min-h-12 flex-1 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-2 text-sm font-extrabold text-white hover:brightness-105"
+              className="btn-3d min-h-12 flex-1 rounded-xl border-b-4 border-accent-dim bg-accent px-2 text-sm font-extrabold text-white hover:brightness-105"
             >
               ✓ 맞게 썼어요
             </button>
@@ -595,7 +595,7 @@ function CodeModal({
         {onPick && (
           <button
             onClick={onPick}
-            className="min-h-12 rounded-full bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-base font-extrabold text-white shadow-card active:scale-[0.98]"
+            className="min-h-12 rounded-full bg-gradient-to-r from-[#F27BA8] to-[#C99BF2] text-base font-extrabold text-white shadow-card active:scale-[0.98]"
           >
             이 코드 고르기
           </button>
@@ -628,7 +628,7 @@ function CodeView({ ex, onGrade }: { ex: CodeExercise; onGrade: (correct: boolea
               ? "ring-[3px] ring-duo-red"
               : "opacity-60"
             : isPicked
-            ? "ring-[3px] ring-[#8EA2F8]"
+            ? "ring-[3px] ring-[#F27BA8]"
             : "ring-1 ring-ink-200";
           return (
             <div key={o.qid} className={"relative rounded-2xl bg-white shadow-card transition-all " + tone}>
@@ -655,7 +655,7 @@ function CodeView({ ex, onGrade }: { ex: CodeExercise; onGrade: (correct: boolea
                     : graded && isPicked
                     ? "bg-duo-red text-white"
                     : isPicked
-                    ? "bg-[#8EA2F8] text-white"
+                    ? "bg-[#F27BA8] text-white"
                     : "bg-ink-100 text-ink-500")
                 }
               >
@@ -680,7 +680,7 @@ function CodeView({ ex, onGrade }: { ex: CodeExercise; onGrade: (correct: boolea
           disabled={!picked}
           className={
             "min-h-14 w-full rounded-full text-lg font-extrabold transition-transform active:scale-[0.98] " +
-            (picked ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+            (picked ? "bg-gradient-to-r from-[#F27BA8] to-[#C99BF2] text-white shadow-card" : "bg-ink-200 text-ink-400")
           }
         >
           확인
@@ -796,7 +796,7 @@ function OrderView({ ex, onGrade }: { ex: OrderExercise; onGrade: (correct: bool
             disabled={!full}
             className={
               "min-h-12 flex-1 rounded-full text-base font-extrabold transition-transform active:scale-[0.98] " +
-              (full ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+              (full ? "bg-gradient-to-r from-[#F27BA8] to-[#C99BF2] text-white shadow-card" : "bg-ink-200 text-ink-400")
             }
           >
             확인
@@ -862,7 +862,7 @@ function FillView({ ex, onGrade }: { ex: FillExercise; onGrade: (correct: boolea
                       : v !== null
                       ? "border-[#4B6CF0] bg-[#2B44A8] text-white"
                       : i === nextEmpty
-                      ? "border-[#8EA2F8] bg-[#8EA2F8]/15"
+                      ? "border-[#F27BA8] bg-[#F27BA8]/15"
                       : "border-[#3A4A78]")
                   }
                 >
@@ -921,7 +921,7 @@ function FillView({ ex, onGrade }: { ex: FillExercise; onGrade: (correct: boolea
           disabled={!full}
           className={
             "min-h-12 w-full rounded-full text-base font-extrabold transition-transform active:scale-[0.98] " +
-            (full ? "bg-gradient-to-r from-[#7DB9FB] to-[#9B8CF8] text-white shadow-card" : "bg-ink-200 text-ink-400")
+            (full ? "bg-gradient-to-r from-[#F27BA8] to-[#C99BF2] text-white shadow-card" : "bg-ink-200 text-ink-400")
           }
         >
           확인
@@ -1352,7 +1352,7 @@ export function QuestionCard() {
                   // (opacity 로 흐리게 하면 배경이 비쳐서 "고장난 버튼"처럼 보인다.)
                   (selected === null
                     ? "border-ink-300 bg-ink-200 text-ink-400"
-                    : "border-duo-green-dim bg-duo-green text-white hover:brightness-105")
+                    : "border-accent-dim bg-accent text-white hover:brightness-105")
                 }
               >
                 확인

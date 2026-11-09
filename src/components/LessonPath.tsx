@@ -31,7 +31,7 @@ import type { CategoryGroup } from "../types";
  *  밝은 바탕이라 흰 글자 대비가 4.5:1 에 못 미친다 → 배너 글자는 굵고 크게(20px extrabold) 둔다.
  *  CSS 변수로 넘기는 이유: 노드 3D 그림자·광택·말풍선이 전부 같은 색을 써야 해서. */
 const UNIT_COLORS = [
-  { face: "#58CC02", side: "#58A700" },
+  { face: "#F0679A", side: "#C9487A" },
   { face: "#1CB0F6", side: "#1899D6" },
   { face: "#CE82FF", side: "#A568CC" },
   { face: "#FF9600", side: "#CC7800" },

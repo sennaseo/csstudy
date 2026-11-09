@@ -63,12 +63,13 @@ export default {
           DEFAULT: "#F7F8FA", // body 배경
           card: "#FFFFFF", // 카드
         },
-        accent: {
-          DEFAULT: "#2563EB", // 선택·링크·보조 CTA
-          dim: "#1D4ED8",
-          soft: "#EFF4FF",
-        },
-        duo: {
+        // 포인트 색 = 마스코트 볼터치 분홍. 흰 글자를 올려도 읽히게(대비 4.5 이상) DEFAULT 는 진한 로즈.
+      accent: {
+        DEFAULT: "#D63B74", // 선택·링크·보조 CTA
+        dim: "#B42A5F",
+        soft: "#FDEEF4",
+      },
+      duo: {
           green: "#15803D", // 정답·Primary CTA
           "green-dim": "#166534",
           "green-soft": "#DCFCE7",
@@ -95,13 +96,13 @@ export default {
         // 공부노트 "꼭 볼 N가지" 포스터 전용 — 인스타 인포그래픽 톤의 보라·라벤더.
         // 노트 탭 안에서만 쓴다 (나머지 화면은 accent 파랑 그대로).
         reel: {
-          DEFAULT: "#5B5BF0", // 번호·키커·강조
-          dim: "#4343D6",
-          ink: "#16163A", // 큰 제목
-          sub: "#6B6B85", // 영어 부제
-          tile: "#F1F1F8", // 타일 안 그림 칸
-          bg: "#ECECF8", // 포스터 바탕
-          soft: "#E4E4FB",
+          DEFAULT: "#D63B74", // 번호·키커·강조 (포인트 분홍)
+          dim: "#B42A5F",
+          ink: "#2A1B2E", // 큰 제목
+          sub: "#7A6B78", // 부제
+          tile: "#FBF1F5", // 타일 안 그림 칸
+          bg: "#F8EAF0", // 포스터 바탕
+          soft: "#FCE4EE",
         },
       },
       boxShadow: {

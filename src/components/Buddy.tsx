@@ -68,7 +68,7 @@ export function Buddy() {
 
 /** 우측 "도감 ›" 힌트 — 버튼이 아니라 글자. 진짜 버튼은 바깥 카드 하나뿐(중첩 버튼 금지). */
 function DexHint() {
-  return <span className="shrink-0 text-sm font-bold text-duo-green-ink">도감 ›</span>;
+  return <span className="shrink-0 text-sm font-bold text-accent-dim">도감 ›</span>;
 }
 
 /** 대표 캐릭터 카드 — 아트 + 이름·Lv + 다음 진화까지 남은 XP + 손글씨 한마디 */
@@ -148,7 +148,7 @@ function BuddyCard({ charId, xp }: { charId: string; xp: number }) {
         <p className="min-w-0 flex-1 break-keep font-display text-sm text-ink-500">
           {buddyLine(dateKeyOf(new Date()), xpLeft)}
         </p>
-        <span className="shrink-0 text-sm font-bold text-duo-green-ink">버디 보기 →</span>
+        <span className="shrink-0 text-sm font-bold text-accent-dim">버디 보기 →</span>
       </div>
     </div>
   );

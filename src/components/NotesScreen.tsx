@@ -162,7 +162,7 @@ function NoteArt({ note }: { note: Note }) {
 /** 단원 하나 = 포스터 한 장. 키커(단원명) + 큰 제목(꼭 볼 N가지) + 3열 타일. */
 function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: NoteUnit; onOpen: (id: string) => void }) {
   return (
-    <section className="rounded-[28px] bg-gradient-to-b from-[#F6F6FC] to-reel-bg px-2.5 pb-3 pt-5">
+    <section className="rounded-[28px] bg-gradient-to-b from-[#FDF6F9] to-reel-bg px-2.5 pb-3 pt-5">
       <p className="px-1.5 text-sm font-black tracking-tight text-reel">
         {subject.emoji} {unit.title}
       </p>

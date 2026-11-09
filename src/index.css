@@ -264,8 +264,8 @@ button {
   width: 72px;
   height: 66px;
   border-radius: 50%;
-  background: var(--unit, #58CC02);
-  box-shadow: 0 8px 0 var(--unit-side, #58A700);
+  background: var(--unit, #F0679A);
+  box-shadow: 0 8px 0 var(--unit-side, #C9487A);
   color: #fff;
   overflow: hidden;
   transition: transform 80ms, box-shadow 80ms;
@@ -295,7 +295,7 @@ button {
 }
 .path-node:active:not(.path-node-locked) {
   transform: translateY(6px);
-  box-shadow: 0 2px 0 var(--unit-side, #58A700);
+  box-shadow: 0 2px 0 var(--unit-side, #C9487A);
 }
 
 /* ─── 도넛 링 채우기 ───────────────────────────────────────────
@@ -374,7 +374,7 @@ select:focus-visible,
 textarea:focus-visible,
 summary:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #2563EB; /* accent */
+  outline: 2px solid #D63B74; /* accent */
   outline-offset: 2px;
 }
 

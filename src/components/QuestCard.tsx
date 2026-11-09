@@ -75,12 +75,12 @@ export function QuestCard() {
     <section
       aria-label="오늘의 퀘스트"
       // relative + overflow-hidden: 오른쪽 아래 "WOW~" 워터마크가 카드 밖으로 안 새게
-      className="relative overflow-hidden rounded-2xl border border-duo-green/20 bg-duo-green-tint p-4"
+      className="relative overflow-hidden rounded-2xl border border-accent/20 bg-accent-soft p-4"
     >
       {/* 밈 짤 워터마크 — 아주 옅게, 장식 */}
       <span
         aria-hidden
-        className="pointer-events-none absolute -bottom-1 right-2 -rotate-12 select-none font-display text-5xl font-bold text-duo-green/10"
+        className="pointer-events-none absolute -bottom-1 right-2 -rotate-12 select-none font-display text-5xl font-bold text-accent/10"
       >
         WOW~
       </span>
@@ -88,7 +88,7 @@ export function QuestCard() {
       <div className="flex gap-3">
         {/* 왼쪽 — 라벨·제목·진행. min-w-0 이 있어야 긴 제목이 칸을 밀어내지 않고 줄바꿈된다. */}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-duo-green-ink">⭐ 오늘의 퀘스트</p>
+          <p className="text-sm font-bold text-accent-dim">⭐ 오늘의 퀘스트</p>
           {/* 제목 — 형광 연두 + 두꺼운 진초록 외곽선(.b-neon). 숫자만 노란 별폭발 + 빨강(NumBoom). */}
           <h2 className="b-neon mt-1 break-keep text-[1.7rem] leading-tight">
             <NumBoom text={title} />
@@ -97,7 +97,7 @@ export function QuestCard() {
             <span
               className={
                 "shrink-0 font-round text-base font-extrabold tabular-nums " +
-                (isDone ? "text-duo-green-ink" : "text-ink-900")
+                (isDone ? "text-accent-dim" : "text-ink-900")
               }
             >
               {Math.min(count, DAILY_GOAL)} / {DAILY_GOAL}
@@ -137,7 +137,7 @@ export function QuestCard() {
       <p className="meme-bubble mt-4 break-keep font-batang text-[15px] font-bold text-ink-900">{line}</p>
 
       {/* ④ 보상 칩 — 스토어가 실제로 주는 것만. 한 줄에 들어가야 한다. */}
-      <p className="mt-3 inline-flex max-w-full items-center break-keep rounded-lg border border-duo-green/20 bg-white/70 px-2 py-1 text-xs font-semibold text-ink-700">
+      <p className="mt-3 inline-flex max-w-full items-center break-keep rounded-lg border border-accent/20 bg-white/70 px-2 py-1 text-xs font-semibold text-ink-700">
         {reward}
       </p>
 
@@ -147,7 +147,7 @@ export function QuestCard() {
         onClick={startToday}
         title={hint}
         aria-describedby="quest-hint"
-        className="btn-3d mt-3 min-h-14 w-full rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-4 text-base font-extrabold text-white hover:brightness-105"
+        className="btn-3d mt-3 min-h-14 w-full rounded-xl border-b-4 border-accent-dim bg-accent px-4 text-base font-extrabold text-white hover:brightness-105"
       >
         {cta}
       </button>

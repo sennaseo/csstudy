@@ -207,23 +207,13 @@ function TabsScreen() {
           (3) 우측 묶음은 shrink-0 으로 안 찌그러뜨리는 원칙은 그대로 둔다. */}
       <header className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          {/* 로고 마스코트(먼지요정 CSstudy) — 글자는 이미지로 안 넣는다.
-              원본 로고의 'Study'가 흰색이라 앱의 밝은 배경(#FBFAF7)에서 안 보인다.
-              글자는 기존처럼 텍스트로 두는 게 대비도 확실하고 어느 크기에서도 안 흐려진다. */}
+          {/* 로고 = 마스코트 얼굴만. 글자 로고는 빼고, 화면 읽기 프로그램용 이름만 숨겨 둔다. */}
+          <h1 className="sr-only">csStudy</h1>
           <img
             src={`${import.meta.env.BASE_URL}mascot/face-happy.png`}
             alt=""
-            className="h-7 w-auto shrink-0"
+            className="h-12 w-12 shrink-0 object-contain drop-shadow-sm"
           />
-          <div className="flex min-w-0 flex-col">
-            {/* whitespace-nowrap: 제목이 "csStud / y" 로 쪼개지지 않게.
-                제목은 앱 이름이라 줄이지 않고, 대신 아래 우측 묶음이 줄어든다. */}
-            <h1 className="whitespace-nowrap font-display text-2xl font-bold leading-none text-ink-900">
-              cs<span className="text-accent">Study</span>
-            </h1>
-            {/* 부제 — 제목 아래 줄이라 폭을 안 먹어서 좁은 폰에서도 항상 보여준다 */}
-            <span className="truncate text-xs text-ink-500">오늘도 조금만.</span>
-          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* 스트릭 칩 — 홈의 "오늘 풀면 N일째" 와 바로 연결되게 헤더에 꺼내 뒀다(누르면 달력) */}

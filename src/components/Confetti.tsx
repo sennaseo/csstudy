@@ -14,7 +14,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 // 새 팔레트 — 개발자용 학습 앱: 파랑·초록·노랑·주황·보라.
-const COLORS = ["#2563EB","#15803D","#F59E0B","#F97316","#7C3AED"];
+const COLORS = ["#D63B74","#15803D","#F59E0B","#F97316","#7C3AED"];
 
 interface Piece {
   id: number;

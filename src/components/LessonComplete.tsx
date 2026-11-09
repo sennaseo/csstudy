@@ -121,7 +121,7 @@ export function LessonComplete() {
       <div className="flex flex-col items-center gap-4 py-16">
         <button
           onClick={goHome}
-          className="btn-3d min-h-12 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white"
+          className="btn-3d min-h-12 rounded-xl border-b-4 border-accent-dim bg-accent px-6 text-base font-extrabold text-white"
         >
           돌아가기
         </button>
@@ -387,7 +387,7 @@ export function LessonComplete() {
             </button>
             <button
               onClick={startReview}
-              className="btn-3d min-h-14 flex-1 rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white hover:brightness-105"
+              className="btn-3d min-h-14 flex-1 rounded-xl border-b-4 border-accent-dim bg-accent px-6 text-base font-extrabold text-white hover:brightness-105"
             >
               {failed
                 ? "❤️ 복습하고 하트 회복"
@@ -397,7 +397,7 @@ export function LessonComplete() {
         ) : (
           <button
             onClick={goHome}
-            className="btn-3d min-h-14 w-full rounded-xl border-b-4 border-duo-green-dim bg-duo-green px-6 text-base font-extrabold text-white hover:brightness-105"
+            className="btn-3d min-h-14 w-full rounded-xl border-b-4 border-accent-dim bg-accent px-6 text-base font-extrabold text-white hover:brightness-105"
           >
             홈으로
           </button>

@@ -296,7 +296,7 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
           <footer className="flex shrink-0 gap-4 px-5 pb-6 pt-4">
             <button
               onClick={() => mark("known")}
-              className="flex min-h-[58px] flex-1 items-center justify-center gap-2 rounded-full bg-[#3B8EF0] text-lg font-extrabold text-white shadow-card transition-transform active:scale-95"
+              className="flex min-h-[58px] flex-1 items-center justify-center gap-2 rounded-full bg-accent text-lg font-extrabold text-white shadow-card transition-transform active:scale-95"
             >
               <span className="text-2xl leading-none">✓</span> 암기완료
             </button>
