@@ -122,6 +122,17 @@ export const NOTE_ALIASES: Record<string, string[]> = {
   "n-fe-2-4": ["서버 상태", "클라이언트 상태", "React Query"],
   "n-fe-2-5": ["낙관적 업데이트"],
   "n-fe-2-6": ["FSD", "Feature-Sliced Design"],
+  // ── WAS·DB
+  "n-sv-1-1": ["WAS", "웹 서버", "정적 콘텐츠", "동적 콘텐츠"],
+  "n-sv-1-2": ["3계층", "3계층 구조"],
+  "n-sv-1-3": ["Nginx"],
+  "n-sv-1-4": ["톰캣", "Tomcat", "서블릿", "서블릿 컨테이너"],
+  "n-sv-1-5": ["스레드 풀"],
+  "n-sv-2-1": ["DBMS", "테이블", "스키마"],
+  "n-sv-2-2": ["SQL"],
+  "n-sv-2-3": ["기본키", "외래키"],
+  "n-sv-2-4": ["JDBC", "PreparedStatement"],
+  "n-sv-2-6": ["COMMIT", "ROLLBACK"],
 };
 
 /** 시트에 보여줄 개념 하나. 카드와 노트 중 있는 것만 채워진다. */

@@ -42,6 +42,16 @@ export const LEVEL_OF: Record<string, Level> = {
   "q-cs-18": "normal", // 충돌 해결 3단계 + PR 흐름
   "q-cs-19": "easy", // 이미지 vs 컨테이너: 밀키트 vs 요리 한 줄 대비
   "q-cs-20": "easy", // 배포: 빌드→실행→설정 3단계 개요
+  "q-cs-21": "easy", // 웹 서버 vs WAS: 파일 전달 vs 코드 실행 한 줄 대비
+  "q-cs-22": "easy", // 정적/동적 콘텐츠 정의 대비
+  "q-cs-23": "easy", // 웹 서버를 앞에 두는 이유 3가지 나열
+  "q-cs-24": "easy", // 톰캣 = 서블릿 컨테이너 정의
+  "q-cs-25": "easy", // 요청 1개 = 스레드 1개, 스레드 풀 개요
+  "q-cs-26": "easy", // 3계층: 웹 서버·WAS·DB 역할 나열
+  "q-cs-27": "easy", // 브라우저가 DB 에 직접 못 붙는 이유
+  "q-cs-28": "easy", // DB vs DBMS 정의 대비
+  "q-cs-29": "easy", // JDBC = 자바-DB 표준 창구 정의
+  "q-cs-30": "easy", // WAS 무상태 vs DB 상태 보유 대비
 
   // ─── React ───
   "q-react-1": "easy", // 의존성 배열: "넣은 값 바뀔 때 실행" 한 줄

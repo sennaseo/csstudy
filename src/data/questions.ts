@@ -1832,6 +1832,166 @@ export SPRING_DATASOURCE_PASSWORD=****
 # npm run build → dist/ (정적 파일, 웹서버가 나눠주기만 함)
 # bootJar      → app.jar (스스로 계속 도는 서버)`,
   },
+  // ─── CS: WAS 와 DB (공부노트 "WAS·DB" 와 짝) ─────────────
+  {
+    id: "q-cs-21",
+    category: "CS",
+    question: "웹 서버와 WAS 의 차이는?",
+    answer:
+      "웹 서버 = 편의점 진열대, WAS = 주방. 웹 서버(Nginx, Apache)는 이미 만들어져 있는 파일(HTML·CSS·이미지)을 찾아서 그대로 건넨다. WAS(Tomcat 등, Web Application Server)는 요청이 올 때마다 내가 짠 코드를 실행해서 응답을 그 자리에서 만든다. 로그인 확인, 장바구니 조회처럼 사람마다 결과가 다르고 DB 에 다녀와야 하는 일은 WAS 몫이다.",
+    code: `// 웹 서버: 파일을 그대로 건넨다
+GET /logo.png        →  /var/www/logo.png 파일 전달
+
+// WAS: 코드를 실행해 만든다
+@GetMapping("/cart")
+public List<Item> cart(@LoginUser Long userId) {
+    return cartService.findByUser(userId);   // DB 조회 → 사람마다 다른 결과
+}`,
+  },
+  {
+    id: "q-cs-22",
+    category: "CS",
+    question: "정적 콘텐츠와 동적 콘텐츠는 어떻게 다른가?",
+    answer:
+      "정적 = 인쇄된 전단지, 동적 = 그 자리에서 써 주는 영수증. 정적 콘텐츠는 누가 언제 요청해도 똑같은 파일이다(로고 이미지, CSS, JS 파일). 서버는 꺼내서 주기만 하면 된다. 동적 콘텐츠는 요청한 사람·시점에 따라 달라진다(내 주문 내역, 검색 결과). 서버가 코드를 돌리고 DB 를 조회해야 나온다. 그래서 정적은 웹 서버나 CDN 이, 동적은 WAS 가 맡는다.",
+    code: `// 정적: 모두에게 같은 응답
+GET /css/style.css
+GET /img/banner.png
+
+// 동적: 요청마다 다른 응답
+GET /orders/me          // 로그인한 사람의 주문만
+GET /search?q=keyboard  // 검색어에 따라 달라짐`,
+  },
+  {
+    id: "q-cs-23",
+    category: "CS",
+    question: "WAS 앞에 웹 서버를 따로 두는 이유는?",
+    answer:
+      "주방(WAS) 앞에 홀 직원(웹 서버)을 세우는 것. ① 물·수저 같은 간단한 건(정적 파일) 홀에서 바로 준다 → 주방은 요리만 한다. ② 주방이 여러 개면 주문을 고르게 나눠 준다(로드 밸런싱). 한 곳이 멈추면 다른 곳으로만 보낸다. ③ 손님은 주방 위치를 모른다 → WAS 주소가 밖에 안 드러나고, HTTPS 처리도 앞에서 맡는다. 이렇게 대신 받아 뒤로 넘기는 역할을 리버스 프록시라고 한다.",
+    code: `server {
+    listen 80;
+
+    location /static/ {          # 정적 파일은 여기서 끝
+        root /var/www;
+    }
+
+    location / {                 # 나머지는 WAS 로 넘김
+        proxy_pass http://localhost:8080;
+    }
+}`,
+  },
+  {
+    id: "q-cs-24",
+    category: "CS",
+    question: "톰캣(Tomcat)은 어떤 프로그램인가?",
+    answer:
+      "톰캣 = 서블릿을 돌려 주는 자바 WAS. 서블릿은 'HTTP 요청을 받아 응답을 만드는 자바 클래스'이고, 톰캣은 그 서블릿을 만들고·불러 주고·없애는 관리자(서블릿 컨테이너)다. 포트를 열고 기다리다가, 들어온 HTTP 글자를 요청 객체로 바꾸고, 주소에 맞는 서블릿을 실행하고, 결과를 다시 HTTP 글자로 돌려준다. 스프링 부트는 이 톰캣을 jar 안에 품고 있어서 java -jar 한 줄로 서버가 뜬다.",
+    code: `@WebServlet("/hello")
+public class HelloServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
+        resp.getWriter().write("hello");   // 톰캣이 이 메서드를 불러 준다
+    }
+}`,
+  },
+  {
+    id: "q-cs-25",
+    category: "CS",
+    question: "WAS 는 동시에 들어온 여러 요청을 어떻게 처리하나?",
+    answer:
+      "은행 창구와 같다. 손님(요청) 한 명에 직원(스레드) 한 명이 붙는다. 직원을 손님이 올 때마다 새로 뽑으면 느리고 끝없이 늘어나니, 미리 정해진 수만큼 뽑아 두고(스레드 풀) 돌려 쓴다. 톰캣 기본값은 최대 200개. 다 바쁘면 손님은 대기 줄에 선다. 주의: 직원들이 서류철(컨트롤러·서비스 객체) 하나를 같이 쓰므로, 거기에 손님별 값을 적어 두면 서로 섞인다.",
+    code: `# application.yml
+server:
+  tomcat:
+    threads:
+      max: 200          # 동시에 일하는 스레드 최대 수
+    accept-count: 100   # 꽉 찼을 때 대기 줄 길이`,
+  },
+  {
+    id: "q-cs-26",
+    category: "CS",
+    question: "3계층 구조(3-Tier)는 무엇을 어떻게 나눈 것인가?",
+    answer:
+      "식당으로 치면 홀·주방·창고. ① 표현 계층(웹 서버): 요청을 받고 정적 파일을 준다. ② 애플리케이션 계층(WAS): 업무 로직을 실행한다. ③ 데이터 계층(DB): 데이터를 보관한다. 요청은 웹 서버 → WAS → DB 로 들어가고 응답은 거꾸로 나온다. 나누면 붐비는 층만 따로 늘릴 수 있고, DB 를 인터넷에서 안 보이는 안쪽에 숨길 수 있다.",
+    code: `브라우저
+   │  HTTP
+   ▼
+웹 서버 (Nginx)      ← 표현 계층
+   │  동적 요청만
+   ▼
+WAS (Tomcat)         ← 애플리케이션 계층
+   │  SQL
+   ▼
+DB (MySQL)           ← 데이터 계층`,
+  },
+  {
+    id: "q-cs-27",
+    category: "CS",
+    question: "브라우저가 DB 에 직접 접속하지 않고 WAS 를 거치는 이유는?",
+    answer:
+      "금고 열쇠를 손님에게 주지 않는 것과 같다. 브라우저에서 도는 코드는 누구나 열어 볼 수 있어서, 거기에 DB 주소와 비밀번호를 넣으면 전부 공개된다. 또 '남의 주문은 못 본다' 같은 규칙을 브라우저에 두면 사용자가 고쳐서 건너뛸 수 있다. 그래서 접속 정보와 검증은 WAS 안에 두고, 브라우저는 WAS 가 열어 둔 API 만 부른다.",
+    code: `// ❌ 브라우저에서 DB 로 바로 — 비밀번호가 그대로 노출
+const db = connect("mysql://root:1234@db.shop.com/shop");
+
+// ✅ 브라우저는 API 만 호출
+fetch("/api/orders/me");
+
+// WAS 안에서만 검증하고 DB 에 접근
+@GetMapping("/api/orders/me")
+public List<Order> myOrders(@LoginUser Long userId) {
+    return orderRepository.findByUserId(userId);
+}`,
+  },
+  {
+    id: "q-cs-28",
+    category: "CS",
+    question: "DB 와 DBMS 는 무엇이 다른가?",
+    answer:
+      "DB = 서류 창고에 쌓인 서류, DBMS = 창고 관리인. DB(데이터베이스)는 저장된 데이터 묶음 그 자체다. DBMS(MySQL, PostgreSQL, Oracle)는 그 데이터를 넣고 찾고 지키는 프로그램이다. 여럿이 동시에 써도 안 꼬이게 조율하고, 조건에 맞는 것만 빨리 찾아 주고, 중간에 실패하면 원래대로 되돌린다. 보통 'DB 에 저장한다'고 말할 때는 DBMS 에 SQL 을 보내는 것이다.",
+    code: `-- DBMS(MySQL) 에게 보내는 주문서 = SQL
+CREATE DATABASE shop;            -- DB 하나 만들기
+
+CREATE TABLE member (            -- 그 안에 테이블 만들기
+    id   INTEGER PRIMARY KEY,
+    name TEXT
+);
+
+SELECT name FROM member WHERE id = 1;`,
+  },
+  {
+    id: "q-cs-29",
+    category: "CS",
+    question: "JDBC 는 무엇인가?",
+    answer:
+      "JDBC = 만능 콘센트. 자바 코드가 DB 에 접속해 SQL 을 보내고 결과를 받는 표준 방법이다. DB 회사마다 통신 방식이 다르지만, 각 회사가 JDBC 규격에 맞춘 드라이버(어댑터)를 내놓기 때문에 자바 코드는 그대로 두고 드라이버만 바꾸면 MySQL 에서 PostgreSQL 로 갈아탈 수 있다. 순서는 연결 얻기 → SQL 준비 → 실행 → 닫기. MyBatis 와 JPA 도 맨 아래에서는 JDBC 를 쓴다.",
+    code: `String sql = "SELECT name FROM member WHERE id = ?";
+
+try (Connection conn = dataSource.getConnection();
+     PreparedStatement ps = conn.prepareStatement(sql)) {
+    ps.setLong(1, 1L);                       // ? 자리에 값 넣기
+    try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+            System.out.println(rs.getString("name"));
+        }
+    }
+}`,
+  },
+  {
+    id: "q-cs-30",
+    category: "CS",
+    question: "WAS 는 여러 대로 늘리기 쉬운데 DB 는 왜 어려운가?",
+    answer:
+      "WAS = 계산원, DB = 장부. 계산원은 똑같이 교육해서 몇 명이든 더 세우면 된다. WAS 는 데이터를 스스로 들고 있지 않아서(무상태) 같은 것을 여러 대 띄우기만 하면 된다. 장부는 다르다. 여러 권으로 나누면 한 권에 적은 내용을 나머지에도 똑같이 맞춰야 하고, 그 사이에 서로 다른 값을 보게 될 수 있다. 그래서 DB 는 한 대를 크게 키우거나, 읽기 전용 복제본을 두는 식으로 조심해서 늘린다. 같은 이유로 로그인 세션을 WAS 메모리에만 두면 안 된다.",
+    code: `# WAS: 같은 jar 를 그냥 여러 번 띄운다
+java -jar app.jar --server.port=8081
+java -jar app.jar --server.port=8082
+java -jar app.jar --server.port=8083
+
+# DB: 원본 하나 + 읽기용 복제본 (내용을 계속 맞춰 줘야 함)
+primary  (쓰기)  ──복제──▶  replica 1 (읽기)
+                 ──복제──▶  replica 2 (읽기)`,
+  },
   // ─── 운영체제 ──────────────────────────────────────────
   {
     id: "q-os-1",
@@ -3982,6 +4142,16 @@ export const SUMMARIES: Record<string, string> = {
   "q-cs-18": "충돌은 같은 줄을 둘 다 고쳐서 사람이 골라줘야 하는 상황",
   "q-cs-19": "도커 이미지는 굳힌 포장본이고 컨테이너는 그걸 실행한 것",
   "q-cs-20": "배포는 자르로 굳혀 서버에서 돌리고 설정은 환경변수로 바꾼다",
+  "q-cs-21": "웹 서버는 만들어진 파일을 건네고 WAS 는 코드를 실행해 만든다",
+  "q-cs-22": "정적 콘텐츠는 누구에게나 같고 동적 콘텐츠는 요청마다 달라진다",
+  "q-cs-23": "앞단 웹 서버는 정적 파일을 맡고 WAS 여러 대에 요청을 나눈다",
+  "q-cs-24": "톰캣은 요청을 받아 서블릿을 실행해 주는 자바 WAS 다",
+  "q-cs-25": "WAS 는 요청마다 스레드 풀에서 스레드를 하나 빌려 처리한다",
+  "q-cs-26": "3계층 구조는 웹 서버와 WAS 와 DB 로 역할을 나눈 것이다",
+  "q-cs-27": "DB 접속 정보와 검증을 WAS 안에 숨겨야 데이터가 안전하다",
+  "q-cs-28": "DB 는 데이터 묶음이고 DBMS 는 그것을 관리하는 프로그램이다",
+  "q-cs-29": "JDBC 는 자바 코드가 DB 에 접속해 SQL 을 보내는 표준 창구다",
+  "q-cs-30": "WAS 는 상태가 없어 늘리기 쉽고 DB 는 데이터를 맞춰야 해 어렵다",
   "q-os-1": "주소 공간을 코드·데이터·스택으로 나눠 메모리를 아낀다",
   "q-os-2": "인터럽트는 벨을 울려 알리고 폴링은 계속 나가서 확인한다",
   "q-os-3": "fork 는 프로세스를 복제하고 exec 는 알맹이만 갈아끼운다",

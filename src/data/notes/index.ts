@@ -2,6 +2,7 @@
 import { FRONTEND } from "./frontend";
 import { JAVA } from "./java";
 import { PYTHON } from "./python";
+import { SERVER } from "./server";
 import type { NoteSubject } from "./types";
 
-export const NOTE_SUBJECTS: NoteSubject[] = [PYTHON, JAVA, FRONTEND];
+export const NOTE_SUBJECTS: NoteSubject[] = [PYTHON, JAVA, FRONTEND, SERVER];

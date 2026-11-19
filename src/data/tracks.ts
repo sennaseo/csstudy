@@ -67,6 +67,17 @@ const CS_BASIC = [
   "q-cs-10",
   "q-cs-17",
   "q-cs-18",
+  // WAS·DB 입문 (공부노트 "WAS·DB" 와 짝) — 끝에 붙여서 기존 레슨 노드 구성은 그대로 둔다
+  "q-cs-21",
+  "q-cs-22",
+  "q-cs-23",
+  "q-cs-24",
+  "q-cs-25",
+  "q-cs-26",
+  "q-cs-27",
+  "q-cs-28",
+  "q-cs-29",
+  "q-cs-30",
 ];
 const CS_DEEP = [
   "q-cs-1",

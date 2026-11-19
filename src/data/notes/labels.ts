@@ -136,4 +136,18 @@ export const NOTE_LABELS: Record<string, string> = {
   "n-fe-2-4": "서버 상태",
   "n-fe-2-5": "낙관적 업데이트",
   "n-fe-2-6": "기능별 폴더",
+
+  // ── WAS·DB · WAS 기초
+  "n-sv-1-1": "웹 서버 vs WAS",
+  "n-sv-1-2": "3계층 구조",
+  "n-sv-1-3": "리버스 프록시",
+  "n-sv-1-4": "톰캣·서블릿",
+  "n-sv-1-5": "스레드 풀",
+  // ── WAS·DB · DB 기초와 WAS 연결
+  "n-sv-2-1": "DB와 DBMS",
+  "n-sv-2-2": "SQL 기본",
+  "n-sv-2-3": "키와 JOIN",
+  "n-sv-2-4": "JDBC",
+  "n-sv-2-5": "커넥션 풀",
+  "n-sv-2-6": "트랜잭션",
 };
