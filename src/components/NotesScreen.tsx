@@ -4,7 +4,7 @@
 // - 목록 뷰: 단원마다 "꼭 볼 N가지" 포스터 한 장 (인스타 인포그래픽 형식).
 //   3열 타일 = 노트 1장 (그림 + 번호·짧은 제목). 타일 그림은 노트 본문의 첫 그림거리(비교·코드·단계·표)를 축소해 자동으로 그린다.
 //   그래서 노트를 새로 써도 그림을 따로 그릴 필요가 없다. 타일 제목은 labels.ts.
-// - 상세 뷰: 화이트보드 판서 스타일 (NoteBoard.tsx).
+// - 상세 뷰: 옆으로 넘기는 카드뉴스 (NoteBoard.tsx). 카드 안 내용은 화이트보드 손그림 블록.
 //
 // 왜 열린 노트를 스토어가 아닌 로컬 useState 로 두나
 //   "지금 몇 번 노트를 보고 있나"는 앱을 껐다 켜면 잊어도 되는 정보다.
@@ -242,7 +242,7 @@ export function NotesScreen() {
         >
           ← 목록
         </button>
-        <NoteBoard note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} onOpenNote={(id) => open(id)} />
+        <NoteBoard key={note.id} note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} onOpenNote={(id) => open(id)} />
         {(prev || next) && (
           <div className="flex gap-2">
             {prev ? (

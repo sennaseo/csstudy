@@ -1,5 +1,7 @@
 // =============================================================
-// NoteBoard — 공부노트 상세를 "화이트보드 손그림" 으로 그린다.
+// NoteBoard — 공부노트 상세를 "카드뉴스" 로 그린다 (옆으로 넘겨 보는 카드 묶음).
+// - 표지 → 핵심 한 장 → 소제목마다 한 장(길면 여러 장으로 나눔) → "이것만 기억" 마무리.
+// - 카드 안 내용은 화이트보드 손그림 블록 그대로:
 // - 강의실 화이트보드에 마커로 정리한 판서 느낌: 손글씨(Gaegu), 빨강·파랑·초록 마커,
 //   손으로 그린 듯 삐뚤한 상자(.sketch), 동그라미 번호 ①②③.
 // - 단계(flow)는 2열 지그재그(1→2, 4←3, 5→6 …)로 판서처럼 배치한다.
@@ -7,7 +9,7 @@
 // - 코드만은 고정폭 글꼴 그대로 — 손글씨 코드는 읽기도 베끼기도 어렵다.
 // =============================================================
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 
 import { aliasesOfNote, conceptOf, isConceptName, splitConcepts, type Concept } from "../data/notes/concepts";
 import type { Note, NoteBlock } from "../data/notes/types";
@@ -289,7 +291,93 @@ function BoardBlock({ block }: { block: NoteBlock }) {
   }
 }
 
-/** 노트 한 장 = 화이트보드 한 판. */
+// ─── 카드뉴스 쪽 나누기 ───
+// 카드 한 장에 들어갈 분량을 "줄 수" 어림값으로 센다. 넘치면 다음 카드로 넘긴다.
+// 어림이라 조금 넘칠 수 있어서, 카드 안은 세로 스크롤도 된다(안전망).
+
+/** 표 한 줄의 높이 어림 — 칸이 좁아(3열이면 한 줄에 6자쯤) 글이 여러 줄로 접힌다. */
+function tableRowWeight(row: string[]): number {
+  const per = Math.max(4, Math.floor(20 / row.length));
+  return 0.5 + Math.max(...row.map((c) => Math.ceil(c.split("`").join("").length / per))) * 0.85;
+}
+
+/** 블록 하나가 차지하는 높이 어림 (본문 줄 수 단위). */
+function weightOf(b: NoteBlock): number {
+  const len = (t: string, per: number) => Math.ceil(t.length / per);
+  switch (b.type) {
+    case "key":
+      return 3;
+    case "p":
+      return 1 + len(b.text, 24);
+    case "code":
+      return 2 + b.code.split("\n").length * 0.8 + (b.out !== undefined ? 1.5 + b.out.split("\n").length * 0.8 : 0);
+    case "list":
+      if (b.style === "flow") return Math.ceil(b.items.length / 2) * 4;
+      return 1 + b.items.reduce((n, it) => n + len(it, 26), 0);
+    case "compare":
+      return 2 + Math.max(...b.cols.map((c) => c.items.reduce((n, it) => n + len(it, 12), 0)));
+    case "tip":
+      return 2.5 + len(b.text, 26);
+    case "table":
+      return 2 + b.rows.reduce((n, r) => n + tableRowWeight(r), 0);
+    case "figure":
+      if (b.kind === "flow") return b.nodes.length <= 3 ? 5 : b.nodes.length * 3.4;
+      if (b.kind === "cycle") return 11;
+      if (b.kind === "tree") return 8 + Math.max(0, ...b.children.map((c) => c.leaves?.length ?? 0)) * 1.2;
+      if (b.kind === "stack") return b.layers.length * (b.nested ? 2.6 : 2);
+      return Math.max(b.vars.length, b.objs.length) * 2.6 + 1;
+    default:
+      return 0;
+  }
+}
+
+/** 카드 한 장 분량 (줄 수 어림). 화면 높이의 62% 카드에 맞춘 값. */
+const PAGE_BUDGET = 17;
+
+/** 블록들을 카드 분량으로 끊는다. 혼자서 넘치는 블록은 혼자 한 장을 쓴다. */
+function paginate(input: NoteBlock[], budget = PAGE_BUDGET): NoteBlock[][] {
+  // 한 장에 안 들어가는 긴 표는 줄 단위로 끊어 여러 표로 만든다 (머리줄은 장마다 다시 붙는다)
+  const blocks = input.flatMap((b): NoteBlock[] => {
+    if (b.type !== "table" || weightOf(b) <= budget) return [b];
+    const parts: NoteBlock[] = [];
+    let rows: string[][] = [];
+    let used = 2;
+    for (const r of b.rows) {
+      const w = tableRowWeight(r);
+      if (rows.length && used + w > budget) {
+        parts.push({ ...b, rows });
+        rows = [];
+        used = 2;
+      }
+      rows.push(r);
+      used += w;
+    }
+    if (rows.length) parts.push({ ...b, rows });
+    return parts;
+  });
+  const pages: NoteBlock[][] = [];
+  let cur: NoteBlock[] = [];
+  let used = 0;
+  for (const b of blocks) {
+    const w = weightOf(b);
+    if (cur.length && used + w > budget) {
+      pages.push(cur);
+      cur = [];
+      used = 0;
+    }
+    cur.push(b);
+    used += w;
+  }
+  if (cur.length) pages.push(cur);
+  return pages;
+}
+
+type Slide =
+  | { kind: "cover" }
+  | { kind: "body"; title: string | null; no: number; cont: boolean; blocks: NoteBlock[] }
+  | { kind: "end"; blocks: NoteBlock[] };
+
+/** 노트 한 장 = 카드뉴스 한 묶음. */
 export function NoteBoard({
   note,
   kicker,
@@ -321,47 +409,124 @@ export function NoteBoard({
     pick: (name) => setPicked(conceptOf(name, note.id)),
   };
 
+  // 카드 묶음: 표지 → 머리(핵심·그림) → 소제목별 → 마무리
+  const slides: Slide[] = [{ kind: "cover" }];
+  for (const pg of paginate(head)) slides.push({ kind: "body", title: null, no: 0, cont: false, blocks: pg });
+  sections.forEach((sec, i) => {
+    // 소제목 한 줄만큼 분량을 덜 준다
+    const pages = paginate(sec.blocks, PAGE_BUDGET - 1.5);
+    (pages.length ? pages : [[]]).forEach((pg, k) => slides.push({ kind: "body", title: sec.title, no: i + 1, cont: k > 0, blocks: pg }));
+  });
+  slides.push({ kind: "end", blocks: tail });
+
+  const scroller = useRef<HTMLDivElement>(null);
+  const [page, setPage] = useState(0);
+  const go = (i: number) => {
+    const el = scroller.current;
+    if (!el) return;
+    const next = Math.max(0, Math.min(slides.length - 1, i));
+    el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
+  };
+  const CARD = "flex h-[62dvh] min-h-[440px] w-full shrink-0 snap-center snap-always flex-col overflow-hidden rounded-[28px]";
+
   return (
-    // 보드: 흰 판 + 알루미늄 테두리 + 아래 받침대 그림자
     <LinkCtx.Provider value={linker}>
-    <article className="flex flex-col gap-4 rounded-[14px] border-[6px] border-[#D3D7DE] bg-white px-4 pb-6 pt-5 font-display tracking-[-0.06em] text-marker-ink shadow-[0_6px_0_#B4B9C2]">
-      <header className="flex flex-col items-center gap-1 text-center">
-        <span className="self-start text-[15px] text-marker-blue">{kicker}</span>
-        <h1 className="break-keep text-[34px] leading-tight">{note.title}</h1>
-        {/* 손으로 그은 밑줄 두 줄 */}
-        <span className="sketch block h-[3px] w-4/5 bg-marker-ink" />
-        <span className="sketch-alt -mt-0.5 block h-[2px] w-3/5 bg-marker-ink opacity-70" />
-        <p className="mt-2 self-start text-left text-[18px] leading-snug">
-          <span className="text-marker-blue">→ </span>
-          <Inline text={note.summary} />
-        </p>
-      </header>
+      <div className="flex flex-col gap-3">
+        {/* 카드 줄 — 옆으로 밀면 한 장씩 딱딱 멈춘다(scroll-snap). */}
+        <div
+          ref={scroller}
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            setPage(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+          className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto"
+          aria-roledescription="카드뉴스"
+        >
+          {slides.map((sl, i) => {
+            const count = (
+              <span className="shrink-0 rounded-full bg-black/10 px-2.5 py-0.5 font-sans text-[11px] font-extrabold tracking-normal">
+                {i + 1} / {slides.length}
+              </span>
+            );
+            if (sl.kind === "cover")
+              return (
+                <section key={i} className={CARD + " relative justify-between bg-gradient-to-br from-accent to-[#C99BF2] p-6 text-white"}>
+                  <div className="flex items-center justify-between font-sans text-xs font-extrabold">
+                    <span className="rounded-full bg-white/20 px-3 py-1">{kicker}</span>
+                    {count}
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    <span className="text-6xl">{note.emoji}</span>
+                    <h1 className="break-keep font-sans text-[34px] font-black leading-[1.15] tracking-tight">{note.title}</h1>
+                    <p className="break-keep font-sans text-base font-semibold leading-snug text-white/90">{note.summary.split("`").join("")}</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <span className="font-sans text-sm font-extrabold text-white/90">옆으로 넘겨 보세요 →</span>
+                    <img src={`${import.meta.env.BASE_URL}mascot/face-happy.png`} alt="" className="h-20 w-20 object-contain drop-shadow-md" />
+                  </div>
+                </section>
+              );
+            const isEnd = sl.kind === "end";
+            return (
+              <section
+                key={i}
+                className={CARD + " font-display tracking-[-0.06em] text-marker-ink shadow-card " + (isEnd ? "bg-accent-soft" : "bg-white")}
+              >
+                <header className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-4">
+                  {isEnd ? (
+                    <h2 className="text-[24px] leading-tight text-accent-dim">마무리</h2>
+                  ) : sl.title ? (
+                    <h2 className="flex min-w-0 items-center gap-2 text-[23px] leading-tight text-marker-red">
+                      <Circled n={sl.no} />
+                      <span className="min-w-0">
+                        <Inline text={sl.title} />
+                        {sl.cont && <span className="ml-1 text-[15px] text-marker-blue">(이어서)</span>}
+                      </span>
+                    </h2>
+                  ) : (
+                    <h2 className="text-[23px] leading-tight text-marker-red">한눈에 보기</h2>
+                  )}
+                  <span className="text-ink-500">{count}</span>
+                </header>
+                {/* 분량 어림이 빗나가 넘치면 카드 안에서 세로로 민다 */}
+                <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-5">
+                  <div className="my-auto flex flex-col gap-3">
+                    {sl.blocks.map((b, j) => (
+                      <BoardBlock key={j} block={b} />
+                    ))}
+                  </div>
+                  {isEnd && (
+                    <p className="pt-2 text-center text-[14px] text-marker-blue">
+                      <span className="underline decoration-dotted decoration-2 underline-offset-4">점선 밑줄</span> 낱말을 누르면 그 개념을 다시 볼 수 있어요
+                    </p>
+                  )}
+                </div>
+              </section>
+            );
+          })}
+        </div>
 
-      {head.map((b, i) => (
-        <BoardBlock key={"h" + i} block={b} />
-      ))}
-
-      {sections.map((sec, i) => (
-        <section key={i} className="flex flex-col gap-3">
-          <h2 className="mt-2 flex items-center gap-2 text-[23px] leading-tight text-marker-red">
-            <Circled n={i + 1} />
-            <span>
-              <Inline text={sec.title} />
-            </span>
-          </h2>
-          {sec.blocks.map((b, j) => (
-            <BoardBlock key={j} block={b} />
-          ))}
-        </section>
-      ))}
-
-      {tail.map((b, i) => (
-        <BoardBlock key={"t" + i} block={b} />
-      ))}
-      <p className="text-center text-[14px] text-marker-blue">
-        <span className="underline decoration-dotted decoration-2 underline-offset-4">점선 밑줄</span> 낱말을 누르면 그 개념을 다시 볼 수 있어요
-      </p>
-    </article>
+        {/* 쪽 표시 + 앞뒤 버튼 */}
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" onClick={() => go(page - 1)} disabled={page === 0} aria-label="이전 카드" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl font-black text-ink-700 shadow-chip disabled:text-ink-300">
+            ‹
+          </button>
+          <div className="flex min-w-0 flex-wrap items-center justify-center gap-1.5">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => go(i)}
+                aria-label={`${i + 1}번 카드`}
+                className={"h-2 rounded-full transition-all " + (i === page ? "w-5 bg-accent" : "w-2 bg-ink-300")}
+              />
+            ))}
+          </div>
+          <button type="button" onClick={() => go(page + 1)} disabled={page === slides.length - 1} aria-label="다음 카드" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl font-black text-ink-700 shadow-chip disabled:text-ink-300">
+            ›
+          </button>
+        </div>
+      </div>
     {picked && (
       <ConceptSheet
         concept={picked}
