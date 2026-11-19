@@ -88,10 +88,25 @@ export default {
         },
         // 공부노트 상세 화이트보드 마커 4색 (NoteBoard.tsx 전용)
         marker: {
-          ink: "#23262E", // 검정 마커 — 본문
-          red: "#C8323C", // 빨강 — 번호·소제목·핵심
-          blue: "#2F5BD3", // 파랑 — 화살표·표 머리·보조
-          green: "#1F8A4C", // 초록 — 정답·결과·이것만 기억
+          ink: "#2D2A55", // 남색 — 본문·테두리 (카드뉴스 톤)
+          red: "#E8588F", // 분홍 — 번호·강조·틀림
+          blue: "#5B7FE0", // 하늘 — 화살표·보조
+          green: "#1FA06A", // 민트 — 정답·결과
+        },
+        // 공부노트 카드뉴스 파스텔 (NoteBoard.tsx)
+        cute: {
+          navy: "#2D2A55",
+          lav: "#BDAEF2", // 카드·알약 테두리
+          "lav-soft": "#EFEAFD", // 알약·바닥 띠 바탕
+          "lav-bg": "#F6F2FF",
+          pink: "#FFD9E6",
+          "pink-ink": "#D8457F",
+          blue: "#D9E8FF",
+          "blue-ink": "#3F6FD6",
+          yellow: "#FFF0BF",
+          "yellow-ink": "#A8700A",
+          mint: "#D5F5E3",
+          "mint-ink": "#15885A",
         },
         // 공부노트 "꼭 볼 N가지" 포스터 전용 — 인스타 인포그래픽 톤의 보라·라벤더.
         // 노트 탭 안에서만 쓴다 (나머지 화면은 accent 파랑 그대로).

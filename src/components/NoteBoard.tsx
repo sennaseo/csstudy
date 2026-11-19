@@ -1,7 +1,7 @@
 // =============================================================
 // NoteBoard — 공부노트 상세를 "카드뉴스" 로 그린다 (옆으로 넘겨 보는 카드 묶음).
 // - 표지 → 핵심 한 장 → 소제목마다 한 장(길면 여러 장으로 나눔) → "이것만 기억" 마무리.
-// - 카드 안 내용은 화이트보드 손그림 블록 그대로:
+// - 파스텔 라벤더 톤: 제목 알약, 파스텔 상자, 체크박스 목록, 마스코트 말풍선.
 // - 강의실 화이트보드에 마커로 정리한 판서 느낌: 손글씨(Gaegu), 빨강·파랑·초록 마커,
 //   손으로 그린 듯 삐뚤한 상자(.sketch), 동그라미 번호 ①②③.
 // - 단계(flow)는 2열 지그재그(1→2, 4←3, 5→6 …)로 판서처럼 배치한다.
@@ -94,7 +94,7 @@ export function Inline({ text, link = false }: { text: string; link?: boolean })
       {text.split("`").map((part, i) => {
         if (i % 2 === 1) {
           const code = (
-            <code className="rounded bg-ink-100 px-1 font-mono text-[0.78em] tracking-normal text-marker-blue">{part}</code>
+            <code className="rounded-md bg-cute-lav-soft px-1 font-mono text-[0.88em] font-semibold text-cute-blue-ink">{part}</code>
           );
           // `HashMap` 처럼 코드 조각 하나가 통째로 개념 이름이면 그 조각을 누르게
           return linking && isConceptName(part) && !ctx.skip.has(part) && claim(part) ? (
@@ -124,103 +124,100 @@ export function Inline({ text, link = false }: { text: string; link?: boolean })
   );
 }
 
-/** 마커로 그린 동그라미 번호. */
-function Circled({ n, color = "red" }: { n: number; color?: "red" | "blue" }) {
-  const c = color === "red" ? "border-marker-red text-marker-red" : "border-marker-blue text-marker-blue";
-  return (
-    <span className={"flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-lg leading-none " + c}>
-      {n}
-    </span>
-  );
-}
+// ─── 카드 안 블록 — 파스텔 카드뉴스 톤 ───
+// 둥근 상자, 파스텔 머리띠, 체크박스 목록, 마스코트 말풍선. 색은 tailwind 의 cute.* 토큰.
 
-// compare 상자 마커색 — 틀림=빨강, 맞음=초록, 그냥 나열=파랑.
-const BOX = {
-  bad: { mark: "✗ ", cls: "border-marker-red", title: "text-marker-red" },
-  good: { mark: "✓ ", cls: "border-marker-green", title: "text-marker-green" },
-  none: { mark: "", cls: "border-marker-blue", title: "text-marker-blue" },
+const MASCOT = (name: string) => `${import.meta.env.BASE_URL}mascot/${name}.png`;
+
+/** 파스텔 4색 돌려 쓰기 — 상자 머리띠·단계 번호. */
+const PASTEL = [
+  { bg: "bg-cute-pink", ink: "text-cute-pink-ink", border: "border-cute-pink" },
+  { bg: "bg-cute-blue", ink: "text-cute-blue-ink", border: "border-cute-blue" },
+  { bg: "bg-cute-yellow", ink: "text-cute-yellow-ink", border: "border-cute-yellow" },
+  { bg: "bg-cute-lav-soft", ink: "text-cute-navy", border: "border-cute-lav-soft" },
+] as const;
+const TONE_BOX = {
+  good: { bg: "bg-cute-mint", ink: "text-cute-mint-ink", border: "border-cute-mint", mark: "✓ " },
+  bad: { bg: "bg-cute-pink", ink: "text-cute-pink-ink", border: "border-cute-pink", mark: "✕ " },
 } as const;
 
-// 팁은 보드 귀퉁이에 붙인 포스트잇.
-const STICKY = {
-  analogy: { label: "🎈 비유", cls: "bg-[#FFF4B8] -rotate-1", title: "text-marker-blue" },
-  warn: { label: "⚠️ 자주 하는 실수", cls: "bg-[#FFD9D6] rotate-1", title: "text-marker-red" },
-  memo: { label: "📝 메모", cls: "bg-[#DDF3E4] -rotate-1", title: "text-marker-green" },
+// 팁 = 마스코트가 말풍선으로 알려 준다.
+const BUBBLE = {
+  analogy: { label: "비유하자면", face: "face-wink", ink: "text-cute-blue-ink" },
+  warn: { label: "자주 하는 실수!", face: "face-sad", ink: "text-cute-pink-ink" },
+  memo: { label: "메모", face: "face-happy", ink: "text-cute-mint-ink" },
 } as const;
 
 function BoardBlock({ block }: { block: NoteBlock }) {
   switch (block.type) {
     case "key":
-      // 보드 한가운데 빨간 마커로 동그랗게 두른 한 줄 ("FROM COMMIT TO PRODUCTION" 자리)
+      // 핵심 한 줄 — 라벤더 띠
       return (
-        <div className="sketch mx-auto my-1 max-w-full border-[2.5px] border-marker-red px-5 py-2 text-center text-[21px] leading-snug text-marker-red">
+        <div className="rounded-2xl bg-cute-lav-soft px-4 py-3 text-center text-[16px] font-extrabold leading-snug text-cute-navy">
           <Inline text={block.text} />
         </div>
       );
     case "figure":
       return <NoteFigure block={block} />;
     case "h2":
-      return null; // 섹션 제목은 NoteBoard 가 번호와 함께 직접 그린다
+      return null; // 섹션 제목은 NoteBoard 가 알약으로 직접 그린다
     case "p":
       return (
-        <p className="text-[18px] leading-relaxed">
+        <p className="text-[15px] font-semibold leading-relaxed">
           <Inline text={block.text} link />
         </p>
       );
     case "code":
       return (
-        <div className="sketch-sm border-[2.5px] border-marker-ink bg-[#FAFAF7] px-3 py-3">
-          <pre className="overflow-x-auto whitespace-pre font-mono tracking-normal text-xs leading-relaxed text-marker-ink">{block.code}</pre>
+        <div className="overflow-hidden rounded-2xl border-2 border-cute-lav bg-[#FAF8FF]">
+          <pre className="overflow-x-auto whitespace-pre p-3 font-mono text-[11.5px] font-medium leading-relaxed text-cute-navy">{block.code}</pre>
           {block.out !== undefined && (
-            <div className="mt-2 border-t-2 border-dashed border-marker-green pt-1.5">
-              <span className="text-base text-marker-green">▶ 결과</span>
-              <pre className="whitespace-pre-wrap font-mono tracking-normal text-xs leading-relaxed text-marker-green">{block.out}</pre>
+            <div className="bg-cute-mint px-3 py-2">
+              <span className="text-[12px] font-extrabold text-cute-mint-ink">▶ 결과</span>
+              <pre className="whitespace-pre-wrap font-mono text-[11.5px] font-semibold leading-relaxed text-cute-mint-ink">{block.out}</pre>
             </div>
           )}
         </div>
       );
     case "list": {
-      if (block.style === "flow") {
-        // 2열 지그재그: 짝수 줄은 왼→오, 홀수 줄은 오→왼. 동그라미 번호가 순서를 알려 준다.
-        const COLS = 2;
+      if (block.style === "flow")
+        // 단계: 파스텔 번호 상자를 ↓ 로 잇는다
         return (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-4 py-1">
+          <ol className="flex flex-col items-stretch">
             {block.items.map((it, i) => {
-              const row = Math.floor(i / COLS);
-              const col = row % 2 === 0 ? i % COLS : COLS - 1 - (i % COLS);
+              const c = PASTEL[i % PASTEL.length];
               return (
-                <div key={i} className="flex min-w-0 items-start gap-1.5" style={{ gridRow: row + 1, gridColumn: col + 1 }}>
-                  <Circled n={i + 1} />
-                  <span className="sketch min-w-0 break-words border-2 border-marker-ink px-2 py-1 text-[16px] leading-snug">
-                    <Inline text={it} link />
-                  </span>
-                </div>
+                <li key={i} className="flex flex-col items-center">
+                  {i > 0 && <span className="text-[15px] font-black leading-5 text-cute-lav">↓</span>}
+                  <div className={"flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 " + c.bg}>
+                    <span className={"flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[13px] font-black " + c.ink}>{i + 1}</span>
+                    <span className="min-w-0 break-words text-[14px] font-bold leading-snug">
+                      <Inline text={it} link />
+                    </span>
+                  </div>
+                </li>
               );
             })}
-          </div>
+          </ol>
         );
-      }
       if (block.style === "check")
         return (
-          <div className="sketch mt-2 border-[2.5px] border-marker-green px-4 py-3">
-            <span className="block text-[20px] text-marker-green">✓ 이것만 기억</span>
-            <ul className="mt-1 flex flex-col gap-1 text-[17px] leading-snug">
-              {block.items.map((it, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="text-marker-green">✓</span>
-                  <span>
-                    <Inline text={it} link />
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className="flex flex-col gap-2.5">
+            {block.items.map((it, i) => (
+              <li key={i} className="flex items-start gap-2.5 text-[15px] font-bold leading-snug">
+                <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-cute-lav text-[12px] font-black text-white">✓</span>
+                <span>
+                  <Inline text={it} link />
+                </span>
+              </li>
+            ))}
+          </ul>
         );
       return (
-        <ul className="flex flex-col gap-1 text-[17px] leading-snug">
+        <ul className="flex flex-col gap-1.5 text-[14.5px] font-semibold leading-snug">
           {block.items.map((it, i) => (
             <li key={i} className="flex gap-2">
-              <span className="shrink-0 text-marker-blue">{block.ordered ? `${i + 1}.` : "→"}</span>
+              <span className="shrink-0 font-black text-cute-lav">{block.ordered ? `${i + 1}.` : "•"}</span>
               <span>
                 <Inline text={it} link />
               </span>
@@ -230,20 +227,21 @@ function BoardBlock({ block }: { block: NoteBlock }) {
       );
     }
     case "compare":
+      // 나란히 상자 — 파스텔 머리띠 + 흰 몸통
       return (
-        <div className={"grid gap-3 " + (block.cols.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
+        <div className={"grid gap-2.5 " + (block.cols.length > 1 ? "grid-cols-2" : "grid-cols-1")}>
           {block.cols.map((c, i) => {
-            const t = BOX[c.tone ?? "none"];
+            const t = c.tone ? TONE_BOX[c.tone] : { ...PASTEL[i % PASTEL.length], mark: "" };
             return (
-              <div key={i} className={"min-w-0 border-[2.5px] px-3 py-2.5 " + t.cls + (i % 2 ? " sketch-alt" : " sketch")}>
-                <div className={"text-[19px] leading-tight " + t.title}>
+              <div key={i} className={"min-w-0 overflow-hidden rounded-2xl border-2 bg-white " + t.border}>
+                <div className={"px-2 py-1.5 text-center text-[14.5px] font-black leading-tight " + t.bg + " " + t.ink}>
                   {t.mark}
                   <Inline text={c.title} />
                 </div>
-                <ul className="mt-1 flex flex-col gap-0.5 text-[15px] leading-snug">
+                <ul className="flex flex-col gap-1 px-2.5 py-2 text-[13px] font-semibold leading-snug">
                   {c.items.map((it, j) => (
                     <li key={j} className="break-words">
-                      → <Inline text={it} link />
+                      <Inline text={it} link />
                     </li>
                   ))}
                 </ul>
@@ -253,22 +251,25 @@ function BoardBlock({ block }: { block: NoteBlock }) {
         </div>
       );
     case "tip": {
-      const t = STICKY[block.kind];
+      const t = BUBBLE[block.kind];
       return (
-        <div className={"mx-1 rounded-sm px-4 py-3 text-[16px] leading-snug shadow-[2px_3px_0_rgba(0,0,0,0.08)] " + t.cls}>
-          <span className={"block text-[18px] " + t.title}>{t.label}</span>
-          <Inline text={block.text} link />
+        <div className="flex items-end gap-1.5">
+          <img src={MASCOT(t.face)} alt="" className="h-14 w-14 shrink-0 object-contain" />
+          <div className="relative min-w-0 flex-1 rounded-2xl rounded-bl-sm border-2 border-cute-lav bg-white px-3 py-2 text-[13.5px] font-semibold leading-snug">
+            <span className={"block text-[12px] font-black " + t.ink}>{t.label}</span>
+            <Inline text={block.text} link />
+          </div>
         </div>
       );
     }
     case "table":
       return (
-        <div className="sketch-sm overflow-x-auto border-[2.5px] border-marker-ink px-2 py-1">
-          <table className="w-full border-collapse text-left text-[15px] leading-snug">
+        <div className="overflow-x-auto rounded-2xl border-2 border-cute-blue">
+          <table className="w-full border-collapse text-left text-[13px] font-semibold leading-snug">
             <thead>
               <tr>
                 {block.head.map((h, i) => (
-                  <th key={i} className="border-b-2 border-marker-ink px-2 py-1.5 text-[18px] font-normal text-marker-blue">
+                  <th key={i} className="bg-cute-blue px-2 py-1.5 text-center text-[13.5px] font-black text-cute-blue-ink">
                     {h}
                   </th>
                 ))}
@@ -278,7 +279,7 @@ function BoardBlock({ block }: { block: NoteBlock }) {
               {block.rows.map((row, r) => (
                 <tr key={r}>
                   {row.map((c, i) => (
-                    <td key={i} className="border-b border-dashed border-ink-300 px-2 py-1.5 align-top">
+                    <td key={i} className={"border-t-2 border-cute-blue/60 px-2 py-1.5 align-top " + (i > 0 ? "border-l-2" : "")}>
                       <Inline text={c} link />
                     </td>
                   ))}
@@ -295,34 +296,34 @@ function BoardBlock({ block }: { block: NoteBlock }) {
 // 카드 한 장에 들어갈 분량을 "줄 수" 어림값으로 센다. 넘치면 다음 카드로 넘긴다.
 // 어림이라 조금 넘칠 수 있어서, 카드 안은 세로 스크롤도 된다(안전망).
 
-/** 표 한 줄의 높이 어림 — 칸이 좁아(3열이면 한 줄에 6자쯤) 글이 여러 줄로 접힌다. */
+/** 표 한 줄의 높이 어림 — 칸 너비는 글 길이에 따라 나뉘므로, 줄 전체 글자 수로 접히는 줄 수를 어림한다. */
 function tableRowWeight(row: string[]): number {
-  const per = Math.max(4, Math.floor(20 / row.length));
-  return 0.5 + Math.max(...row.map((c) => Math.ceil(c.split("`").join("").length / per))) * 0.85;
+  const chars = row.reduce((n, c) => n + c.split("`").join("").length, 0);
+  return 0.6 + Math.ceil(chars / 17) * 0.85;
 }
 
-/** 블록 하나가 차지하는 높이 어림 (본문 줄 수 단위). */
+/** 블록 하나가 차지하는 높이 어림 (본문 한 줄 ≈ 1). */
 function weightOf(b: NoteBlock): number {
-  const len = (t: string, per: number) => Math.ceil(t.length / per);
+  const len = (t: string, per: number) => Math.ceil(t.split("`").join("").length / per);
   switch (b.type) {
     case "key":
-      return 3;
+      return 2 + len(b.text, 20);
     case "p":
-      return 1 + len(b.text, 24);
+      return 0.5 + len(b.text, 21) * 1.1;
     case "code":
-      return 2 + b.code.split("\n").length * 0.8 + (b.out !== undefined ? 1.5 + b.out.split("\n").length * 0.8 : 0);
+      return 1.5 + b.code.split("\n").length * 0.8 + (b.out !== undefined ? 1.8 + b.out.split("\n").length * 0.8 : 0);
     case "list":
-      if (b.style === "flow") return Math.ceil(b.items.length / 2) * 4;
-      return 1 + b.items.reduce((n, it) => n + len(it, 26), 0);
+      if (b.style === "flow") return b.items.reduce((n, it) => n + 1.6 + len(it, 19) * 0.9, 0);
+      return 0.5 + b.items.reduce((n, it) => n + len(it, 20) + 0.4, 0);
     case "compare":
-      return 2 + Math.max(...b.cols.map((c) => c.items.reduce((n, it) => n + len(it, 12), 0)));
+      return 2.6 + Math.max(...b.cols.map((c) => c.items.reduce((n, it) => n + len(it, b.cols.length > 1 ? 10 : 22) * 0.85 + 0.2, 0)));
     case "tip":
-      return 2.5 + len(b.text, 26);
+      return 2.2 + len(b.text, 17) * 0.85;
     case "table":
-      return 2 + b.rows.reduce((n, r) => n + tableRowWeight(r), 0);
+      return 1.8 + b.rows.reduce((n, r) => n + tableRowWeight(r), 0);
     case "figure":
-      if (b.kind === "flow") return b.nodes.length <= 3 ? 5 : b.nodes.length * 3.4;
-      if (b.kind === "cycle") return 11;
+      if (b.kind === "flow") return b.nodes.length <= 3 ? 5 : b.nodes.length * 3.3;
+      if (b.kind === "cycle") return 12;
       if (b.kind === "tree") return 8 + Math.max(0, ...b.children.map((c) => c.leaves?.length ?? 0)) * 1.2;
       if (b.kind === "stack") return b.layers.length * (b.nested ? 2.6 : 2);
       return Math.max(b.vars.length, b.objs.length) * 2.6 + 1;
@@ -331,8 +332,8 @@ function weightOf(b: NoteBlock): number {
   }
 }
 
-/** 카드 한 장 분량 (줄 수 어림). 화면 높이의 62% 카드에 맞춘 값. */
-const PAGE_BUDGET = 17;
+/** 카드 한 장 분량 (줄 수 어림). 실제로 재 보면 카드 몸통이 22줄쯤 — 어림 오차만큼 여유를 둔다. */
+const PAGE_BUDGET = 20;
 
 /** 블록들을 카드 분량으로 끊는다. 혼자서 넘치는 블록은 혼자 한 장을 쓴다. */
 function paginate(input: NoteBlock[], budget = PAGE_BUDGET): NoteBlock[][] {
@@ -427,7 +428,16 @@ export function NoteBoard({
     const next = Math.max(0, Math.min(slides.length - 1, i));
     el.scrollTo({ left: next * el.clientWidth, behavior: "smooth" });
   };
-  const CARD = "flex h-[62dvh] min-h-[440px] w-full shrink-0 snap-center snap-always flex-col overflow-hidden rounded-[28px]";
+  const CARD =
+    "relative flex h-[62dvh] min-h-[440px] w-full shrink-0 snap-center snap-always flex-col overflow-hidden rounded-[28px] border-2 border-cute-lav";
+  // 카드 귀퉁이 반짝이 — 장식이라 누르기·읽기에서 빠진다
+  const sparkles = (
+    <span aria-hidden className="pointer-events-none absolute inset-0 select-none">
+      <span className="absolute right-4 top-12 text-[13px] text-[#F7C948]">✦</span>
+      <span className="absolute bottom-5 left-4 text-[11px] text-cute-lav">✦</span>
+      <span className="absolute bottom-16 right-5 text-[10px] text-[#F9A8C9]">✦</span>
+    </span>
+  );
 
   return (
     <LinkCtx.Provider value={linker}>
@@ -444,60 +454,78 @@ export function NoteBoard({
         >
           {slides.map((sl, i) => {
             const count = (
-              <span className="shrink-0 rounded-full bg-black/10 px-2.5 py-0.5 font-sans text-[11px] font-extrabold tracking-normal">
+              <span className="shrink-0 rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-cute-navy/60">
                 {i + 1} / {slides.length}
               </span>
             );
             if (sl.kind === "cover")
               return (
-                <section key={i} className={CARD + " relative justify-between bg-gradient-to-br from-accent to-[#C99BF2] p-6 text-white"}>
-                  <div className="flex items-center justify-between font-sans text-xs font-extrabold">
-                    <span className="rounded-full bg-white/20 px-3 py-1">{kicker}</span>
+                <section key={i} className={CARD + " bg-gradient-to-b from-[#E6DDFF] to-[#D3C6FA] px-5 pt-5 text-cute-navy"}>
+                  <span aria-hidden className="pointer-events-none absolute inset-0 select-none">
+                    <span className="absolute left-5 top-16 text-lg text-white">✦</span>
+                    <span className="absolute right-6 top-24 text-2xl text-[#F7C948]">✦</span>
+                    <span className="absolute right-10 top-1/2 text-base text-white">✦</span>
+                    <span className="absolute bottom-40 left-8 text-sm text-[#F9A8C9]">✦</span>
+                  </span>
+                  <div className="relative flex items-center justify-between">
+                    <span className="rounded-full border-2 border-cute-lav bg-white px-3.5 py-1 text-[13px] font-black">{kicker}</span>
                     {count}
                   </div>
-                  <div className="flex flex-col gap-4">
-                    <span className="text-6xl">{note.emoji}</span>
-                    <h1 className="break-keep font-sans text-[34px] font-black leading-[1.15] tracking-tight">{note.title}</h1>
-                    <p className="break-keep font-sans text-base font-semibold leading-snug text-white/90">{note.summary.split("`").join("")}</p>
+                  <div className="relative mt-5 flex flex-col items-center gap-3 text-center">
+                    {/* 흰 글자 + 남색 테두리 — 표지 제목의 스티커 글씨 느낌 */}
+                    <h1
+                      className="break-keep text-[36px] font-black leading-[1.2] text-white"
+                      style={{ WebkitTextStroke: "7px #2D2A55", paintOrder: "stroke fill" }}
+                    >
+                      {note.title}
+                    </h1>
+                    <p className="break-keep rounded-2xl border-2 border-cute-lav bg-white px-4 py-2 text-[14px] font-extrabold leading-snug">
+                      {note.summary.split("`").join("")}
+                    </p>
                   </div>
-                  <div className="flex items-end justify-between">
-                    <span className="font-sans text-sm font-extrabold text-white/90">옆으로 넘겨 보세요 →</span>
-                    <img src={`${import.meta.env.BASE_URL}mascot/face-happy.png`} alt="" className="h-20 w-20 object-contain drop-shadow-md" />
+                  <div className="relative mt-auto flex items-end justify-between">
+                    <img src={MASCOT("pose-laptop")} alt="" className="-mb-3 h-40 w-40 object-contain drop-shadow-md" />
+                    <div className="flex flex-col items-end gap-2 pb-5">
+                      <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#A792F2] text-3xl shadow-sm">{note.emoji}</span>
+                      <span className="rounded-full bg-white/80 px-3 py-1 text-[13px] font-black">옆으로 넘겨요 →</span>
+                    </div>
                   </div>
                 </section>
               );
             const isEnd = sl.kind === "end";
+            const title = isEnd ? "이것만 기억!" : sl.title ? sl.title : "핵심 한눈에";
             return (
-              <section
-                key={i}
-                className={CARD + " font-display tracking-[-0.06em] text-marker-ink shadow-card " + (isEnd ? "bg-accent-soft" : "bg-white")}
-              >
-                <header className="flex shrink-0 items-start justify-between gap-2 px-5 pb-2 pt-4">
-                  {isEnd ? (
-                    <h2 className="text-[24px] leading-tight text-accent-dim">마무리</h2>
-                  ) : sl.title ? (
-                    <h2 className="flex min-w-0 items-center gap-2 text-[23px] leading-tight text-marker-red">
-                      <Circled n={sl.no} />
-                      <span className="min-w-0">
-                        <Inline text={sl.title} />
-                        {sl.cont && <span className="ml-1 text-[15px] text-marker-blue">(이어서)</span>}
-                      </span>
-                    </h2>
-                  ) : (
-                    <h2 className="text-[23px] leading-tight text-marker-red">한눈에 보기</h2>
-                  )}
-                  <span className="text-ink-500">{count}</span>
+              <section key={i} className={CARD + " bg-white font-sans text-cute-navy"}>
+                {sparkles}
+                <header className="relative flex shrink-0 items-start justify-between gap-2 px-4 pb-2 pt-4">
+                  {/* 제목 알약 — "1. 개발이란?" */}
+                  <h2 className="min-w-0 rounded-3xl border-2 border-cute-lav bg-cute-lav-soft px-4 py-1.5 text-[18px] font-black leading-snug">
+                    {!isEnd && sl.title && <span>{sl.no}. </span>}
+                    <Inline text={title} />
+                    {!isEnd && sl.cont && <span className="ml-1 text-[12px] text-cute-blue-ink">이어서</span>}
+                  </h2>
+                  <span className="mt-1.5 rounded-full bg-cute-lav-soft">{count}</span>
                 </header>
                 {/* 분량 어림이 빗나가 넘치면 카드 안에서 세로로 민다 */}
-                <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 pb-5">
+                <div className="relative flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 pb-4">
                   <div className="my-auto flex flex-col gap-3">
                     {sl.blocks.map((b, j) => (
                       <BoardBlock key={j} block={b} />
                     ))}
+                    {isEnd && (
+                      <div className="mt-2 flex items-end gap-1.5">
+                        <div className="min-w-0 flex-1 rounded-2xl rounded-br-sm border-2 border-cute-lav bg-white px-3 py-2 text-center text-[14px] font-extrabold leading-snug">
+                          천천히, 꾸준히!
+                          <br />
+                          오늘도 한 장 끝 💜
+                        </div>
+                        <img src={MASCOT("face-excited")} alt="" className="h-20 w-20 shrink-0 object-contain" />
+                      </div>
+                    )}
                   </div>
                   {isEnd && (
-                    <p className="pt-2 text-center text-[14px] text-marker-blue">
-                      <span className="underline decoration-dotted decoration-2 underline-offset-4">점선 밑줄</span> 낱말을 누르면 그 개념을 다시 볼 수 있어요
+                    <p className="rounded-2xl bg-cute-lav-soft px-3 py-2 text-center text-[12px] font-bold text-cute-navy/80">
+                      <span className="underline decoration-marker-blue decoration-dotted decoration-2 underline-offset-4">점선 밑줄</span> 낱말을 누르면 그 개념을 다시 볼 수 있어요
                     </p>
                   )}
                 </div>
@@ -518,7 +546,7 @@ export function NoteBoard({
                 type="button"
                 onClick={() => go(i)}
                 aria-label={`${i + 1}번 카드`}
-                className={"h-2 rounded-full transition-all " + (i === page ? "w-5 bg-accent" : "w-2 bg-ink-300")}
+                className={"h-2 rounded-full transition-all " + (i === page ? "w-5 bg-[#A792F2]" : "w-2 bg-cute-lav/50")}
               />
             ))}
           </div>

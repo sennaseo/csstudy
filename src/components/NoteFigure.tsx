@@ -38,11 +38,11 @@ function Box({ n, row = false, small = false, tiny = false, alt = false }: { n: 
     >
       <span className={(tiny ? "text-xl" : small ? "text-2xl" : "text-[32px]") + " leading-none"}>{n.icon}</span>
       <span className="min-w-0">
-        <span className={"block break-keep leading-tight [overflow-wrap:anywhere] " + (tiny ? "text-[12px] " : small ? "text-[14px] " : "text-[16px] ") + TEXT[ink]}>
+        <span className={"block break-keep leading-tight [overflow-wrap:anywhere] " + (tiny ? "text-[11px] " : small ? "text-[12.5px] " : "text-[13.5px] ") + TEXT[ink]}>
           <Inline text={n.label} />
         </span>
         {n.sub && (
-          <span className={"mt-0.5 block break-keep leading-tight " + (tiny ? "text-[11px]" : "text-[13px]") + " text-marker-blue [overflow-wrap:anywhere]"}>
+          <span className={"mt-0.5 block break-keep leading-tight " + (tiny ? "text-[10px]" : "text-[11.5px]") + " text-marker-blue [overflow-wrap:anywhere]"}>
             <Inline text={n.sub} />
           </span>
         )}
@@ -68,14 +68,14 @@ function Arrow({ dir, label }: { dir: "right" | "down"; label?: string }) {
   if (dir === "right")
     return (
       <div className="flex shrink-0 flex-col items-center">
-        {label && <span className="max-w-[56px] text-center text-[12px] leading-tight text-marker-blue">{label}</span>}
+        {label && <span className="max-w-[56px] text-center text-[11px] leading-tight text-marker-blue">{label}</span>}
         {svg}
       </div>
     );
   return (
     <div className="flex items-center justify-center gap-1">
       {svg}
-      {label && <span className="text-[14px] leading-tight text-marker-blue">{label}</span>}
+      {label && <span className="text-[12.5px] leading-tight text-marker-blue">{label}</span>}
     </div>
   );
 }
@@ -144,7 +144,7 @@ function Cycle({ nodes }: { nodes: FigNode[] }) {
             style={{ left: `${50 + R * Math.cos(rad(d))}%`, top: `${50 + R * Math.sin(rad(d))}%` }}
           >
             <div className="relative">
-              <span className="absolute -left-1.5 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-marker-red bg-white text-[12px] leading-none text-marker-red">
+              <span className="absolute -left-1.5 -top-2 z-10 flex h-5 w-5 items-center justify-center rounded-full border-2 border-marker-red bg-white text-[11px] leading-none text-marker-red">
                 {i + 1}
               </span>
               <Box n={node} small alt={i % 2 === 1} />
@@ -177,7 +177,7 @@ function Tree({ root, children }: { root: FigNode; children: (FigNode & { leaves
             <div className="px-1">
               <Box n={c} small tiny={n >= 4} alt={i % 2 === 1} />
               {c.leaves && (
-                <ul className="mt-1.5 flex flex-col gap-0.5 px-0.5 text-[13px] leading-tight">
+                <ul className="mt-1.5 flex flex-col gap-0.5 px-0.5 text-[11.5px] leading-tight">
                   {c.leaves.map((l, j) => (
                     <li key={j} className="break-keep [overflow-wrap:anywhere]">
                       <span className="text-marker-blue">· </span>
@@ -204,12 +204,12 @@ function Stack({ layers, nested }: { layers: FigNode[]; nested?: boolean }) {
       const ink = L.ink ?? INKS[i % INKS.length];
       inner = (
         <div className={"border-[2.5px] bg-white/60 px-2.5 pb-2.5 pt-1.5 " + BORDER[ink] + (i % 2 ? " sketch-alt" : " sketch-sm")}>
-          <div className={"flex items-baseline gap-1.5 text-[17px] leading-tight " + TEXT[ink]}>
+          <div className={"flex items-baseline gap-1.5 text-[14.5px] leading-tight " + TEXT[ink]}>
             <span>{L.icon}</span>
             <Inline text={L.label} />
           </div>
           {L.sub && (
-            <div className="text-[13px] leading-tight text-marker-ink">
+            <div className="text-[11.5px] leading-tight text-marker-ink">
               <Inline text={L.sub} />
             </div>
           )}
@@ -229,11 +229,11 @@ function Stack({ layers, nested }: { layers: FigNode[]; nested?: boolean }) {
             className={"flex items-center gap-3 border-[2.5px] bg-white px-3 py-1.5 " + BORDER[ink] + (i % 2 ? " sketch-alt" : " sketch")}
           >
             <span className="text-2xl leading-none">{L.icon}</span>
-            <span className={"shrink-0 text-[17px] leading-tight " + TEXT[ink]}>
+            <span className={"shrink-0 text-[14.5px] leading-tight " + TEXT[ink]}>
               <Inline text={L.label} />
             </span>
             {L.sub && (
-              <span className="ml-auto min-w-0 break-keep text-right text-[13px] leading-tight text-marker-blue">
+              <span className="ml-auto min-w-0 break-keep text-right text-[11.5px] leading-tight text-marker-blue">
                 <Inline text={L.sub} />
               </span>
             )}
@@ -274,7 +274,7 @@ function Refs({ vars, objs }: { vars: { name: string; to: number }[]; objs: FigN
       {vars.map((v, i) => (
         <div
           key={i}
-          className="sketch absolute left-0 flex w-[32%] items-center justify-center border-[2.5px] border-marker-ink bg-[#FAFAF7] px-1 font-mono text-[13px] tracking-normal"
+          className="sketch absolute left-0 flex w-[32%] items-center justify-center border-[2.5px] border-marker-ink bg-[#FAFAF7] px-1 font-mono text-[11.5px] tracking-normal"
           style={{ top: i * ROW, height: ROW - 8 }}
         >
           <span className="truncate">{v.name}</span>
@@ -289,11 +289,11 @@ function Refs({ vars, objs }: { vars: { name: string; to: number }[]; objs: FigN
           >
             <span className="text-xl leading-none">{o.icon}</span>
             <span className="min-w-0 leading-tight">
-              <span className={"block truncate text-[15px] " + TEXT[o.ink ?? "green"]}>
+              <span className={"block truncate text-[13px] " + TEXT[o.ink ?? "green"]}>
                 <Inline text={o.label} />
               </span>
               {o.sub && (
-                <span className="block truncate text-[12px] text-marker-blue">
+                <span className="block truncate text-[11px] text-marker-blue">
                   <Inline text={o.sub} />
                 </span>
               )}
@@ -328,7 +328,7 @@ export function NoteFigure({ block }: { block: FigureBlock }) {
     <figure className="my-1 flex flex-col gap-2">
       {body}
       {block.caption && (
-        <figcaption className="text-center text-[15px] leading-snug text-marker-blue">
+        <figcaption className="text-center text-[13px] leading-snug text-marker-blue">
           ↑ <Inline text={block.caption} />
         </figcaption>
       )}

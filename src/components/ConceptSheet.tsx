@@ -43,21 +43,21 @@ export function ConceptSheet({
           <span>개념 다시 보기</span>
         </div>
 
-        <h3 className="break-keep font-display text-[30px] leading-tight text-marker-ink">{card ? card.term : concept.name}</h3>
+        <h3 className="break-keep text-[24px] font-black leading-tight text-marker-ink">{card ? card.term : concept.name}</h3>
 
         {card ? (
           <>
-            <p className="sketch border-[2.5px] border-marker-red px-4 py-3 font-display text-[20px] leading-snug text-marker-red">
+            <p className="sketch border-[2.5px] border-marker-red px-4 py-3 text-[16px] font-extrabold leading-snug text-marker-red">
               {card.oneLiner}
             </p>
-            <div className="-rotate-1 rounded-sm bg-[#FFF4B8] px-4 py-3 font-display text-[17px] leading-snug text-marker-ink shadow-[2px_3px_0_rgba(0,0,0,0.08)]">
-              <span className="block text-[16px] text-marker-blue">💡 비유</span>
+            <div className="rounded-2xl bg-cute-yellow px-4 py-3 text-[14px] font-semibold leading-snug text-marker-ink ">
+              <span className="block text-[13px] font-extrabold text-marker-blue">💡 비유</span>
               {card.example}
             </div>
           </>
         ) : (
           first && (
-            <p className="sketch border-[2.5px] border-marker-red px-4 py-3 font-display text-[20px] leading-snug text-marker-red">
+            <p className="sketch border-[2.5px] border-marker-red px-4 py-3 text-[16px] font-extrabold leading-snug text-marker-red">
               {first.note.summary.split("`").join("")}
             </p>
           )
