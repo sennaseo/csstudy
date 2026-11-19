@@ -1,22 +1,15 @@
 // =============================================================
-// NotesScreen (공부노트 탭)
-// - 책장 뷰: 과목마다 공책 표지 한 권. 표지를 누르면 그 과목의 목록 뷰.
-// - 목록 뷰: 단원마다 "꼭 볼 N가지" 포스터 한 장 (인스타 인포그래픽 형식).
-//   3열 타일 = 노트 1장 (그림 + 번호·짧은 제목). 타일 그림은 노트 본문의 첫 그림거리(비교·코드·단계·표)를 축소해 자동으로 그린다.
-//   그래서 노트를 새로 써도 그림을 따로 그릴 필요가 없다. 타일 제목은 labels.ts.
-// - 상세 뷰: 옆으로 넘기는 카드뉴스 (NoteBoard.tsx). 카드 안 내용은 화이트보드 손그림 블록.
-//
-// 왜 열린 노트를 스토어가 아닌 로컬 useState 로 두나
-//   "지금 몇 번 노트를 보고 있나"는 앱을 껐다 켜면 잊어도 되는 정보다.
-//   스토어에 넣으면 저장·동기화 대상인지 매번 따져야 해서, 화면 안에 가둬 둔다.
-//
-// 뒤로가기
-//   이 화면은 노트 탭에 있는 동안 늘 마운트돼 있다 → useBack 의
-//   "늘 마운트된 화면" 패턴(active 플래그)을 쓴다. 노트가 열려 있을 때만
-//   히스토리를 한 장 쌓고, 뒤로가기를 누르면 목록으로 돌아온다.
+// NotesScreen (공부노트 탭) — 인스타그램 피드처럼
+// - 맨 위 스토리 줄: 전체 · 과목들 · 저장됨. 동그라미를 누르면 그 과목 노트만 보인다.
+// - 피드 보기: 노트 한 장 = 게시물 하나.
+//     머리(과목 동그라미 · 단원) → 카드뉴스(옆으로 넘김, NoteBoard) → ♥ · 저장 → 제목·요약 글.
+//   게시물은 5개씩 더 불러오고(아래로 내리면 자동), 화면 근처에 온 게시물만 카드를 그린다
+//   — 111장을 한꺼번에 그리면 카드가 900장이 넘어 느려진다.
+// - 그리드 보기: 단원마다 "꼭 볼 N가지" 3열 타일. 타일을 누르면 피드에서 그 게시물이 맨 위로 온다.
+// - ♥(다 봤어요) · 저장은 이 기기 localStorage 에만 둔다.
 // =============================================================
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { NOTE_SUBJECTS } from "../data/notes";
 import { NOTE_LABELS } from "../data/notes/labels";
@@ -197,140 +190,279 @@ function UnitPoster({ subject, unit, onOpen }: { subject: NoteSubject; unit: Not
   );
 }
 
-// 공책 표지 색 — 과목 순서대로 돌려 쓴다. 흰 글자 규칙 때문에 accent / duo-green / ink-900 위에만.
-const COVERS = [
-  { cover: "bg-accent", spine: "bg-accent-dim" },
-  { cover: "bg-duo-green", spine: "bg-duo-green-dim" },
-  { cover: "bg-ink-900", spine: "bg-ink-700" },
-] as const;
+// ─── ♥ · 저장 기록 ───
+type Marks = { liked: string[]; saved: string[] };
+const MARKS_KEY = "csstudy-note-marks";
+function loadMarks(): Marks {
+  try {
+    const m = JSON.parse(window.localStorage.getItem(MARKS_KEY) ?? "{}") as Partial<Marks>;
+    return { liked: m.liked ?? [], saved: m.saved ?? [] };
+  } catch {
+    return { liked: [], saved: [] };
+  }
+}
+
+/** 과목 순서 그대로 펼친 전체 게시물 목록. */
+const ALL_POSTS = NOTE_SUBJECTS.flatMap((subject) =>
+  subject.units.flatMap((unit) => unit.notes.map((note, index) => ({ note, unit, subject, index }))),
+);
+type Post = (typeof ALL_POSTS)[number];
+
+const PAGE = 5; // 한 번에 불러오는 게시물 수
+
+/** 화면(#root 스크롤 상자) 근처에 오면 true — 한 번 보이면 계속 true. */
+function useNear<T extends HTMLElement>(margin = "700px") {
+  const ref = useRef<T>(null);
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || near) return;
+    if (typeof IntersectionObserver === "undefined") return setNear(true);
+    const io = new IntersectionObserver((es) => es.some((e) => e.isIntersecting) && setNear(true), {
+      root: document.getElementById("root"),
+      rootMargin: margin,
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near, margin]);
+  return [ref, near] as const;
+}
+
+const HeartIcon = ({ on }: { on: boolean }) => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden>
+    <path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.6a4.3 4.3 0 017.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" />
+  </svg>
+);
+const SaveIcon = ({ on }: { on: boolean }) => (
+  <svg viewBox="0 0 24 24" className="h-7 w-7" fill={on ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinejoin="round" aria-hidden>
+    <path d="M6 4h12v16.5l-6-4.5-6 4.5z" />
+  </svg>
+);
+
+/** 스토리 동그라미 — 고른 것은 분홍→보라 고리. */
+function Story({ label, active, onClick, children }: { label: string; active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} aria-pressed={active} className="flex w-[68px] shrink-0 flex-col items-center gap-1">
+      <span className={"rounded-full p-[3px] " + (active ? "bg-gradient-to-tr from-[#F7B84B] via-accent to-[#A792F2]" : "bg-ink-200")}>
+        <span className="flex h-[58px] w-[58px] items-center justify-center overflow-hidden rounded-full border-[3px] border-paper bg-white text-3xl">
+          {children}
+        </span>
+      </span>
+      <span className={"w-full truncate text-center text-[11px] " + (active ? "font-extrabold text-ink-900" : "font-semibold text-ink-500")}>{label}</span>
+    </button>
+  );
+}
+
+/** 피드 맨 아래 감시자 — 화면 근처에 오면 한 번 onMore 를 부른다. */
+function LoadMore({ onMore }: { onMore: () => void }) {
+  const [ref, near] = useNear<HTMLDivElement>("300px");
+  const cb = useRef(onMore);
+  cb.current = onMore;
+  useEffect(() => {
+    if (near) cb.current();
+  }, [near]);
+  return (
+    <div ref={ref} className="py-6 text-center text-xs font-bold text-ink-400">
+      불러오는 중…
+    </div>
+  );
+}
+
+/** 게시물 하나 = 노트 한 장. */
+function FeedPost({
+  post,
+  liked,
+  saved,
+  onLike,
+  onSave,
+  onOpenNote,
+}: {
+  post: Post;
+  liked: boolean;
+  saved: boolean;
+  onLike: () => void;
+  onSave: () => void;
+  onOpenNote: (id: string) => void;
+}) {
+  const { note, unit, subject, index } = post;
+  const [ref, near] = useNear<HTMLElement>();
+  const [more, setMore] = useState(false);
+  return (
+    <article ref={ref} id={"post-" + note.id} className="flex flex-col gap-2.5">
+      {/* 머리 — 과목 동그라미 · 과목 이름 · 단원 */}
+      <header className="flex items-center gap-2.5 px-1">
+        <span className="rounded-full bg-gradient-to-tr from-[#F7B84B] via-accent to-[#A792F2] p-[2px]">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-paper bg-white text-lg">{subject.emoji}</span>
+        </span>
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block text-sm font-extrabold text-ink-900">{subject.title}</span>
+          <span className="block truncate text-xs text-ink-500">
+            {unit.title} · {pad2(index + 1)}
+          </span>
+        </span>
+      </header>
+
+      {/* 카드뉴스 — 화면 근처에 왔을 때만 그린다. 그 전엔 같은 높이의 빈 자리. */}
+      {near ? (
+        <NoteBoard note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} onOpenNote={onOpenNote} />
+      ) : (
+        <div className="flex h-[calc(62dvh+56px)] min-h-[496px] items-center justify-center rounded-[28px] bg-cute-lav-bg text-4xl" aria-hidden>
+          {note.emoji}
+        </div>
+      )}
+
+      {/* ♥ · 저장 */}
+      <div className="flex items-center justify-between px-1">
+        <button type="button" onClick={onLike} aria-pressed={liked} aria-label="다 봤어요" className={"flex items-center gap-1.5 active:scale-90 " + (liked ? "text-accent" : "text-ink-700")}>
+          <HeartIcon on={liked} />
+          <span className="text-xs font-extrabold">{liked ? "다 봤어요" : "다 보면 눌러요"}</span>
+        </button>
+        <button type="button" onClick={onSave} aria-pressed={saved} aria-label="저장" className={"active:scale-90 " + (saved ? "text-ink-900" : "text-ink-700")}>
+          <SaveIcon on={saved} />
+        </button>
+      </div>
+
+      {/* 글 — 과목 이름(굵게) + 제목, 요약은 '더 보기' */}
+      <p className="px-1 text-sm leading-snug text-ink-700">
+        <span className="font-extrabold text-ink-900">{subject.title}</span> {note.emoji} {note.title}
+        {more ? (
+          <span className="mt-0.5 block text-ink-500">{note.summary.split("`").join("")}</span>
+        ) : (
+          <button type="button" onClick={() => setMore(true)} className="ml-1 text-ink-400">
+            ... 더 보기
+          </button>
+        )}
+      </p>
+    </article>
+  );
+}
 
 export function NotesScreen() {
-  const [openSubjectId, setOpenSubjectId] = useState<string | null>(null);
-  const [openNoteId, setOpenNoteId] = useState<string | null>(null);
+  const [marks, setMarks] = useState<Marks>(loadMarks);
+  // 스토리 필터: null = 전체, "saved" = 저장됨, 그 밖 = 과목 id
+  const [filter, setFilter] = useState<string | null>(null);
+  const [view, setView] = useState<"feed" | "grid">("feed");
+  const [pinned, setPinned] = useState<string | null>(null); // 맨 위로 끌어올린 게시물
+  const [limit, setLimit] = useState(PAGE);
 
-  const open = (id: string | null) => {
-    setOpenNoteId(id);
+  const toggle = (kind: keyof Marks, id: string) =>
+    setMarks((m) => {
+      const next = { ...m, [kind]: m[kind].includes(id) ? m[kind].filter((x) => x !== id) : [...m[kind], id] };
+      try {
+        window.localStorage.setItem(MARKS_KEY, JSON.stringify(next));
+      } catch {
+        /* 저장이 막혀도 화면은 계속 */
+      }
+      return next;
+    });
+
+  const pick = (f: string | null) => {
+    setFilter(f);
+    setPinned(null);
+    setLimit(PAGE);
+    scrollTop();
+  };
+  /** 타일·개념 카드에서 노트 열기 — 피드로 가서 그 게시물을 맨 위에 둔다. */
+  const openNote = (id: string) => {
+    const found = findNote(id);
+    if (!found) return;
+    setView("feed");
+    setFilter(null);
+    setPinned(id);
+    setLimit(PAGE);
     scrollTop();
   };
 
-  const openSubject = (id: string | null) => {
-    setOpenSubjectId(id);
-    scrollTop();
-  };
+  // 뒤로가기: 끌어올린 게시물·필터·그리드를 한 번에 풀고 기본 피드로
+  const dirty = filter !== null || pinned !== null || view !== "feed";
+  useBack(() => {
+    setView("feed");
+    pick(null);
+  }, dirty);
 
-  // 뒤로가기: 노트 → 목록 → 책장 순으로 한 칸씩. 과목이 먼저 열리니 장부에도 먼저 쌓인다.
-  useBack(() => openSubject(null), openSubjectId !== null);
-  useBack(() => open(null), openNoteId !== null);
+  const base =
+    filter === null ? ALL_POSTS : filter === "saved" ? ALL_POSTS.filter((p) => marks.saved.includes(p.note.id)) : ALL_POSTS.filter((p) => p.subject.id === filter);
+  // 끌어올린 게시물이 있으면: 그 게시물부터 시작해 같은 과목 순서대로 이어 본다
+  const posts = (() => {
+    if (!pinned) return base;
+    const i = ALL_POSTS.findIndex((p) => p.note.id === pinned);
+    return i < 0 ? base : [...ALL_POSTS.slice(i), ...ALL_POSTS.slice(0, i)];
+  })();
 
-  const found = openNoteId ? findNote(openNoteId) : null;
+  const subjects = filter && filter !== "saved" ? NOTE_SUBJECTS.filter((s) => s.id === filter) : NOTE_SUBJECTS;
 
-  // ─── 상세 뷰 ───────────────────────────────
-  if (found) {
-    const { note, unit, siblings, index } = found;
-    const prev = siblings[index - 1];
-    const next = siblings[index + 1];
-    // 이전/다음은 "목록 → 다른 노트"가 아니라 같은 자리에서 내용만 바꾸는 것이라
-    // openNoteId 만 갈아끼운다(히스토리는 한 장 그대로 — 뒤로가기는 목록으로 간다).
-    const navBtn =
-      "min-h-11 flex-1 rounded-xl border-2 border-b-4 border-ink-200 bg-white px-3 text-sm font-bold text-ink-700 active:bg-ink-100";
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => open(null)}
-          className="min-h-11 self-start px-1 text-sm font-bold text-ink-500 hover:text-ink-700"
-        >
-          ← 목록
-        </button>
-        <NoteBoard key={note.id} note={note} kicker={`${unit.title} · ${pad2(index + 1)}`} onOpenNote={(id) => open(id)} />
-        {(prev || next) && (
-          <div className="flex gap-2">
-            {prev ? (
-              <button type="button" onClick={() => open(prev.id)} className={navBtn}>
-                ‹ 이전
-              </button>
-            ) : (
-              <span className="flex-1" />
-            )}
-            {next ? (
-              <button type="button" onClick={() => open(next.id)} className={navBtn}>
-                다음 ›
-              </button>
-            ) : (
-              <span className="flex-1" />
-            )}
-          </div>
-        )}
-      </>
-    );
-  }
-
-  // ─── 책장 뷰 ───────────────────────────────
-  const subject = NOTE_SUBJECTS.find((s) => s.id === openSubjectId);
-  if (!subject)
-    return (
-      <>
-        <h2 className="text-xl font-extrabold text-ink-900">📒 공부노트</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {NOTE_SUBJECTS.map((s, i) => {
-            const c = COVERS[i % COVERS.length];
-            const total = s.units.reduce((n, u) => n + u.notes.length, 0);
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => openSubject(s.id)}
-                className={
-                  "relative flex aspect-[3/4] overflow-hidden rounded-r-2xl rounded-l-md border-b-4 border-black/20 text-left shadow-md transition-transform active:translate-y-0.5 " +
-                  c.cover
-                }
-              >
-                {/* 책등 + 스프링 고리 */}
-                <span className={"flex w-5 shrink-0 flex-col items-center justify-evenly " + c.spine}>
-                  {[0, 1, 2, 3, 4].map((k) => (
-                    <span key={k} className="h-1.5 w-1.5 rounded-full bg-white/70" />
-                  ))}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col items-center justify-center gap-3 p-3">
-                  <span className="text-4xl">{s.emoji}</span>
-                  {/* 표지 이름표 — 줄 쳐진 흰 스티커 */}
-                  <span className="w-full rounded-lg bg-white px-2 py-2 text-center shadow-sm [background-image:repeating-linear-gradient(transparent_0_15px,rgb(0_0_0/0.06)_15px_16px)]">
-                    <span className="block truncate text-base font-extrabold text-ink-900">{s.title}</span>
-                    <span className="block text-[11px] font-bold text-ink-500">
-                      {s.units.length}단원 · {total}장
-                    </span>
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </>
-    );
-
-  // ─── 목록 뷰 ───────────────────────────────
-  const s = subject;
-  const total = s.units.reduce((n, u) => n + u.notes.length, 0);
   return (
     <>
-      <button
-        type="button"
-        onClick={() => openSubject(null)}
-        className="min-h-11 self-start px-1 text-sm font-bold text-ink-500 hover:text-ink-700"
-      >
-        ← 책장
-      </button>
-      <section className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-xl font-extrabold text-ink-900">
-            {s.emoji} {s.title}
-          </h2>
-          <span className="text-xs font-bold text-ink-400">총 {total}장</span>
+      {/* 윗줄 — 제목 + 피드/그리드 바꾸기 */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-extrabold text-ink-900">📒 공부노트</h2>
+        <div className="flex rounded-full bg-ink-100 p-1" role="group" aria-label="보기 방식">
+          {(["feed", "grid"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => {
+                setView(v);
+                setPinned(null);
+                scrollTop();
+              }}
+              aria-pressed={view === v}
+              className={"min-h-9 rounded-full px-3.5 text-xs font-extrabold " + (view === v ? "bg-white text-ink-900 shadow-chip" : "text-ink-500")}
+            >
+              {v === "feed" ? "피드" : "그리드"}
+            </button>
+          ))}
         </div>
-        {s.units.map((u) => (
-          <UnitPoster key={u.id} subject={s} unit={u} onOpen={open} />
+      </div>
+
+      {/* 스토리 줄 */}
+      <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto border-b border-ink-200 px-4 pb-3">
+        <Story label="전체" active={filter === null} onClick={() => pick(null)}>
+          <img src={`${import.meta.env.BASE_URL}mascot/face-happy.png`} alt="" className="h-11 w-11 object-contain" />
+        </Story>
+        {NOTE_SUBJECTS.map((s) => (
+          <Story key={s.id} label={s.title} active={filter === s.id} onClick={() => pick(s.id)}>
+            {s.emoji}
+          </Story>
         ))}
-      </section>
+        <Story label={`저장됨 ${marks.saved.length}`} active={filter === "saved"} onClick={() => pick("saved")}>
+          🔖
+        </Story>
+      </div>
+
+      {view === "grid" ? (
+        // ─── 그리드 보기: 단원별 "꼭 볼 N가지" 타일 ───
+        <section className="flex flex-col gap-3">
+          {subjects.map((s) => s.units.map((u) => <UnitPoster key={u.id} subject={s} unit={u} onOpen={openNote} />))}
+        </section>
+      ) : posts.length === 0 ? (
+        <p className="py-16 text-center text-sm text-ink-500">
+          저장한 노트가 아직 없어요.
+          <br />
+          게시물 오른쪽 아래 🔖 를 눌러 모아 보세요.
+        </p>
+      ) : (
+        // ─── 피드 보기 ───
+        <section className="flex flex-col gap-8">
+          {posts.slice(0, limit).map((p) => (
+            <FeedPost
+              key={p.note.id}
+              post={p}
+              liked={marks.liked.includes(p.note.id)}
+              saved={marks.saved.includes(p.note.id)}
+              onLike={() => toggle("liked", p.note.id)}
+              onSave={() => toggle("saved", p.note.id)}
+              onOpenNote={openNote}
+            />
+          ))}
+          {limit < posts.length ? (
+            // key 가 바뀌면 새로 만들어져서, 다음 5개도 끝에 닿을 때마다 이어서 불러온다
+            <LoadMore key={limit} onMore={() => setLimit((n) => n + PAGE)} />
+          ) : (
+            <p className="py-6 text-center text-xs font-bold text-ink-400">✓ 모두 봤어요</p>
+          )}
+        </section>
+      )}
     </>
   );
 }
