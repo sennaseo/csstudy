@@ -59,6 +59,8 @@ import kotlin.random.Random
 // APK 안에 박혀 있는 assets/public/cards.json 을 그때그때 읽는다.
 // (npx cap sync 가 public/ 을 여기로 복사해 준다.)
 data class Card(
+    /** cards.json 의 id (예: c-be-1) — 앱에서 "위젯에 띄울 단어"를 고를 때 이 값으로 가리킨다. */
+    val id: String,
     val domain: String,
     val term: String,
     val oneLiner: String,
@@ -75,6 +77,7 @@ fun loadCards(context: Context): List<Card> {
     val list = (0 until arr.length()).map { i ->
         val o = arr.getJSONObject(i)
         Card(
+            id = o.optString("id"),
             domain = o.optString("domain"),
             term = o.optString("term"),
             oneLiner = o.optString("oneLiner"),
@@ -83,6 +86,26 @@ fun loadCards(context: Context): List<Card> {
     }
     cachedCards = list
     return list
+}
+
+// ── 위젯에 띄울 단어 고르기 ─────────────────────────────────────────────
+// 앱(웹뷰)의 "위젯 단어 고르기" 화면에서 고른 카드 id 를 WidgetCardsPlugin 이 여기 SharedPreferences 에 적어 둔다.
+// 위젯은 앱 화면과 따로 그려지므로 웹의 localStorage 를 못 본다 — 그래서 이 파일이 둘 사이의 쪽지함이다.
+const val WIDGET_PREFS = "widget_cards"
+const val WIDGET_KEY_IDS = "selected_ids"
+
+/** 고른 카드만 남긴다. 하나도 안 골랐거나(처음 상태) 고른 id 가 전부 사라졌으면 전체를 그대로 쓴다. */
+fun pickCards(all: List<Card>, selected: Set<String>): List<Card> {
+    if (selected.isEmpty()) return all
+    val picked = all.filter { it.id in selected }
+    return if (picked.isEmpty()) all else picked
+}
+
+/** 위젯이 실제로 돌려 보여줄 카드 목록. */
+fun widgetCards(context: Context): List<Card> {
+    val selected = context.getSharedPreferences(WIDGET_PREFS, Context.MODE_PRIVATE)
+        .getStringSet(WIDGET_KEY_IDS, emptySet()) ?: emptySet()
+    return pickCards(loadCards(context), selected)
 }
 
 // 도메인마다 이모지 하나. 위젯이 작아서 글자보다 그림이 먼저 눈에 들어온다.
@@ -169,7 +192,7 @@ class CardWidget : GlanceAppWidget() {
     ))
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val cards = loadCards(context)
+        val cards = widgetCards(context)
         // 첫 카드는 "그리기 전에" 정해서 저장해 둔다.
         // 그리는 도중에 뽑으면 런처가 다시 그릴 때마다 다른 카드가 나온다.
         updateAppWidgetState(context, id) { prefs ->
@@ -178,6 +201,9 @@ class CardWidget : GlanceAppWidget() {
             if (prefs[KEY_DAY] == null) prefs[KEY_DAY] = todayEpochDay()
         }
         provideContent {
+            // 고른 단어 목록은 그릴 때마다 다시 읽는다 — 앱에서 목록을 바꾼 직후에도 바로 반영되게.
+            // (파싱은 캐시돼 있고 SharedPreferences 읽기는 가볍다)
+            val cards = widgetCards(context)
             val prefs: Preferences = currentState()
             // 날짜는 그릴 때마다 새로 읽는다. 런처가 주기 업데이트로 다시 그리면 자정을 넘긴 순간 다음 카드가 나온다.
             val index = dailyIndex(cards.size, prefs[KEY_INDEX] ?: 0, prefs[KEY_DAY], todayEpochDay())
@@ -343,7 +369,7 @@ private fun CardBody(card: Card, index: Int, total: Int) {
 // ── 액션 ────────────────────────────────────────────────────────────────
 class PrevAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val size = loadCards(context).size
+        val size = widgetCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
             // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
             val today = todayEpochDay()
@@ -357,7 +383,7 @@ class PrevAction : ActionCallback {
 
 class NextAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val size = loadCards(context).size
+        val size = widgetCards(context).size
         updateAppWidgetState(context, glanceId) { prefs ->
             // 지금 화면에 보이는 카드(오늘 카드)에서 한 칸 움직이고, 오늘 날짜로 확정한다.
             val today = todayEpochDay()

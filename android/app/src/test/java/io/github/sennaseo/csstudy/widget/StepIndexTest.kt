@@ -48,6 +48,28 @@ class StepIndexTest {
         }
     }
 
+    // ── 위젯에 띄울 단어 고르기 ──
+    private fun card(id: String) = Card(id = id, domain = "CS", term = id, oneLiner = "", example = "")
+
+    @Test
+    fun `고른 카드만 남고 순서는 원래대로다`() {
+        val all = listOf(card("a"), card("b"), card("c"))
+        assertEquals(listOf("a", "c"), pickCards(all, setOf("c", "a")).map { it.id })
+    }
+
+    @Test
+    fun `하나도 안 골랐으면 전체를 쓴다`() {
+        val all = listOf(card("a"), card("b"))
+        assertEquals(2, pickCards(all, emptySet()).size)
+    }
+
+    // 카드가 삭제돼 고른 id 가 전부 없어졌을 때 위젯이 빈 목록으로 터지면 안 된다.
+    @Test
+    fun `고른 id 가 전부 없는 카드면 전체로 돌아간다`() {
+        val all = listOf(card("a"), card("b"))
+        assertEquals(2, pickCards(all, setOf("zzz")).size)
+    }
+
     // ── 매일 다른 카드 ──
 
     @Test

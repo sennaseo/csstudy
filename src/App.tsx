@@ -21,6 +21,8 @@
 import { useEffect, useState } from "react";
 
 import { CardDeck } from "./components/CardDeck";
+import { WidgetPicker } from "./components/WidgetPicker";
+import { pushToWidget } from "./utils/widgetCards";
 import { CategoryFilter } from "./components/CategoryFilter";
 import { CollectionBook } from "./components/CollectionBook";
 import { DailyStats } from "./components/DailyStats";
@@ -127,7 +129,7 @@ function HeartWarning() {
  *
  *  App.tsx 안의 로컬 함수인 이유: 하트 행이 이 파일의 <Hearts withTime /> 을
  *  재사용해야 하는데, 별도 파일로 빼면 App ↔ MyScreen 순환 import 가 된다. */
-function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
+function MyScreen({ onOpenWidget }: { onOpenWidget: () => void }) {
   const setTab = useStudyStore((s) => s.setTab);
   return (
     <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
@@ -154,13 +156,14 @@ function MyScreen({ onOpenDeck }: { onOpenDeck: () => void }) {
         <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
       </button>
 
+      {/* 단어장은 상단 헤더 버튼으로 옮겼다. 여기엔 위젯에 띄울 단어 고르기. */}
       <button
-        onClick={onOpenDeck}
+        onClick={onOpenWidget}
         className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
       >
         <span className="min-w-0">
-          <span className="block text-sm font-extrabold text-ink-900">📇 단어장</span>
-          <span className="block text-xs text-ink-500">CS 지식을 한두 줄로 훑어보기</span>
+          <span className="block text-sm font-extrabold text-ink-900">📌 위젯 단어 고르기</span>
+          <span className="block text-xs text-ink-500">홈 화면 위젯에 띄울 단어만 골라 두기</span>
         </span>
         <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
       </button>
@@ -186,6 +189,10 @@ function TabsScreen() {
     () => new URLSearchParams(window.location.search).get("open") === "deck",
   );
   const startToday = useStudyStore((s) => s.startToday);
+  const [isWidgetOpen, setIsWidgetOpen] = useState(false); // 위젯 단어 고르기 화면
+  const [widgetRev, setWidgetRev] = useState(0); // 고르기 화면을 닫을 때마다 +1 → 단어장의 📌 표시 갱신
+  // 앱을 켤 때 고른 목록을 위젯 저장소와 한 번 맞춘다 (앱 업데이트·재설치 뒤 어긋남 방지).
+  useEffect(() => pushToWidget(), []);
   // 실무 탭 안의 두 판(백엔드 조립 / 정규화 실습) 중 어느 쪽을 보고 있나.
   // 앱을 껐다 켜면 기본(백엔드)으로 돌아가도 상관없어서 스토어가 아닌 로컬 상태로 충분하다.
   const [practiceMode, setPracticeMode] = useState<"backend" | "normalize">("backend");
@@ -205,7 +212,10 @@ function TabsScreen() {
           지금은 나머지를 전부 마이 탭으로 내려보내고 하트만 남겼다.
           그래도 (1) 부제는 제목 아래 줄로 내려 폭을 안 먹게 하고, (2) 로고 묶음은 shrink 를 허용하고,
           (3) 우측 묶음은 shrink-0 으로 안 찌그러뜨리는 원칙은 그대로 둔다. */}
-      <header className="flex items-center justify-between gap-2">
+      {/* 상단 고정(sticky) — 스크롤해도 로고·단어장 버튼·스트릭·하트가 항상 보인다.
+          main 의 위쪽 여백을 음수 마진으로 지우고 그만큼을 자기 padding 으로 다시 채워서,
+          맨 위에 붙었을 때 상태바(안전영역) 밑으로 내용이 비치지 않게 한다. */}
+      <header className="sticky top-0 z-30 -mx-4 -mt-[max(1.5rem,env(safe-area-inset-top))] flex items-center justify-between gap-2 bg-paper/95 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex min-w-0 items-center gap-2">
           {/* 로고 = 마스코트 얼굴만. 글자 로고는 빼고, 화면 읽기 프로그램용 이름만 숨겨 둔다. */}
           <h1 className="sr-only">csStudy</h1>
@@ -216,6 +226,14 @@ function TabsScreen() {
           />
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {/* 단어장 — 어느 탭에서든 바로 열리게 헤더에 고정 */}
+          <button
+            type="button"
+            onClick={() => setIsDeckOpen(true)}
+            className="flex min-h-10 items-center gap-1 rounded-full bg-white px-3 text-sm font-extrabold text-ink-900 shadow-chip active:bg-ink-100"
+          >
+            <span aria-hidden>📇</span> 단어장
+          </button>
           {/* 스트릭 칩 — 홈의 "오늘 풀면 N일째" 와 바로 연결되게 헤더에 꺼내 뒀다(누르면 달력) */}
           <DailyStats />
           <Hearts />
@@ -284,11 +302,19 @@ function TabsScreen() {
 
       {tab === "collection" && <CollectionBook />}
 
-      {tab === "my" && <MyScreen onOpenDeck={() => setIsDeckOpen(true)} />}
+      {tab === "my" && <MyScreen onOpenWidget={() => setIsWidgetOpen(true)} />}
 
       {/* 단어장 — 마이 탭에서 여는 모달. 탭과 무관하게 마운트해 둬서
           ?open=deck 로 들어왔을 때도 어느 탭에서든 열린다. */}
-      {isDeckOpen && <CardDeck onClose={() => setIsDeckOpen(false)} />}
+      {isDeckOpen && <CardDeck onClose={() => setIsDeckOpen(false)} onOpenWidget={() => setIsWidgetOpen(true)} widgetRev={widgetRev} />}
+      {isWidgetOpen && (
+        <WidgetPicker
+          onClose={() => {
+            setIsWidgetOpen(false);
+            setWidgetRev((n) => n + 1);
+          }}
+        />
+      )}
 
       {/* 하단 탭바 — fixed 라 본문 흐름에서 빠진다.
           가려지는 만큼은 <main> 의 pb 로 비워준다. */}

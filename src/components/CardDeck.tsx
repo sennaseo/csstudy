@@ -11,11 +11,12 @@
 // - 순서는 열 때마다 셔플한다. 고정 순서면 "앞쪽 카드만 외우는" 편식이 생긴다.
 // =============================================================
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CARDS, CARD_DOMAINS, CARD_DOMAIN_EMOJI } from "../data/cards";
 import type { CardDomain, CsCard } from "../data/cards";
 import { useBack } from "../utils/useBack";
 import { useDialog } from "../utils/useDialog";
+import { loadWidgetIds, saveWidgetIds } from "../utils/widgetCards";
 
 /** Fisher–Yates. 원본 배열(CARDS)은 건드리지 않게 복사본을 섞는다. */
 function shuffle(cards: CsCard[]): CsCard[] {
@@ -57,7 +58,16 @@ function speak(term: string) {
 
 const ICON_BTN = "flex h-11 w-14 items-center justify-center rounded-full bg-ink-100 text-ink-500 transition-colors active:bg-ink-200";
 
-export function CardDeck({ onClose }: { onClose: () => void }) {
+export function CardDeck({
+  onClose,
+  onOpenWidget,
+  widgetRev = 0,
+}: {
+  onClose: () => void;
+  onOpenWidget?: () => void;
+  /** 위젯 단어 고르기 화면을 닫을 때마다 바뀌는 숫자 — 바뀌면 📌 표시를 다시 읽는다 */
+  widgetRev?: number;
+}) {
   useBack(onClose); // 안드로이드 뒤로가기 = 닫기
   const dialogRef = useDialog<HTMLDivElement>(onClose); // Esc·포커스 가둠·포커스 복귀
 
@@ -71,6 +81,14 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
   const [revealed, setRevealed] = useState(false);
   const [alwaysShow, setAlwaysShow] = useState(false); // 👁 뜻 항상 보기
   const [tally, setTally] = useState({ known: 0, unknown: 0 }); // 이번 판 결과
+  // 홈 화면 위젯에 띄울 단어 (📌). 고르기 화면(WidgetPicker)을 다녀오면 다시 읽는다.
+  const [widgetIds, setWidgetIds] = useState<string[]>(loadWidgetIds);
+  useEffect(() => setWidgetIds(loadWidgetIds()), [widgetRev]);
+  const togglePin = (id: string) => {
+    const next = widgetIds.includes(id) ? widgetIds.filter((x) => x !== id) : [...widgetIds, id];
+    setWidgetIds(next);
+    saveWidgetIds(next);
+  };
 
   const deck = useMemo(
     () =>
@@ -163,6 +181,18 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
                   </button>
                 );
               })}
+              {onOpenWidget && (
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenWidget();
+                  }}
+                  className="flex w-full items-center justify-between border-t border-ink-200 px-4 py-3 text-left text-sm font-extrabold text-accent active:bg-ink-100"
+                >
+                  <span>📌 위젯 단어 고르기</span>
+                  <span className="font-round text-xs text-ink-400">{widgetIds.length ? `${widgetIds.length}장` : "전체"}</span>
+                </button>
+              )}
             </div>
           )}
         </header>
@@ -245,6 +275,17 @@ export function CardDeck({ onClose }: { onClose: () => void }) {
                       ) : (
                         <span />
                       )}
+                      {/* 📌 이 단어를 홈 화면 위젯에 띄우기 */}
+                      <button
+                        onClick={() => togglePin(card.id)}
+                        aria-pressed={widgetIds.includes(card.id)}
+                        className={
+                          "flex h-11 items-center gap-1 rounded-full px-3.5 text-xs font-extrabold transition-colors " +
+                          (widgetIds.includes(card.id) ? "bg-accent text-white" : "bg-ink-100 text-ink-500 active:bg-ink-200")
+                        }
+                      >
+                        📌 {widgetIds.includes(card.id) ? "위젯에 띄우는 중" : "위젯에 띄우기"}
+                      </button>
                       <button
                         onClick={() => setAlwaysShow((a) => !a)}
                         aria-pressed={alwaysShow}
