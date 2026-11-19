@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "count": 120,
+  "count": 135,
   "cards": [
     {
       "id": "c-be-1",
@@ -380,6 +380,106 @@
       ]
     },
     {
+      "id": "c-be-31",
+      "domain": "백엔드",
+      "term": "WAS(Web Application Server)",
+      "oneLiner": "WAS는 요청마다 코드를 실행해 응답을 만드는 서버다.",
+      "example": "주문을 듣고 그 자리에서 요리하는 주방. 로그인 확인이나 장바구니 조회처럼 사람마다 결과가 다른 일을 맡는다. 톰캣이 대표적이다.",
+      "tags": [
+        "WAS",
+        "application server",
+        "Tomcat"
+      ]
+    },
+    {
+      "id": "c-be-32",
+      "domain": "백엔드",
+      "term": "웹 서버(Web Server)",
+      "oneLiner": "웹 서버는 이미 만들어진 파일을 찾아 그대로 건네는 서버다.",
+      "example": "편의점 진열대와 같다. 포장된 삼각김밥(HTML·CSS·이미지)을 꺼내 주기만 한다. Nginx 와 Apache 가 대표적이다.",
+      "tags": [
+        "web server",
+        "Nginx",
+        "Apache",
+        "static"
+      ]
+    },
+    {
+      "id": "c-be-33",
+      "domain": "백엔드",
+      "term": "정적·동적 콘텐츠",
+      "oneLiner": "정적은 누구에게나 같은 파일이고 동적은 요청마다 만든 결과다.",
+      "example": "인쇄된 전단지(로고 이미지, CSS)와 그 자리에서 써 주는 영수증(내 주문 내역)의 차이. 정적은 웹 서버가, 동적은 WAS 가 맡는다.",
+      "tags": [
+        "static",
+        "dynamic",
+        "content"
+      ]
+    },
+    {
+      "id": "c-be-34",
+      "domain": "백엔드",
+      "term": "3계층 구조(3-Tier)",
+      "oneLiner": "3계층 구조는 웹 서버·WAS·DB 로 역할을 나눈 구조다.",
+      "example": "식당의 홀·주방·창고. 홀이 주문을 받고, 주방이 요리하고, 창고가 재료를 보관한다. 붐비는 곳만 따로 늘릴 수 있다.",
+      "tags": [
+        "3-tier",
+        "architecture",
+        "presentation",
+        "application",
+        "data"
+      ]
+    },
+    {
+      "id": "c-be-35",
+      "domain": "백엔드",
+      "term": "톰캣(Tomcat)",
+      "oneLiner": "톰캣은 서블릿을 실행해 주는 자바 WAS다.",
+      "example": "자바 요리사 전용 주방. 스프링 부트는 이 주방을 가방(jar) 안에 넣고 다녀서 java -jar 한 줄이면 가게가 열린다.",
+      "tags": [
+        "Tomcat",
+        "servlet container",
+        "WAS",
+        "Spring Boot"
+      ]
+    },
+    {
+      "id": "c-be-36",
+      "domain": "백엔드",
+      "term": "서블릿(Servlet)",
+      "oneLiner": "서블릿은 HTTP 요청을 받아 응답을 만드는 자바 클래스다.",
+      "example": "주문서를 받아 요리를 내놓는 요리사 한 명. 스프링의 DispatcherServlet 도 서블릿 하나이고, 그 뒤에서 내 컨트롤러를 불러 준다.",
+      "tags": [
+        "Servlet",
+        "HttpServlet",
+        "DispatcherServlet"
+      ]
+    },
+    {
+      "id": "c-be-37",
+      "domain": "백엔드",
+      "term": "서블릿 컨테이너",
+      "oneLiner": "서블릿 컨테이너는 서블릿을 만들고 부르고 없애는 관리자다.",
+      "example": "요리사를 뽑고, 주문이 오면 맞는 요리사를 부르고, 퇴근시키는 주방 매니저. HTTP 글자를 요청 객체로 바꿔 주는 일도 한다.",
+      "tags": [
+        "servlet container",
+        "Tomcat",
+        "lifecycle"
+      ]
+    },
+    {
+      "id": "c-be-38",
+      "domain": "백엔드",
+      "term": "스레드 풀(Thread Pool)",
+      "oneLiner": "스레드 풀은 스레드를 미리 만들어 두고 돌려 쓰는 방식이다.",
+      "example": "은행 창구 직원을 손님이 올 때마다 뽑지 않고 미리 뽑아 둔다. 다 바쁘면 손님은 번호표를 뽑고 기다린다. 톰캣 기본은 최대 200명.",
+      "tags": [
+        "thread pool",
+        "Tomcat",
+        "concurrency"
+      ]
+    },
+    {
       "id": "c-db-1",
       "domain": "데이터베이스",
       "term": "트랜잭션(Transaction)",
@@ -684,6 +784,96 @@
         "SQL injection",
         "security",
         "prepared statement"
+      ]
+    },
+    {
+      "id": "c-db-26",
+      "domain": "데이터베이스",
+      "term": "DBMS",
+      "oneLiner": "DBMS는 데이터를 넣고 찾고 지켜 주는 관리 프로그램이다.",
+      "example": "서류 창고(DB)의 관리인. 여럿이 동시에 와도 줄을 세우고, 원하는 서류만 찾아 주고, 쓰다 실패하면 원래대로 돌려놓는다. MySQL, PostgreSQL, Oracle.",
+      "tags": [
+        "DBMS",
+        "MySQL",
+        "PostgreSQL",
+        "Oracle"
+      ]
+    },
+    {
+      "id": "c-db-27",
+      "domain": "데이터베이스",
+      "term": "테이블 / 행 / 열",
+      "oneLiner": "테이블은 행(데이터 한 건)과 열(항목)로 이루어진 표다.",
+      "example": "엑셀 시트 한 장. 가로 한 줄이 회원 한 명이고, 세로 칸이 이름·나이 같은 항목이다. 엑셀과 달리 열마다 타입이 정해져 있다.",
+      "tags": [
+        "table",
+        "row",
+        "column"
+      ]
+    },
+    {
+      "id": "c-db-28",
+      "domain": "데이터베이스",
+      "term": "스키마(Schema)",
+      "oneLiner": "스키마는 테이블의 열 이름과 타입을 정해 둔 틀이다.",
+      "example": "신청서 양식과 같다. 이름 칸엔 글자, 나이 칸엔 숫자만 적을 수 있다. 양식에 안 맞는 값은 DB 가 받아 주지 않는다.",
+      "tags": [
+        "schema",
+        "CREATE TABLE",
+        "type"
+      ]
+    },
+    {
+      "id": "c-db-29",
+      "domain": "데이터베이스",
+      "term": "SQL",
+      "oneLiner": "SQL은 DBMS에게 데이터를 넣고 찾으라고 시키는 언어다.",
+      "example": "창고 관리인에게 건네는 주문서. '스무 살 이상 회원의 이름을 찾아 줘'를 SELECT name FROM member WHERE age >= 20 으로 적는다.",
+      "tags": [
+        "SQL",
+        "SELECT",
+        "INSERT",
+        "UPDATE",
+        "DELETE"
+      ]
+    },
+    {
+      "id": "c-db-30",
+      "domain": "데이터베이스",
+      "term": "CRUD",
+      "oneLiner": "CRUD는 만들기·읽기·고치기·지우기 네 가지 기본 동작이다.",
+      "example": "메모장 앱이 하는 일 전부. SQL 로는 INSERT·SELECT·UPDATE·DELETE, HTTP 로는 POST·GET·PUT·DELETE 와 짝이 맞는다.",
+      "tags": [
+        "CRUD",
+        "create",
+        "read",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "id": "c-db-31",
+      "domain": "데이터베이스",
+      "term": "JDBC",
+      "oneLiner": "JDBC는 자바 코드가 DB에 접속해 SQL을 보내는 표준이다.",
+      "example": "만능 콘센트. DB 회사마다 플러그 모양이 달라도 드라이버(어댑터)만 바꿔 끼우면 자바 코드는 그대로 쓴다. JPA 와 MyBatis 도 밑에서는 이걸 쓴다.",
+      "tags": [
+        "JDBC",
+        "driver",
+        "Connection",
+        "DataSource"
+      ]
+    },
+    {
+      "id": "c-db-32",
+      "domain": "데이터베이스",
+      "term": "PreparedStatement",
+      "oneLiner": "PreparedStatement는 값 자리를 ?로 비워 둔 SQL 문장이다.",
+      "example": "빈칸이 뚫린 주문서 양식. 빈칸에 적힌 건 무조건 '값'으로만 취급해서, 손님이 이상한 명령을 적어도 실행되지 않는다(SQL 인젝션 방지).",
+      "tags": [
+        "PreparedStatement",
+        "parameter binding",
+        "SQL injection"
       ]
     },
     {
