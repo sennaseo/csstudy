@@ -225,7 +225,7 @@ export default function PetScreen({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
-        <p className="shrink-0 px-5 text-center text-xs font-bold text-cute-navy/60">톡 치면 폴짝 · 문지르면 쓰담쓰담 · 옆을 끌면 돌려 보기</p>
+        <p className="shrink-0 px-5 text-center text-xs font-bold text-cute-navy/60">톡 치기 · 꾹 누르거나 문지르면 쓰담쓰담 · 끌면 돌려 보기</p>
         <div className="grid shrink-0 grid-cols-3 gap-2 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
           {(
             [
