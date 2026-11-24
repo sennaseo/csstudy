@@ -19,7 +19,7 @@ class WidgetCardsPlugin : Plugin() {
 
     @PluginMethod
     fun setSelected(call: PluginCall) {
-        val arr = call.getArray("ids", JSArray())
+        val arr = call.getArray("ids", JSArray()) ?: JSArray()
         val ids = HashSet<String>()
         for (i in 0 until arr.length()) {
             val id = arr.optString(i)
