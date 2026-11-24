@@ -18,7 +18,7 @@
 //   단, 탭 화면은 .safe-area 를 쓰지 않는다 (아래 <main> 주석 참고).
 // =============================================================
 
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { CardDeck } from "./components/CardDeck";
 import { WidgetPicker } from "./components/WidgetPicker";
@@ -39,6 +39,7 @@ import { TabBar } from "./components/TabBar";
 import { TrackProgress } from "./components/TrackPicker";
 import { MAX_HEARTS, useStudyStore } from "./store/useStudyStore";
 import { useBack } from "./utils/useBack";
+const PetScreen = lazy(() => import("./components/PetScreen"));
 
 // 하트 1개가 차는 데 걸리는 시간. 스토어의 HEART_REGEN_MS 와 같은 값인데
 // 그쪽이 export 가 아니라 여기서 한 번 더 적었다 — "읽기 전용" 사본이다.
@@ -129,7 +130,7 @@ function HeartWarning() {
  *
  *  App.tsx 안의 로컬 함수인 이유: 하트 행이 이 파일의 <Hearts withTime /> 을
  *  재사용해야 하는데, 별도 파일로 빼면 App ↔ MyScreen 순환 import 가 된다. */
-function MyScreen({ onOpenWidget }: { onOpenWidget: () => void }) {
+function MyScreen({ onOpenWidget, onOpenPet }: { onOpenWidget: () => void; onOpenPet: () => void }) {
   const setTab = useStudyStore((s) => s.setTab);
   return (
     <div className="divide-y divide-ink-200 rounded-2xl border border-ink-200 bg-white">
@@ -152,6 +153,17 @@ function MyScreen({ onOpenWidget }: { onOpenWidget: () => void }) {
         <span className="min-w-0">
           <span className="block text-sm font-extrabold text-ink-900">📖 도감</span>
           <span className="block text-xs text-ink-500">모은 버디 보기</span>
+        </span>
+        <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
+      </button>
+
+      <button
+        onClick={onOpenPet}
+        className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-ink-100"
+      >
+        <span className="min-w-0">
+          <span className="block text-sm font-extrabold text-ink-900">🐾 쓰담쓰담</span>
+          <span className="block text-xs text-ink-500">마스코트 쓰다듬고 간식 주기</span>
         </span>
         <span className="shrink-0 text-lg font-extrabold text-ink-400">›</span>
       </button>
@@ -190,6 +202,7 @@ function TabsScreen() {
   );
   const startToday = useStudyStore((s) => s.startToday);
   const [isWidgetOpen, setIsWidgetOpen] = useState(false); // 위젯 단어 고르기 화면
+  const [isPetOpen, setIsPetOpen] = useState(false); // 쓰담쓰담(3D 마스코트) 화면
   const [widgetRev, setWidgetRev] = useState(0); // 고르기 화면을 닫을 때마다 +1 → 단어장의 📌 표시 갱신
   // 앱을 켤 때 고른 목록을 위젯 저장소와 한 번 맞춘다 (앱 업데이트·재설치 뒤 어긋남 방지).
   useEffect(() => pushToWidget(), []);
@@ -219,11 +232,14 @@ function TabsScreen() {
         <div className="flex min-w-0 items-center gap-2">
           {/* 로고 = 마스코트 얼굴만. 글자 로고는 빼고, 화면 읽기 프로그램용 이름만 숨겨 둔다. */}
           <h1 className="sr-only">csStudy</h1>
-          <img
-            src={`${import.meta.env.BASE_URL}mascot/face-happy.png`}
-            alt=""
-            className="h-12 w-12 shrink-0 object-contain drop-shadow-sm"
-          />
+          {/* 누르면 쓰담쓰담 화면(3D 마스코트)이 열린다 */}
+          <button type="button" onClick={() => setIsPetOpen(true)} aria-label="마스코트 쓰다듬기" className="shrink-0 rounded-full active:scale-95">
+            <img
+              src={`${import.meta.env.BASE_URL}mascot/face-happy.png`}
+              alt=""
+              className="h-12 w-12 object-contain drop-shadow-sm"
+            />
+          </button>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* 단어장 — 어느 탭에서든 바로 열리게 헤더에 고정 */}
@@ -302,7 +318,13 @@ function TabsScreen() {
 
       {tab === "collection" && <CollectionBook />}
 
-      {tab === "my" && <MyScreen onOpenWidget={() => setIsWidgetOpen(true)} />}
+      {tab === "my" && <MyScreen onOpenWidget={() => setIsWidgetOpen(true)} onOpenPet={() => setIsPetOpen(true)} />}
+
+      {isPetOpen && (
+        <Suspense fallback={null}>
+          <PetScreen onClose={() => setIsPetOpen(false)} />
+        </Suspense>
+      )}
 
       {/* 단어장 — 마이 탭에서 여는 모달. 탭과 무관하게 마운트해 둬서
           ?open=deck 로 들어왔을 때도 어느 탭에서든 열린다. */}

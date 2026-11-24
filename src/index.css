@@ -329,6 +329,31 @@ button {
   animation: float-up 1.1s ease-out forwards;
 }
 
+/* ─── 쓰담쓰담 화면 (PetScreen) ─────────────────────────────── */
+@keyframes pet-heart {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  20% { opacity: 1; transform: translate(-50%, -90%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -260%) scale(0.9); }
+}
+.pet-heart { animation: pet-heart 1.05s ease-out forwards; }
+@keyframes pet-zzz {
+  0%, 100% { opacity: 0.35; transform: translateY(0); }
+  50% { opacity: 0.9; transform: translateY(-8px); }
+}
+.pet-zzz { animation: pet-zzz 2.4s ease-in-out infinite; }
+@keyframes pet-bump {
+  0% { transform: scale(1, 1); }
+  30% { transform: scale(1.08, 0.9); }
+  60% { transform: scale(0.96, 1.06); }
+  100% { transform: scale(1, 1); }
+}
+.pet-bump { animation: pet-bump 0.35s ease-out; }
+@keyframes float-in {
+  0% { opacity: 0; transform: translateY(6px) scale(0.96); }
+  100% { opacity: 1; transform: none; }
+}
+.float-in { animation: float-in 0.2s ease-out; }
+
 /* ─── 모션 줄이기(prefers-reduced-motion) ──────────────────────
    OS 설정에서 "동작 줄이기"를 켠 사람에게는 무한 반복·큰 움직임이
    멀미를 일으킨다. 그런 것만 끈다 — 요소는 그대로 보이고, 움직임만 멈춘다.
