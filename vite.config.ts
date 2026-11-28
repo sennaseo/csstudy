@@ -29,11 +29,14 @@ function swPrecache() {
       // 서비스워커가 돌려주는 캐시 응답엔 CORS 헤더가 없어 오프라인에서 모듈 실행이
       // 거부된다 (에러도 안 뜨고 흰 화면). 일반 fetch 는 되는데 <script type=module> 만
       // 죽는 게 이 증상의 특징이다.
-      const htmlPath = join(dist, "index.html");
-      writeFileSync(
-        htmlPath,
-        readFileSync(htmlPath, "utf8").replace(/\s+crossorigin(?==|\s|>)/g, ""),
-      );
+      // mascot.html(홈 3D 고양이 iframe)도 같은 이유로 똑같이 걷어낸다.
+      for (const page of ["index.html", "mascot.html"]) {
+        const htmlPath = join(dist, page);
+        writeFileSync(
+          htmlPath,
+          readFileSync(htmlPath, "utf8").replace(/\s+crossorigin(?==|\s|>)/g, ""),
+        );
+      }
 
       const swPath = join(dist, "sw.js");
       const src = readFileSync(swPath, "utf8");
@@ -66,6 +69,13 @@ export default defineConfig(({ mode }) => {
     // 앱은 이미 자산이 폰 안에 통째로 들어있어 오프라인 캐시가 필요 없고,
     // 오히려 SW 캐시가 남아 앱을 업데이트해도 옛 화면이 나오는 사고만 난다.
     plugins: [react(), ...(isNative ? [] : [swPrecache()])],
+    // 페이지 2개: 앱 본체 + 홈 화면 iframe 용 3D 고양이(mascot.html).
+    // 고양이를 별도 페이지로 둬야 three.js 가 본 번들(index)에 안 섞인다.
+    build: {
+      rollupOptions: {
+        input: { index: "index.html", mascot: "mascot.html" },
+      },
+    },
     server: {
       port: 5173,
       open: true,

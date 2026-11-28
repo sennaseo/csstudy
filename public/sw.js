@@ -19,6 +19,8 @@ const BUILD_ASSETS = "__BUILD_ASSETS__";
 const SHELL = [
   "./",
   "./index.html",
+  // 홈 화면 3D 고양이 iframe 페이지 (three.js 청크·cat.glb 는 아래 BUILD_ASSETS 에 들어 있다)
+  "./mascot.html",
   "./manifest.webmanifest",
   "./icon-192.png",
   // 마스코트 — 헤더 로고·퀘스트·오늘의 밈 카드. 없으면 오프라인에서 깨진 이미지로 뜬다

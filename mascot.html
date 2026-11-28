@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>csStudy 마스코트</title>
+    <!-- 홈 화면 iframe 안에서만 쓰는 3D 고양이 페이지.
+         따로 뗀 이유: three.js(수백 KB)가 앱 본 번들에 섞이지 않고 이 페이지에서만 로드되게.
+         배경은 투명 — 부모(홈 화면)의 배경이 그대로 비쳐 보인다. -->
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: transparent; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="/src/mascot3d/main.js"></script>
+  </body>
+</html>

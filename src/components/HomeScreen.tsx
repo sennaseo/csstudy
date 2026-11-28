@@ -2,12 +2,13 @@
 // HomeScreen — 홈 탭 본문 (헤더·하트 경고·탭바는 App.tsx 가 그린다)
 //
 // 세로 순서(위 → 아래):
-//   ① QuestCard     오늘의 퀘스트 — 5문제 + 밈 말풍선 + 시작 버튼 (홈에서 유일한 "센 밈")
-//   ② Buddy         다음 진화까지 XP. 누르면 도감
-//   ③ 2열           MissionCard(오늘의 미션) | PracticeCard(실무 탭으로)
-//   ④ ReviewRow     복습할 문제가 있을 때만
-//   ⑤ DailyMemeCard 오늘의 운세/버그/한마디 (날짜에 따라 없는 날도 있다)
-//   ⑥ 트랙·난이도   하루에 한 번도 안 만지는 설정이라 접어 둔다
+//   ① MascotStage   3D 고양이 (iframe) — 탭·드래그·길게 눌러 쓰다듬기
+//   ② QuestCard     오늘의 퀘스트 — 5문제 + 밈 말풍선 + 시작 버튼 (홈에서 유일한 "센 밈")
+//   ③ Buddy         다음 진화까지 XP. 누르면 도감
+//   ④ 2열           MissionCard(오늘의 미션) | PracticeCard(실무 탭으로)
+//   ⑤ ReviewRow     복습할 문제가 있을 때만
+//   ⑥ DailyMemeCard 오늘의 운세/버그/한마디 (날짜에 따라 없는 날도 있다)
+//   ⑦ 트랙·난이도   하루에 한 번도 안 만지는 설정이라 접어 둔다
 //
 // 왜 App.tsx 에서 따로 뺐나?
 // - "카드를 세로로 쌓는다"를 아는 곳을 이 파일 하나로 모으려고.
@@ -20,6 +21,7 @@ import { TRACKS } from "../data/tracks";
 import { useStudyStore } from "../store/useStudyStore";
 import { Buddy } from "./Buddy";
 import { DailyMemeCard } from "./DailyMemeCard";
+import { MascotStage } from "./MascotStage";
 import { MissionCard } from "./MissionCard";
 import { QuestCard } from "./QuestCard";
 import { LEVELS, TrackPicker } from "./TrackPicker";
@@ -33,6 +35,7 @@ export function HomeScreen() {
 
   return (
     <>
+      <MascotStage />
       <QuestCard />
       <Buddy />
       <div className="grid grid-cols-2 gap-3">
